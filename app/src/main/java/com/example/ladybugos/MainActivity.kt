@@ -1,0 +1,231 @@
+package com.example.ladybugos
+
+import android.Manifest
+import android.appwidget.AppWidgetManager
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
+import android.provider.Settings
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.rememberNavController
+import com.example.ladybugos.a.DatePickerDialogSample
+import com.example.ladybugos.a.TimePickerDialogExample
+import com.example.ladybugos.notification.PermissionDialog
+import com.example.ladybugos.ui.presentation.EditNoteViewModel
+import com.example.ladybugos.ui.presentation.HomeContent
+import com.example.ladybugos.ui.theme.LadyBugOSTheme
+import dagger.hilt.android.AndroidEntryPoint
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import timber.log.Timber
+
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+
+    private val mainActivityViewModel: MainViewModel by viewModel()
+    private val editNoteViewModel: EditNoteViewModel by viewModel()
+
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        installSplashScreen()
+
+
+        setContent {
+            // Extract note ID and widget ID from intent
+            val noteId = remember { intent?.getLongExtra("noteId", -1L) } ?: -1L
+            val widgetId = remember {
+                intent?.let { safeIntent ->
+                    val extraValue = safeIntent.getStringExtra(AppWidgetManager.EXTRA_APPWIDGET_ID)
+                    extraValue?.toIntOrNull() ?: AppWidgetManager.INVALID_APPWIDGET_ID
+                } ?: AppWidgetManager.INVALID_APPWIDGET_ID
+            }
+
+
+            // Initialize the NavController
+            val navController = rememberNavController()
+            val theme by mainActivityViewModel.theme.collectAsStateWithLifecycle()
+
+
+            // Preload note data if opened from widget
+            LaunchedEffect(noteId, widgetId) {
+                if (widgetId != AppWidgetManager.INVALID_APPWIDGET_ID) {
+                    val glanceAppWidgetManager = GlanceAppWidgetManager(this@MainActivity)
+                    val glanceId = glanceAppWidgetManager.getGlanceIdBy(widgetId)
+                    glanceId.let {
+                        editNoteViewModel.preloadNoteData(noteId, it)
+                    }
+                }
+            }
+
+            LadyBugOSTheme(theme = theme) {
+                Timber.tag("DEBUG").d("MainActivity_[noteId]=[$noteId]")
+                Timber.tag("DEBUG").d("MainActivity_[widgetId]=[$widgetId]")
+
+                PermissionContent {
+                    HomeContent(
+                        navController = navController,
+                        noteId = noteId
+                    )
+//                    DatePickerDialogSample(
+//                        onConfirm = {},
+//                        onDismiss = {},
+//                    )
+//                    TimePickerDialogExample(
+//                        onConfirm = {},
+//                        onDismiss = {},
+//                    )
+                }
+            }
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    @Composable
+    fun PermissionContent(content: @Composable () -> Unit) {
+        var showDialog by remember { mutableStateOf(false) }
+
+        val notificationPermissionLauncher = rememberLauncherForActivityResult(
+            contract = ActivityResultContracts.RequestPermission(),
+            onResult = { isGranted ->
+                if (isGranted) {
+                    // Permission granted
+                } else {
+                    showDialog = true
+                }
+                Timber.tag("DEBUG").d("Notification permission granted: $isGranted")
+            }
+        )
+
+        LaunchedEffect(Unit) {
+            checkAndRequestNotificationPermission(notificationPermissionLauncher)
+        }
+
+        if (showDialog) {
+            PermissionDialog(
+                onDismiss = { showDialog = false },
+                onSettingsClick = {
+                    showDialog = false
+                    openNotificationSettings()
+                }
+            )
+        }
+        content()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private fun checkAndRequestNotificationPermission(
+        permissionLauncher: ManagedActivityResultLauncher<String, Boolean>
+    ) {
+        when {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED -> {
+            }
+
+            else -> {
+                // Request permission directly
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun openNotificationSettings() {
+        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).also {
+            it.putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            startActivity(it)
+        }
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
