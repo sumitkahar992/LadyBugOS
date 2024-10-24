@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
 class NotificationWorker(
@@ -72,7 +73,7 @@ class NotificationWorker(
 
         // Build the notification
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
-            .setSmallIcon(R.drawable.light_bulb)
+            .setSmallIcon(R.drawable.notes)
             .setContentTitle(title)
             .setContentText(content)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -90,6 +91,7 @@ class NotificationWorker(
                 Result.success()
             } catch (e: Exception) {
                 Result.failure()
+                Timber.e(e, "Failed to update note status")
             }
         }
     }

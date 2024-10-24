@@ -15,6 +15,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -25,37 +26,67 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ladybugos.model.Note
+import com.example.ladybugos.model.NoteWithTags
+import com.example.ladybugos.ui.components.ReminderInfo
+import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
 fun NoteSelectionContent(
-    viewModel: NoteSelectionViewModel,
+    viewModel: NoteSelectionViewModel = koinViewModel(),
+    widgetId: Int,
     onNoteSelected: (Note?) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    when (val state = uiState) {
-        is NotesUiState.Loading -> LoadingScreen()
-        is NotesUiState.Success -> {
-            val notes = state.notes.filterNot { it.isArchived && it.isTrashed }
-            if (notes.isEmpty()) EmptyState()
-            else NoteSelectionScreen(notes, onNoteSelected)
-        }
+    LaunchedEffect(Unit) {
+        viewModel.handleEvent(NoteSelectionEvent.RefreshNotes)
+    }
 
-        is NotesUiState.Error -> ErrorScreen(state.message)
+    when (val state = uiState) {
+
+        is NoteSelectionUiState.Error -> ErrorScreen(state.message)
+        NoteSelectionUiState.Loading -> LoadingScreen()
+        is NoteSelectionUiState.Success -> {
+            NoteSelectionContent(
+                notes = state.notes,
+                onNoteSelected = onNoteSelected,
+                widgetId = widgetId
+            )
+        }
     }
 }
 
 
 @Composable
-fun NoteSelectionScreen(
-    notes: List<Note>,
-    onNoteSelected: (note: Note?) -> Unit
+private fun NoteSelectionContent(
+    notes: List<NoteWithTags>,
+    onNoteSelected: (Note) -> Unit,
+    widgetId: Int,
+) {
+    if (notes.isEmpty()) {
+        EmptyState()
+    } else {
+        NotesList(
+            notes = notes,
+            onNoteSelected = onNoteSelected,
+        )
+    }
+}
+
+
+@Composable
+fun NotesList(
+    notes: List<NoteWithTags>,
+    onNoteSelected: (note: Note) -> Unit
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(notes.filter { !it.isArchived && !it.isTrashed }) { note ->
+        items(
+            items = notes,
+            key = { it.note.id }
+        ) { note ->
             NoteListItem(note) {
-                onNoteSelected(note)
+                onNoteSelected(note.note)
             }
         }
     }
@@ -98,12 +129,17 @@ fun ErrorScreen(message: String) {
 
 
 @Composable
-fun NoteListItem(note: Note, onClick: () -> Unit) {
+fun NoteListItem(
+    noteWithTags: NoteWithTags,
+    onNoteSelected: (Note) -> Unit
+
+) {
+    val note = noteWithTags.note
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .clickable(onClick = onClick),
+            .clickable(onClick = { onNoteSelected(note) }),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -113,6 +149,18 @@ fun NoteListItem(note: Note, onClick: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = note.content, maxLines = 2, overflow = TextOverflow.Ellipsis)
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+
+            note.reminderDate?.let { reminderDate ->
+                Spacer(modifier = Modifier.height(8.dp))
+                ReminderInfo(
+                    reminderDate = reminderDate,
+                    isDone = note.isDone,
+                    onClick = {}
+                )
+            }
         }
     }
 }

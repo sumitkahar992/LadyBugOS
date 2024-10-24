@@ -1,27 +1,26 @@
 package com.example.ladybugos.model
 
+import androidx.annotation.Keep
 import androidx.compose.ui.graphics.Color
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Delete
-import androidx.room.Embedded
 import androidx.room.Entity
-import androidx.room.ForeignKey
-import androidx.room.Index
 import androidx.room.Insert
-import androidx.room.Junction
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
-import androidx.room.Relation
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+@Keep
+@Serializable
 @Entity(tableName = "notes")
 data class Note(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -33,7 +32,7 @@ data class Note(
     var isArchived: Boolean = false,
     var isTrashed: Boolean = false,
     var reminderDate: Long? = null,
-    var isDone: Boolean = false
+    var isDone: Boolean = false,
 ) {
     fun matchesSearch(query: String): Boolean =
         title.contains(query, ignoreCase = true) || content.contains(query, ignoreCase = true)
@@ -92,17 +91,17 @@ interface NoteDao {
     suspend fun deleteNoteTagCrossRefs(noteId: Long)
 
     @Transaction
-    suspend fun deleteNoteAndCrossRefs(note: Note) {
+    suspend fun deleteNoteAndTag(note: Note) {
         deleteNoteTagCrossRefs(note.id)
         deleteNote(note)
     }
 
     // Reminder
-    @Query("UPDATE notes SET reminderDate = :reminderDate WHERE id = :noteId")
-    suspend fun updateNoteReminder(noteId: Long, reminderDate: Long?)
+//    @Query("UPDATE notes SET reminderDate = :reminderDate WHERE id = :noteId")
+//    suspend fun updateNoteReminder(noteId: Long, reminderDate: Long?)
 
-    @Query("SELECT * FROM notes WHERE reminderDate IS NOT NULL AND reminderDate > :currentTime ORDER BY reminderDate ASC")
-    fun getUpcomingReminders(currentTime: Long): Flow<List<Note>>
+//    @Query("SELECT * FROM notes WHERE reminderDate IS NOT NULL AND reminderDate > :currentTime ORDER BY reminderDate ASC")
+//    fun getUpcomingReminders(currentTime: Long): Flow<List<Note>>
 
 
     @Query("UPDATE notes SET isDone = :isDone WHERE id = :noteId")
@@ -111,75 +110,40 @@ interface NoteDao {
     @Query("SELECT isDone FROM notes WHERE id = :noteId")
     suspend fun isNoteDone(noteId: Long): Boolean
 
+    // Update NoteDao with a new query to reset isDone along with reminder
+    @Query("UPDATE notes SET reminderDate = :reminderDate, isDone = :isDone WHERE id = :noteId")
+    suspend fun updateNoteReminderAndIsDone(noteId: Long, reminderDate: Long?, isDone: Boolean)
 
 
-}
-
-@Dao
-interface TagDao {
-    @Query("SELECT * FROM tags")
-    fun getAllTags(): Flow<List<Tag>>
-
+    // BATCH
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTag(tag: Tag): Long
+    suspend fun insertNotes(notes: List<Note>)
 
-    @Update
-    suspend fun updateTag(tag: Tag)
+    // Delete reminder
+    @Query("UPDATE notes SET reminderDate = NULL, isDone = 0 WHERE id = :noteId")
+    suspend fun deleteReminder(noteId: Long)
 
-    @Delete
-    suspend fun deleteTag(tag: Tag)
-
-    @Query("SELECT * FROM tags WHERE id = :id")
-    fun getTagById(id: Long): Flow<Tag?>
-
-
-    @Query("DELETE FROM note_tag_cross_ref WHERE tagId = :tagId")
-    suspend fun deleteTagCrossRefs(tagId: Long)
+    // New methods for categorized reminders
+    @Transaction
+    @Query("SELECT * FROM notes WHERE reminderDate > :currentTime AND isDone = 0")
+    fun getUpcomingRemindersWithTags(currentTime: Long): Flow<List<NoteWithTags>>
 
     @Transaction
-    suspend fun deleteTagAndCrossRefs(tag: Tag) {
-        deleteTagCrossRefs(tag.id)
-        deleteTag(tag)
+    @Query("SELECT * FROM notes WHERE reminderDate <= :currentTime OR isDone = 1")
+    fun getCompletedRemindersWithTags(currentTime: Long): Flow<List<NoteWithTags>>
+
+
+    @Query("DELETE FROM note_tag_cross_ref WHERE noteId IN (SELECT id FROM notes WHERE isTrashed = 1)")
+    suspend fun deleteTrashNoteTagCrossRefs()
+
+    @Transaction
+    suspend fun emptyTrashWithTags() {
+        deleteTrashNoteTagCrossRefs()
+        emptyTrash()
     }
+
+
 }
-
-
-@Entity(tableName = "tags")
-data class Tag(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val name: String,
-    val color: Int
-)
-
-@Entity(
-    tableName = "note_tag_cross_ref",
-    primaryKeys = ["noteId", "tagId"],
-    foreignKeys = [
-        ForeignKey(entity = Note::class, parentColumns = ["id"], childColumns = ["noteId"]),
-        ForeignKey(entity = Tag::class, parentColumns = ["id"], childColumns = ["tagId"])
-    ],
-    indices = [Index(value = ["tagId"]), Index(value = ["noteId"])] // Index for tagName and noteId
-
-)
-data class NoteTagCrossRef(
-    val noteId: Long,
-    val tagId: Long
-)
-
-data class NoteWithTags(
-    @Embedded val note: Note,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "id",
-        associateBy = Junction(
-            value = NoteTagCrossRef::class,
-            parentColumn = "noteId",
-            entityColumn = "tagId"
-        )
-    )
-    val tags: List<Tag>
-)
 
 
 @Database(
@@ -193,20 +157,20 @@ abstract class NoteDatabase : RoomDatabase() {
 
 
 val colorPalette = listOf(
-    Color(0xFFE783F6), Color(0xFFFFDAC1), Color(0xFFC5E2D2), Color(0xFFB2EBF2),
+    Color(0xFFFFDAC1), Color(0xFFC5E2D2), Color(0xFFB2EBF2),
     Color(0xFFFFE082), Color(0xFFD7CCC8), Color(0xFFDCD3FF), Color(0xFFFFE5C0),
-    Color(0xFFF1E0FF), Color(0xFFF48FB1), Color(0xFFFFF176), Color(0xFFADD8E6),
+    Color(0xFFF1E0FF), Color(0xFFF48FB1), Color(0xFFFFF289), Color(0xFFADD8E6),
     Color(0xFFE6F3E3), Color(0xFFC7CEEA), Color(0xFFD1C4E9), Color(0xFFFADAD9),
     Color(0xFFE6D2AA), Color(0xFFC8E6C9), Color(0xFFFFECB3), Color(0xFF78E9DA),
-    Color(0xFFFFF3DE), Color(0xFFBFE3D3), Color(0xFFB5EAD7), Color(0xFFF7D1BA),
-    Color(0xFFFF9AA2), Color(0xFFFFB7B2), Color(0xFFFDFFB6), Color(0xFFBDB2FF),
+    Color(0xFFBFE3D3), Color(0xFFB5EAD7), Color(0xFFF7D1BA), Color(0xFFFF9AA2),
+    Color(0xFFFFB7B2), Color(0xFFFDFFB6), Color(0xFFBDB2FF),
     Color(0xFFA0E7E5), Color(0xFFF0DEFD), Color(0xFFE2F0CB), Color(0xFFD5F4E6),
-    Color(0xFFEC87FF), Color(0xFFB8F6EA), Color(0xFFFFF1C9), Color(0xFFFFCFDF),
+    Color(0xFFF09EFF), Color(0xFFB8F6EA), Color(0xFFFFF1C9), Color(0xFFFFCFDF),
     Color(0xFFE1F8DC), Color(0xFFFFE6E6), Color(0xFFC9F3E4), Color(0xFFF8E1A6),
     Color(0xFFE8D3EF), Color(0xFFE3F2FD), Color(0xFFF0F4E3), Color(0xFFFDE2E4),
     Color(0xFFD4E9DA), Color(0xFFE4F3EA), Color(0xFFA5D6A7), Color(0xFF81D4FA),
-    Color(0xFF4DD0E1), Color(0xFFCE93D8), Color(0xFFFFAB91), Color(0xFFE6EE9C),
-    Color(0xFFC5E1A5), Color(0xFFD2B48C), Color(0xFFD0E0E3), Color(0xFFBED2E6),
+    Color(0xFF60E3F3), Color(0xFFCE93D8), Color(0xFFFFAB91), Color(0xFFE6EE9C),
+    Color(0xFFC5E1A5), Color(0xFFD0E0E3), Color(0xFFBED2E6),
 )
 
 

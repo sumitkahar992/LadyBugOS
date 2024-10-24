@@ -1,14 +1,13 @@
 package com.example.ladybugos.repository
 
-import androidx.compose.ui.graphics.toArgb
 import com.example.ladybugos.model.Note
 import com.example.ladybugos.model.NoteDao
 import com.example.ladybugos.model.NoteTagCrossRef
 import com.example.ladybugos.model.Tag
 import com.example.ladybugos.model.TagDao
-import com.example.ladybugos.model.colorPalette
 import com.example.ladybugos.notification.NotificationHelper
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 
 class NoteRepository(
     private val noteDao: NoteDao,
@@ -16,14 +15,16 @@ class NoteRepository(
     private val notificationHelper: NotificationHelper
 ) {
 
-    val getAllNotes: Flow<List<Note>> = noteDao.getAllNotes()
+    fun getAllNotes() = noteDao.getAllNotes()
+    fun getNoteById(id: Long) = noteDao.getNoteById(id)
+
+    suspend fun insertNotes(notes: List<Note>) = noteDao.insertNotes(notes)
 
 
     suspend fun updateNotes(notes: List<Note>) = noteDao.updateNotes(notes)
-    suspend fun delete(note: Note) = noteDao.deleteNote(note)
-    fun getNoteById(id: Long): Flow<Note?> = noteDao.getNoteById(id)
+//    fun getNoteById(id: Long): Flow<Note?> = noteDao.getNoteById(id)
     fun searchNotes(query: String): Flow<List<Note>> = noteDao.searchNotes(query)
-    suspend fun emptyTrash() = noteDao.emptyTrash()
+    suspend fun emptyTrashWithTags() = noteDao.emptyTrashWithTags()
 
     // Tag-related operations
     fun getAllNotesWithTags() = noteDao.getAllNotesWithTags()
@@ -53,7 +54,7 @@ class NoteRepository(
 
     suspend fun deleteNote(note: Note) {
         // Delete both the note and associated tag cross-references
-        noteDao.deleteNoteAndCrossRefs(note)
+        noteDao.deleteNoteAndTag(note)
     }
 
     suspend fun deleteTag(tag: Tag) {
@@ -61,26 +62,28 @@ class NoteRepository(
     }
 
 
-    private fun getRandomColor(): Int = colorPalette.random().toArgb()
-
-    // Reminder
     suspend fun updateNoteReminder(noteId: Long, reminderDate: Long?) {
-        noteDao.updateNoteReminder(noteId, reminderDate)
+
+        val currentTime = System.currentTimeMillis()
+        val isDone = reminderDate != null && reminderDate <= currentTime
+
+        // Update reminder and reset isDone status
+        noteDao.updateNoteReminderAndIsDone(noteId, reminderDate, isDone)
+
+        val updatedNote = noteDao.getNoteById(noteId).first()
+        updatedNote?.let {
+            if (reminderDate != null) {
+                notificationHelper.scheduleNotification(it)
+            } else {
+                notificationHelper.cancelNotification(noteId)
+            }
+        }
     }
 
-    fun getUpcomingReminders(): Flow<List<Note>> {
-        return noteDao.getUpcomingReminders(System.currentTimeMillis())
+    suspend fun deleteReminder(noteId: Long) {
+        noteDao.deleteReminder(noteId)
     }
 
-
-    // Notification
-    fun scheduleReminder(note: Note) {
-        notificationHelper.scheduleNotification(note)
-    }
-
-    fun cancelReminder(noteId: Long) {
-        notificationHelper.cancelNotification(noteId)
-    }
 
 }
 

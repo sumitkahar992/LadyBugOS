@@ -21,4 +21,8 @@ class MainViewModel @Inject constructor(
         initialValue = Theme.System
     )
 
+    val dynamicTheme: StateFlow<Boolean> = repo.get { dynamicColor }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), true)
+
+
 }

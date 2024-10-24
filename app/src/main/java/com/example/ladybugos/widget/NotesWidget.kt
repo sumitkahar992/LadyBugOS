@@ -3,15 +3,11 @@ package com.example.ladybugos.widget
 import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.os.Build
-import androidx.annotation.Keep
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.booleanPreferencesKey
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.Button
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -38,7 +34,6 @@ import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
-import androidx.glance.state.GlanceStateDefinition
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
@@ -47,9 +42,10 @@ import com.example.ladybugos.MainActivity
 import com.example.ladybugos.R
 import com.example.ladybugos.model.darken
 import com.example.ladybugos.model.getRelativeTimeAgo
+import com.example.ladybugos.widget.model.WidgetKeys
 
 class NoteWidget : GlanceAppWidget() {
-    override var stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
+    override var stateDefinition = PreferencesGlanceStateDefinition
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val widgetId = GlanceAppWidgetManager(context).getAppWidgetId(id)
@@ -57,7 +53,7 @@ class NoteWidget : GlanceAppWidget() {
         provideContent {
             GlanceTheme {
                 val prefs = currentState<Preferences>()
-                NoteWidgetContent(prefs, widgetId)
+                NoteWidgetContent(prefs, context, widgetId)
             }
         }
     }
@@ -65,7 +61,11 @@ class NoteWidget : GlanceAppWidget() {
 
 
 @Composable
-fun NoteWidgetContent(prefs: Preferences, widgetId: Int) {
+fun NoteWidgetContent(
+    prefs: Preferences,
+    context: Context,
+    widgetId: Int
+) {
     val noteId = prefs[WidgetKeys.Prefs.noteId]?.toLongOrNull()
     val noteHeader = prefs[WidgetKeys.Prefs.noteHeader]
     val noteBody = prefs[WidgetKeys.Prefs.noteBody]
@@ -101,11 +101,11 @@ fun NoteWidgetContent(prefs: Preferences, widgetId: Int) {
             .padding(16.dp)
 
     ) {
-        if (!isDeleted && noteId != null && noteHeader != null && noteBody != null && updatedAt != null) {
+        if (!isDeleted && noteId != null && noteHeader != null) {
             SelectedNote(
                 noteHeader = noteHeader,
-                noteBody = noteBody,
-                updatedAt = updatedAt,
+                noteBody = "$noteBody",
+                updatedAt = "$updatedAt",
                 noteId = noteId,
                 widgetId = widgetId
             )
@@ -302,18 +302,4 @@ private fun GlanceModifier.openNote(noteId: Long, widgetId: Int) =
     )
 )*/
 
-@Keep
-object WidgetKeys {
-    object Prefs {
-        val noteId = stringPreferencesKey("noteId")
-        val noteHeader = stringPreferencesKey("noteHeader")
-        val noteBody = stringPreferencesKey("noteBody")
-        val noteLastUpdate = stringPreferencesKey("noteLastUpdate")
-        val noteColor = intPreferencesKey("noteColor") // New key for storing the note color
-        val isDeleted = booleanPreferencesKey("isDeleted")
 
-        const val NOTE_ID_EXTRA = "NoteIdExtra"
-
-
-    }
-}

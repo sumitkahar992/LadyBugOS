@@ -50,11 +50,12 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ladybugos.model.Note
-import com.example.ladybugos.ui.presentation.ExpandedSearchView
-import com.example.ladybugos.ui.presentation.NoteGrid
-import com.example.ladybugos.ui.presentation.NotesViewModel
-import com.example.ladybugos.ui.presentation.ScreenType
-import com.example.ladybugos.ui.presentation.SelectionTopBar
+import com.example.ladybugos.ui.components.ExpandedSearchView
+import com.example.ladybugos.ui.components.ScreenType
+import com.example.ladybugos.ui.components.SelectionTopBar
+import com.example.ladybugos.ui.components.SwipeToDismissContentSnack
+import com.example.ladybugos.ui.components.NoteGridTags
+import com.example.ladybugos.ui.drawer.home.NoteListViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -63,13 +64,16 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArchivedScreen(
-    viewModel: NotesViewModel = koinViewModel(),
+    viewModel: NoteListViewModel = koinViewModel(),
     onMenuClick: () -> Unit,
     navigateToNoteDetail: (Long) -> Unit,
 ) {
     val notes by viewModel.archivedNotes.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val theme by viewModel.theme.collectAsStateWithLifecycle()
+
+    // grid layout
+    val gridLayout by viewModel.gridLayout.collectAsState()
 
     var isSearchActive by remember { mutableStateOf(false) }
     var selectedNotes by remember { mutableStateOf(setOf<Note>()) }
@@ -79,9 +83,7 @@ fun ArchivedScreen(
     val snackBarHostState = remember { SnackbarHostState() }
 
     fun toggleSelection(note: Note) {
-        selectedNotes = selectedNotes.toMutableSet().apply {
-            if (contains(note)) remove(note) else add(note)
-        }
+        selectedNotes = if (note in selectedNotes) selectedNotes - note else selectedNotes + note
     }
 
     fun handleNoteClick(note: Note) {
@@ -89,12 +91,12 @@ fun ArchivedScreen(
         else navigateToNoteDetail(note.id)
     }
 
-    fun handleAction(action: (Set<Note>) -> Unit, message: String, restoreAction: () -> Unit) {
-        action(selectedNotes)
+    fun handleAction(action: (List<Note>) -> Unit, message: String) {
+        action(selectedNotes.toList())
         scope.launch {
             val result = snackBarHostState.showSnackbar(message, "UNDO")
             if (result == SnackbarResult.ActionPerformed) {
-                restoreAction()
+                viewModel.undoLastOperation()
             }
         }
         selectedNotes = emptySet()
@@ -119,23 +121,20 @@ fun ArchivedScreen(
                 onClearSelection = { selectedNotes = emptySet() },
                 onPinNotes = {
                     handleAction(
-                        { viewModel.pinAndUnarchiveNotes(it.toList()) },
-                        "${selectedNotes.size} notes pinned and un-archived",
-                        viewModel::restoreLastPinnedUnArchivedNotes
+                        viewModel::pinAndUnarchiveNotes,
+                        "${selectedNotes.size} notes pinned and un-archived"
                     )
                 },
                 onUnarchiveNotes = {
                     handleAction(
-                        { viewModel.unarchiveNotes(it.toList()) },
-                        "${selectedNotes.size} notes un-archived",
-                        viewModel::restoreLastUnArchivedNotes
+                        viewModel::unarchiveNotes,
+                        "${selectedNotes.size} notes un-archived"
                     )
                 },
                 onDeleteNotes = {
                     handleAction(
-                        { viewModel.trashNotes(it.toList()) },
-                        "${selectedNotes.size} notes moved to trash",
-                        viewModel::restoreLastDeletedNotes
+                        viewModel::trashNotes,
+                        "${selectedNotes.size} notes moved to trash"
                     )
                 },
                 title = "Archive",
@@ -144,8 +143,6 @@ fun ArchivedScreen(
                 searchQuery = searchQuery,
                 onSearchQueryChange = viewModel::updateSearchQuery,
                 scrollBehavior = scrollBehavior,
-                suggestions = emptyList(),
-                onSuggestionSelected = viewModel::updateSearchQuery,
                 onSearchClosed = {
                     isSearchActive = false
                     viewModel.updateSearchQuery("")
@@ -163,7 +160,7 @@ fun ArchivedScreen(
                             .wrapContentSize()
                     )
                 } else {
-                    NoteGrid(
+                    NoteGridTags(
                         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
                         notes = notes,
                         selectedNotes = selectedNotes,
@@ -171,7 +168,9 @@ fun ArchivedScreen(
                         onNoteLongPress = ::toggleSelection,
                         theme = theme,
                         searchHeightPadding = 0.dp,
-                        pinnedHeader = false
+                        pinnedHeader = false,
+                        gridContent = {},
+                        gridLayout = gridLayout
                     )
                 }
             }
@@ -417,8 +416,6 @@ fun AnimatedTopBar(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     scrollBehavior: TopAppBarScrollBehavior,
-    suggestions: List<String> = emptyList(),
-    onSuggestionSelected: (String) -> Unit = {},
     onSearchClosed: () -> Unit
 ) {
     val focusRequester = remember { FocusRequester() }

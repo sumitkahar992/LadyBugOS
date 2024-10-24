@@ -25,11 +25,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
-import com.example.ladybugos.a.DatePickerDialogSample
-import com.example.ladybugos.a.TimePickerDialogExample
 import com.example.ladybugos.notification.PermissionDialog
-import com.example.ladybugos.ui.presentation.EditNoteViewModel
-import com.example.ladybugos.ui.presentation.HomeContent
+import com.example.ladybugos.ui.drawer.note_detail.NoteDetailViewModel
 import com.example.ladybugos.ui.theme.LadyBugOSTheme
 import dagger.hilt.android.AndroidEntryPoint
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -39,7 +36,7 @@ import timber.log.Timber
 class MainActivity : ComponentActivity() {
 
     private val mainActivityViewModel: MainViewModel by viewModel()
-    private val editNoteViewModel: EditNoteViewModel by viewModel()
+    private val editNoteViewModel: NoteDetailViewModel by viewModel()
 
 
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -63,6 +60,7 @@ class MainActivity : ComponentActivity() {
             // Initialize the NavController
             val navController = rememberNavController()
             val theme by mainActivityViewModel.theme.collectAsStateWithLifecycle()
+            val dynamicColor by mainActivityViewModel.dynamicTheme.collectAsStateWithLifecycle()
 
 
             // Preload note data if opened from widget
@@ -76,24 +74,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            LadyBugOSTheme(theme = theme) {
-                Timber.tag("DEBUG").d("MainActivity_[noteId]=[$noteId]")
-                Timber.tag("DEBUG").d("MainActivity_[widgetId]=[$widgetId]")
+            LadyBugOSTheme(theme = theme, dynamicColor = dynamicColor) {
+                    Timber.tag("DEBUG").d("MainActivity_[noteId]=[$noteId]")
+                     Timber.tag("DEBUG").d("MainActivity_[widgetId]=[$widgetId]")
 
-                PermissionContent {
-                    HomeContent(
-                        navController = navController,
-                        noteId = noteId
-                    )
-//                    DatePickerDialogSample(
-//                        onConfirm = {},
-//                        onDismiss = {},
-//                    )
-//                    TimePickerDialogExample(
-//                        onConfirm = {},
-//                        onDismiss = {},
-//                    )
-                }
+                     PermissionContent {
+                         MainContent(
+                             navController = navController,
+                             noteId = noteId
+                         )
+                     }
+//                NoteeApp()
             }
         }
     }

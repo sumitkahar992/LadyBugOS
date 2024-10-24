@@ -11,6 +11,15 @@ android {
     compileSdk = 35
 
 
+    sourceSets {
+        getByName("main") {
+            assets.srcDirs(listOf("src/main/assets", "../dummy"))
+        }
+    }
+
+//    sourceSets["main"].assets.srcDirs("src/main/assets", "../dummy")
+
+
 
     defaultConfig {
         applicationId = "com.example.ladybugos"

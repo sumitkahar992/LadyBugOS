@@ -1,0 +1,27 @@
+package com.example.ladybugos.widget.model
+
+import android.appwidget.AppWidgetManager
+import androidx.annotation.Keep
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+
+@Keep
+object WidgetKeys {
+    object Prefs {
+        val noteId = stringPreferencesKey("noteId")
+        val noteHeader = stringPreferencesKey("noteHeader")
+        val noteBody = stringPreferencesKey("noteBody")
+        val noteLastUpdate = stringPreferencesKey("noteLastUpdate")
+        val noteColor = intPreferencesKey("noteColor") // New key for storing the note color
+        val isDeleted = booleanPreferencesKey("isDeleted")
+
+        const val NOTE_ID_EXTRA = "NoteIdExtra"
+
+
+    }
+}
+
+object WidgetConstants {
+    const val INVALID_WIDGET_ID = AppWidgetManager.INVALID_APPWIDGET_ID
+}
