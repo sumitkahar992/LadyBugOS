@@ -15,16 +15,17 @@ import androidx.room.Relation
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
 
-
+@Serializable
 @Entity(tableName = "tags")
 data class Tag(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
-    val color: Int
 )
 
+@Serializable
 @Entity(
     tableName = "note_tag_cross_ref",
     primaryKeys = ["noteId", "tagId"],
@@ -81,6 +82,37 @@ interface TagDao {
         deleteTagCrossRefs(tag.id)
         deleteTag(tag)
     }
+
+    @Query("DELETE FROM tags")
+    suspend fun deleteAllTags()
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTags(tags: List<Tag>)
 }
 
+
+// First, let's implement the missing NoteTagCrossRefDao
+@Dao
+interface NoteTagCrossRefDao {
+    @Query("SELECT * FROM note_tag_cross_ref")
+    fun getAllCrossRefs(): Flow<List<NoteTagCrossRef>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCrossRef(crossRef: NoteTagCrossRef)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCrossRefs(crossRefs: List<NoteTagCrossRef>)
+
+    @Delete
+    suspend fun deleteCrossRef(crossRef: NoteTagCrossRef)
+
+    @Query("DELETE FROM note_tag_cross_ref")
+    suspend fun deleteAllCrossRefs()
+
+    @Query("SELECT * FROM note_tag_cross_ref WHERE noteId = :noteId")
+    fun getCrossRefsByNoteId(noteId: Long): Flow<List<NoteTagCrossRef>>
+
+    @Query("SELECT * FROM note_tag_cross_ref WHERE tagId = :tagId")
+    fun getCrossRefsByTagId(tagId: Long): Flow<List<NoteTagCrossRef>>
+}
 

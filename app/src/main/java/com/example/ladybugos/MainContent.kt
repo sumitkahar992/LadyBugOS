@@ -39,8 +39,8 @@ fun MainContent(
     ) {
         NoteeNavigation(
             navController = navController,
-            drawerState = drawerState,
-            noteId = noteId
+            noteId = noteId,
+            drawerState = drawerState
         )
     }
 }

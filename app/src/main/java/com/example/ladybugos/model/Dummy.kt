@@ -34,7 +34,7 @@ class LoadSampleDataUseCase(
                 }
                 sampleNotes.forEach { note ->
                     val randomTags = sampleTags.shuffled().take(Random.nextInt(1, 4))
-                    noteRepository.insertNote(note, randomTags.map { it.id })
+                    noteRepository.insertNoteWithTags(note, randomTags.map { it.id })
                 }
             }
         }
@@ -42,20 +42,20 @@ class LoadSampleDataUseCase(
 
     private fun createSampleTags(): List<Tag> {
         return listOf(
-            Tag(1, "Work", colorPalette.random().toArgb()),
-            Tag(2, "Personal", colorPalette.random().toArgb()),
-            Tag(3, "Ideas", colorPalette.random().toArgb()),
-            Tag(4, "Todo", colorPalette.random().toArgb()),
-            Tag(5, "Important", colorPalette.random().toArgb()),
-            Tag(6, "Project", colorPalette.random().toArgb()),
-            Tag(7, "Meeting", colorPalette.random().toArgb()),
-            Tag(8, "Family", colorPalette.random().toArgb()),
-            Tag(9, "Travel", colorPalette.random().toArgb()),
-            Tag(10, "Shopping", colorPalette.random().toArgb()),
-            Tag(11, "Health", colorPalette.random().toArgb()),
-            Tag(12, "Finance", colorPalette.random().toArgb()),
-            Tag(13, "Education", colorPalette.random().toArgb()),
-            Tag(14, "Hobby", colorPalette.random().toArgb())
+            Tag(1, "Work"),
+            Tag(2, "Personal"),
+            Tag(3, "Ideas"),
+            Tag(4, "Todo"),
+            Tag(5, "Important"),
+            Tag(6, "Project"),
+            Tag(7, "Meeting"),
+            Tag(8, "Family"),
+            Tag(9, "Travel"),
+            Tag(10, "Shopping"),
+            Tag(11, "Health"),
+            Tag(12, "Finance"),
+            Tag(13, "Education"),
+            Tag(14, "Hobby")
         )
     }
 
@@ -149,20 +149,20 @@ val largeContents = listOf(
 
 // 14 predefined tag headers
 val tags = listOf(
-    Tag(1, "Work", colorPalette.random().toArgb()),
-    Tag(2, "Personal", colorPalette.random().toArgb()),
-    Tag(3, "Ideas", colorPalette.random().toArgb()),
-    Tag(4, "Todo", colorPalette.random().toArgb()),
-    Tag(5, "Important", colorPalette.random().toArgb()),
-    Tag(6, "Project", colorPalette.random().toArgb()),
-    Tag(7, "Meeting", colorPalette.random().toArgb()),
-    Tag(8, "Family", colorPalette.random().toArgb()),
-    Tag(9, "Travel", colorPalette.random().toArgb()),
-    Tag(10, "Shopping", colorPalette.random().toArgb()),
-    Tag(11, "Health", colorPalette.random().toArgb()),
-    Tag(12, "Finance", colorPalette.random().toArgb()),
-    Tag(13, "Education", colorPalette.random().toArgb()),
-    Tag(14, "Hobby", colorPalette.random().toArgb())
+    Tag(1, "Work"),
+    Tag(2, "Personal"),
+    Tag(3, "Ideas"),
+    Tag(4, "Todo"),
+    Tag(5, "Important"),
+    Tag(6, "Project"),
+    Tag(7, "Meeting"),
+    Tag(8, "Family"),
+    Tag(9, "Travel"),
+    Tag(10, "Shopping"),
+    Tag(11, "Health"),
+    Tag(12, "Finance"),
+    Tag(13, "Education"),
+    Tag(14, "Hobby")
 )
 
 suspend fun generateDummyData(noteRepository: NoteRepository) {
@@ -225,7 +225,7 @@ suspend fun generateDummyData(noteRepository: NoteRepository) {
     // Batch insert notes with tags
     runBlocking {
         notes.forEach { (note, tags) ->
-            noteRepository.insertNote(note, tags)
+            noteRepository.insertNoteWithTags(note, tags)
         }
     }
 

@@ -18,6 +18,7 @@ object WidgetKeys {
 
         const val NOTE_ID_EXTRA = "NoteIdExtra"
 
+        val tempNoteId = stringPreferencesKey("temp_note_id")  // Make sure this is stringPreferencesKey, not booleanPreferencesKey as shown in the example
 
     }
 }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material.icons.filled.Contrast
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.DateRange
@@ -37,7 +38,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,23 +48,27 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ladybugos.ui.theme.LocalThemeProvider
 import com.example.ladybugos.ui.theme.Theme
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    viewModel: SettingsViewModel = koinViewModel(),
     onMenuClick: () -> Unit,
-    viewModel: SettingsViewModel = koinViewModel()
+    onPrivacyClick: () -> Unit,
+    onOSLicenseClick: () -> Unit,
+    onBackUpClick: () -> Unit
 ) {
     var blackTheme by remember { mutableStateOf(false) }
-    val materialYou by viewModel.dynamicColor.collectAsState()
     var biometricLock by remember { mutableStateOf(false) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     var showThemeDialog by remember { mutableStateOf(false) }
-    val theme by viewModel.theme.collectAsStateWithLifecycle()
+
+    val theme = LocalThemeProvider.theme
+    val materialYou = LocalThemeProvider.dynamicColor
 
 
 
@@ -161,6 +165,13 @@ fun SettingsScreen(
                     checked = biometricLock,
                     onCheckedChange = { biometricLock = it }
                 )
+
+                SettingsItem(
+                    title = "BackUp",
+                    subtitle = "Back up your notes data to a secure location. So that, you can restore them later",
+                    icon = Icons.Default.CloudQueue,
+                    onClick = onBackUpClick
+                )
             }
 
             SettingsSection(title = "Miscellaneous") {
@@ -168,17 +179,13 @@ fun SettingsScreen(
                     title = "License & Acknowledgement",
                     subtitle = "Show open source license information.",
                     icon = Icons.Default.Info,
-                    onClick = {
-                        // Open license information
-                    }
+                    onClick = onOSLicenseClick
                 )
                 SettingsItem(
-                    title = "App Information",
-                    subtitle = "Show app version and useful links.",
+                    title = "Privacy Policy",
+                    subtitle = "Click to view our privacy policy",
                     icon = Icons.Default.Info,
-                    onClick = {
-                        // Open app information
-                    }
+                    onClick = onPrivacyClick
                 )
             }
         }

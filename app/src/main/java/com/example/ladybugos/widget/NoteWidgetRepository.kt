@@ -21,14 +21,8 @@ import javax.inject.Inject
 private const val DATASTORE_NAME = "widget_preferences"
 private const val WIDGET_KEY_PREFIX = "widget_"
 
-/**
- * DataStore extension property with improved error handling
- */
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = DATASTORE_NAME)
 
-/**
- * Repository for managing widget preferences and state
- */
 class NoteWidgetRepository @Inject constructor(
     private val context: Context,
     private val noteRepository: NoteRepository,
@@ -41,25 +35,19 @@ class NoteWidgetRepository @Inject constructor(
 
     private val dataStore = context.dataStore
 
-    /**
-     * Sealed interface for Widget operations results
-     */
+    /*   Sealed interface for Widget operations results   */
     sealed interface WidgetResult {
         data class Success(val widgetId: Int) : WidgetResult
         data class Error(val exception: Exception, val widgetId: Int? = null) : WidgetResult
     }
 
-    /**
-     * Gets or creates a preferences key for a widget
-     */
+    /*   Gets or creates a preferences key for a widget   */
     private fun getWidgetKey(widgetId: Int): Preferences.Key<Long> =
         widgetKeyCache[widgetId] ?: longPreferencesKey("${WIDGET_KEY_PREFIX}$widgetId").also {
             widgetKeyCache.put(widgetId, it)
         }
 
-    /**
-     * Saves widget note association and updates widget
-     */
+    /*   Saves widget note association and updates widget   */
     suspend fun saveWidgetNoteId(widgetId: Int, noteId: Long): WidgetResult =
         withContext(dispatchers.io) {
             try {
@@ -82,8 +70,8 @@ class NoteWidgetRepository @Inject constructor(
             }
         }
 
-    /**
-     * Restores all widgets and cleans up orphaned data
+    /*
+      Restores all widgets and cleans up orphaned data
      */
     suspend fun restoreWidgets(): WidgetResult = withContext(dispatchers.io) {
         try {
@@ -105,8 +93,8 @@ class NoteWidgetRepository @Inject constructor(
         }
     }
 
-    /**
-     * Updates all widgets with current note data
+    /*
+      Updates all widgets with current note data
      */
     private suspend fun updateAllWidgets() {
         noteRepository.getAllNotes()
@@ -116,8 +104,8 @@ class NoteWidgetRepository @Inject constructor(
             }
     }
 
-    /**
-     * Cleans up orphaned widget data
+    /*
+      Cleans up orphaned widget data
      */
     private suspend fun cleanupOrphanedWidgets() {
         val activeWidgetIds = getActiveWidgetIds()
@@ -129,18 +117,20 @@ class NoteWidgetRepository @Inject constructor(
         }
     }
 
-    /**
-     * Gets currently active widget IDs
-     */
+
+    /*
+            Gets currently active widget IDs
+    */
     private fun getActiveWidgetIds(): Set<Int> {
         val widgetManager = AppWidgetManager.getInstance(context)
         val componentName = ComponentName(context, NotesWidgetReceiver::class.java)
         return widgetManager.getAppWidgetIds(componentName).toSet()
     }
 
-    /**
-     * Gets stored widget IDs from preferences
-     */
+
+    /*
+          Gets stored widget IDs from preferences
+    */
     private suspend fun getStoredWidgetIds(): Set<Int> =
         dataStore.data.first().asMap()
             .mapNotNull { (key, _) ->
@@ -148,15 +138,42 @@ class NoteWidgetRepository @Inject constructor(
             }
             .toSet()
 
-    /**
-     * Removes orphaned widget data
-     */
+
+    /*
+           Removes orphaned widget data
+    */
     private suspend fun removeOrphanedWidgets(orphanedIds: Set<Int>) {
         dataStore.edit { preferences ->
             orphanedIds.forEach { widgetId ->
                 preferences.remove(getWidgetKey(widgetId))
                 widgetKeyCache.remove(widgetId)
             }
+        }
+    }
+
+    /*
+            Handles widget cleanup when note is permanently deleted
+    */
+    suspend fun handleNoteDeleted(noteId: Long): WidgetResult = withContext(dispatchers.io) {
+        try {
+            // Remove from DataStore
+            dataStore.edit { preferences ->
+                preferences.asMap()
+                    .filter { (_, value) -> value as? Long == noteId }
+                    .forEach { (key, _) ->
+                        preferences.remove(key)
+                        // Clear from cache if present
+                        key.name.removePrefix(WIDGET_KEY_PREFIX)
+                            .toIntOrNull()
+                            ?.let { widgetKeyCache.remove(it) }
+                    }
+            }
+
+
+            WidgetResult.Success(-1)
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to cleanup widgets for deleted note: noteId=$noteId")
+            WidgetResult.Error(e)
         }
     }
 }

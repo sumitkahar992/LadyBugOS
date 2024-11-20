@@ -7,7 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.example.ladybugos.ui.drawer.home.GridLayout
+import com.example.ladybugos.ui.theme.GridLayout
 import com.example.ladybugos.ui.theme.Settings
 import com.example.ladybugos.ui.theme.Theme
 import kotlinx.coroutines.flow.Flow

@@ -1,75 +1,20 @@
 package com.example.ladybugos.ui.drawer
 
-/*
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ReminderScreen(
-    viewModel: NotesViewModel = koinViewModel(),
-    drawerState: DrawerState? = null,
-    onSearch: () -> Unit,
-    selectedTheme: Theme,
-    handleNoteClick: (Note) -> Unit,
-    toggleSelection: (Note) -> Unit
-) {
-    val notes by viewModel.notes.collectAsStateWithLifecycle()
-    val archivedNotes = notes.filter { it.isArchived }
-    val scope = rememberCoroutineScope()
-    val selectedNotes by remember { mutableStateOf(setOf<Note>()) }
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-
-
-
-    NoteAppScaffold(
-        scrollBehavior = scrollBehavior,
-        title = "Reminders",
-        onMenuClick = { scope.launch { drawerState?.open() } },
-        onSearch = onSearch,
-        content = {
-            if (archivedNotes.isEmpty()) {
-                Text(
-                    text = "Notes with upcoming reminder appear here",
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .wrapContentSize()
-                )
-            } else {
-                NoteGrid(
-                    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-                    notes = archivedNotes,
-                    selectedNotes = selectedNotes,
-                    onNoteClick = { handleNoteClick(it) },
-                    onNoteLongPress = { toggleSelection(it) },
-                    theme = selectedTheme,
-                    searchHeightPadding = 0.dp,
-                    pinnedHeader = false
-                )
-            }
-        },
-    )
-}*/
-
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -80,18 +25,23 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ladybugos.R
 import com.example.ladybugos.model.Note
 import com.example.ladybugos.model.NoteWithTags
-import com.example.ladybugos.ui.components.SwipeToDismissContentSnack
-import com.example.ladybugos.ui.drawer.home.GridLayout
+import com.example.ladybugos.navigation.NoteActionType
 import com.example.ladybugos.ui.components.NoteItemTag
-import com.example.ladybugos.ui.drawer.home.NoteListViewModel
+import com.example.ladybugos.ui.components.NoteScreenContent
 import com.example.ladybugos.ui.components.SectionHeader
 import com.example.ladybugos.ui.components.bottomWindowInsetsPadding
 import com.example.ladybugos.ui.components.endWindowInsetsPadding
 import com.example.ladybugos.ui.components.getSearchBarHeight
 import com.example.ladybugos.ui.components.startWindowInsetsPadding
-import com.example.ladybugos.ui.theme.Theme
+import com.example.ladybugos.ui.drawer.home.HandleNoteActions
+import com.example.ladybugos.ui.drawer.home.NoteListViewModel
+import com.example.ladybugos.ui.drawer.home.NoteSnackBarHandler
+import com.example.ladybugos.ui.drawer.home.ReminderDialog
+import com.example.ladybugos.ui.drawer.home.SwipeableSnackBarHost
+import com.example.ladybugos.ui.theme.GridLayout
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -101,30 +51,39 @@ fun ReminderScreen(
     viewModel: NoteListViewModel = koinViewModel(),
     onMenuClick: () -> Unit,
     navigateToNoteDetail: (Long) -> Unit,
+    noteId: Long?,
+    actionType: NoteActionType?,
+    clearNoteAction: () -> Unit
 ) {
-    val upcomingReminders by viewModel.upcomingReminders.collectAsState()
-    val completedReminders by viewModel.completedReminders.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val upcomingReminders = uiState.notes.filter {
+        !it.note.isDone && it.note.reminderDate != null
+    }
+    val completedReminders = uiState.notes.filter {
+        it.note.isDone && it.note.reminderDate != null
+    }
 
-    // grid layout
-    val gridLayout by viewModel.gridLayout.collectAsState()
 
-    val searchQuery by viewModel.searchQuery.collectAsState()
-    val theme by viewModel.theme.collectAsStateWithLifecycle()
-
-    var isSearchActive by remember { mutableStateOf(false) }
+    var isSearchExpanded by remember { mutableStateOf(false) }
     var selectedNotes by remember { mutableStateOf(setOf<Note>()) }
-
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val scope = rememberCoroutineScope()
     val snackBarHostState = remember { SnackbarHostState() }
+    var showReminderDialog by remember { mutableStateOf(false) }
+    val snackbarMessage by viewModel.snackBarMessage.collectAsStateWithLifecycle()
 
     fun toggleSelection(note: Note) {
         selectedNotes = if (note in selectedNotes) selectedNotes - note else selectedNotes + note
     }
 
+    // Also clear snackBar when navigating to detail
     fun handleNoteClick(note: Note) {
-        if (selectedNotes.isNotEmpty()) toggleSelection(note)
-        else navigateToNoteDetail(note.id)
+        if (selectedNotes.isNotEmpty()) {
+            toggleSelection(note)
+        } else {
+            viewModel.clearSnackbarMessage()
+            navigateToNoteDetail(note.id)
+        }
     }
 
     fun handleAction(action: (List<Note>) -> Unit, message: String) {
@@ -138,69 +97,95 @@ fun ReminderScreen(
         selectedNotes = emptySet()
     }
 
+    // Handle actions
+    HandleNoteActions(
+        noteId = noteId,
+        actionType = actionType,
+        viewModel = viewModel,
+        clearAction = { clearNoteAction() },
+        isSearchExpanded = isSearchExpanded,
+        setSearchExpanded = { isSearchExpanded = it },
+        selectedNotes = selectedNotes,
+        clearSelectedNotes = { selectedNotes = emptySet() }
+    )
+
+    // Handle snackBar
+    NoteSnackBarHandler(snackbarMessage, snackBarHostState)
+
     Scaffold(
-        snackbarHost = {
-            SnackbarHost(hostState = snackBarHostState) { data ->
-                SwipeToDismissContentSnack(
-                    onSwipeToDismiss = { snackBarHostState.currentSnackbarData?.dismiss() },
-                    content = { Snackbar(snackbarData = data) }
-                )
-            }
-        },
+        snackbarHost = { SwipeableSnackBarHost(snackBarHostState) },
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             AnimatedTopBar(
                 selectedNotes = selectedNotes,
-                isSearchActive = isSearchActive,
+                isSearchActive = isSearchExpanded,
+                onSearchActiveChange = { isSearchExpanded = it },
                 onClearSelection = { selectedNotes = emptySet() },
-                onPinNotes = {},
-                onUnarchiveNotes = {},
+                onSetReminder = { showReminderDialog = true },
+                onPinNotes = {
+                    handleAction(
+                        viewModel::pinAndUnarchiveNotes,
+                        "Notes pinned"
+                    )
+                },
+                onUnarchiveNotes = {
+                    handleAction(
+                        viewModel::unarchiveNotes,
+                        "Notes unarchived"
+                    )
+                },
                 onDeleteNotes = {
                     handleAction(
                         viewModel::trashNotes,
-                        "${selectedNotes.size} notes moved to trash",
+                        "${selectedNotes.size} notes moved to trash"
                     )
                 },
                 title = "Reminders",
                 onMenuClick = onMenuClick,
-                onSearchActiveChange = { isSearchActive = it },
-                searchQuery = searchQuery,
+                searchQuery = uiState.searchQuery,
                 onSearchQueryChange = viewModel::updateSearchQuery,
                 scrollBehavior = scrollBehavior,
-                onSearchClosed = {
-                    isSearchActive = false
-                    viewModel.updateSearchQuery("")
-                },
             )
-        },
-        content = { padding ->
-            Box(modifier = Modifier.padding(padding)) {
-                if (upcomingReminders.isEmpty() && completedReminders.isEmpty()) {
-                    Text(
-                        text = if (searchQuery.isBlank()) "No notes with reminders"
-                        else "No notes found",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .wrapContentSize()
-                    )
-                } else {
-                    NoteGridTagsReminder(
-                        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-                        upcomingList = upcomingReminders,
-                        completedList = completedReminders,
-                        selectedNotes = selectedNotes,
-                        onNoteClick = ::handleNoteClick,
-                        onNoteLongPress = ::toggleSelection,
-                        theme = theme,
-                        searchHeightPadding = 0.dp,
-                        gridLayout = gridLayout
+        }
+    ) { padding ->
+        NoteScreenContent(
+            paddingValues = padding,
+            notes = upcomingReminders + completedReminders,
+            isInitialized = uiState.isNotesInitialized,
+            searchQuery = uiState.searchQuery,
+            emptyIcon = R.drawable.reminders,
+            emptyTitle = "No notes with reminders"
+        ) {
+            NoteGridTagsReminder(
+                modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+                upcomingList = upcomingReminders,
+                completedList = completedReminders,
+                selectedNotes = selectedNotes,
+                onNoteClick = ::handleNoteClick,
+                onNoteLongPress = ::toggleSelection,
+                gridLayout = uiState.gridLayout,
+                searchHeightPadding = 0.dp
+            )
+        }
+
+        ReminderDialog(
+            showDialog = showReminderDialog,
+            onDismiss = { showReminderDialog = false },
+            onSetReminder = { reminderDate ->
+                selectedNotes.forEach { note ->
+                    viewModel.updateNoteReminder(
+                        noteId = note.id,
+                        reminderDate = reminderDate,
                     )
                 }
-            }
-        }
-    )
+                selectedNotes = emptySet()
+                showReminderDialog = false
+            },
+            initialDate = selectedNotes.firstOrNull()?.reminderDate,
+        )
+    }
 }
 
 
@@ -213,7 +198,6 @@ fun NoteGridTagsReminder(
     onNoteClick: (Note) -> Unit,
     onNoteLongPress: (Note) -> Unit,
     gridLayout: GridLayout,
-    theme: Theme,
     searchHeightPadding: Dp = getSearchBarHeight(),
 ) {
 
@@ -265,11 +249,10 @@ fun NoteGridTagsReminder(
             NoteItemTag(
                 modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
                 noteWithTags = noteWithTags,
-                theme = theme,
+                gridLayout = gridLayout,
                 isSelected = noteWithTags.note in selectedNotes,
                 onClick = { onNoteClick(noteWithTags.note) },
-                onLongPress = { onNoteLongPress(noteWithTags.note) },
-                gridLayout = gridLayout
+                onLongPress = { onNoteLongPress(noteWithTags.note) }
             )
         }
 
@@ -289,11 +272,10 @@ fun NoteGridTagsReminder(
             NoteItemTag(
                 modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
                 noteWithTags = noteWithTags,
-                theme = theme,
+                gridLayout = gridLayout,
                 isSelected = noteWithTags.note in selectedNotes,
                 onClick = { onNoteClick(noteWithTags.note) },
-                onLongPress = { onNoteLongPress(noteWithTags.note) },
-                gridLayout = gridLayout
+                onLongPress = { onNoteLongPress(noteWithTags.note) }
             )
         }
     }

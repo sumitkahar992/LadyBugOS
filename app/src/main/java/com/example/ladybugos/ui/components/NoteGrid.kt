@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,7 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ladybugos.model.Note
 import com.example.ladybugos.model.darken
-import com.example.ladybugos.ui.theme.Theme
+import com.example.ladybugos.model.tags
+import com.example.ladybugos.ui.theme.GridLayout
+import com.example.ladybugos.ui.theme.LocalThemeProvider
 
 @Composable
 fun NoteGrid(
@@ -45,7 +46,6 @@ fun NoteGrid(
     selectedNotes: Set<Note>,
     onNoteClick: (Note) -> Unit,
     onNoteLongPress: (Note) -> Unit,
-    theme: Theme,
     pinnedHeader: Boolean = true,
     searchHeightPadding: Dp = getSearchBarHeight()
 ) {
@@ -81,7 +81,6 @@ fun NoteGrid(
             NoteItem(
                 modifier = Modifier.animateItem(),
                 note = pinned,
-                theme = theme,
                 isSelected = pinned in selectedNotes,
                 onClick = { onNoteClick(pinned) },
                 onLongPress = { onNoteLongPress(pinned) }
@@ -104,7 +103,6 @@ fun NoteGrid(
             NoteItem(
                 modifier = Modifier.animateItem(),
                 note = note,
-                theme = theme,
                 isSelected = note in selectedNotes,
                 onClick = { onNoteClick(note) },
                 onLongPress = { onNoteLongPress(note) }
@@ -117,7 +115,6 @@ fun NoteGrid(
 @Composable
 fun NoteItem(
     modifier: Modifier = Modifier,
-    theme: Theme,
     isSelected: Boolean,
     note: Note,
     onClick: () -> Unit,
@@ -129,11 +126,7 @@ fun NoteItem(
     val borderColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
     val shape by animateDpAsState(targetValue = if (isSelected) 16.dp else 12.dp, label = "")
 
-    val darkTheme = when (theme) {
-        Theme.System -> isSystemInDarkTheme()
-        Theme.Light -> false
-        Theme.Dark -> true
-    }
+    val darkTheme = LocalThemeProvider.isDarkTheme
 
     val surfaceColor = if (darkTheme) {
         Color(note.lightColor).darken(0.4f)
@@ -142,8 +135,12 @@ fun NoteItem(
     }
 
     // Calculate height based on title and content presence
-    val height = calculateHeight(note)
-
+    val height = calculateNoteHeight(
+        note = note,
+        hasReminder = note.reminderDate != null,
+        hasTags = tags.isNotEmpty(),
+        gridLayout = GridLayout.OneColumn
+    )
     Surface(
         modifier = modifier
             .fillMaxWidth()

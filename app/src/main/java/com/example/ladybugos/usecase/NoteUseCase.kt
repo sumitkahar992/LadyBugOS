@@ -1,8 +1,96 @@
 package com.example.ladybugos.usecase
 
 import com.example.ladybugos.model.Note
+import com.example.ladybugos.notification.NotificationHelper
 import com.example.ladybugos.repository.NoteRepository
-import kotlinx.coroutines.flow.Flow
+import com.example.ladybugos.widget.CoroutineDispatchers
+import com.example.ladybugos.widget.DefaultCoroutineDispatchers
+import com.example.ladybugos.widget.WidgetUpdater
+import kotlinx.coroutines.withContext
+
+
+class UpdateNoteUseCase(
+    private val noteRepository: NoteRepository,
+    private val widgetUpdater: WidgetUpdater,
+    private val notificationHelper: NotificationHelper,
+    private val dispatchers: CoroutineDispatchers = DefaultCoroutineDispatchers()
+) {
+    suspend operator fun invoke(
+        note: Note,
+        tagIds: List<Long>,
+        updateReminder: Boolean = false
+    ) = withContext(dispatchers.io) {
+        // Update note and tags in repository
+        noteRepository.updateNoteWithTags(note, tagIds)
+
+        // Handle reminder if needed
+        if (updateReminder) {
+            note.reminderDate?.let { reminderDate ->
+                val currentTime = System.currentTimeMillis()
+                if (reminderDate > currentTime) {
+                    notificationHelper.scheduleNotification(note)
+                } else {
+                    notificationHelper.cancelNotification(note.id)
+                }
+            } ?: notificationHelper.cancelNotification(note.id)
+        }
+
+        // Update widgets
+        widgetUpdater.updateSingleWidget(note)
+    }
+}
+
+
+class BatchUpdateNoteUseCase(
+    private val noteRepository: NoteRepository,
+    private val widgetUpdater: WidgetUpdater,
+    private val dispatchers: CoroutineDispatchers = DefaultCoroutineDispatchers()
+) {
+    suspend operator fun invoke(
+        notes: List<Note>
+    ) = withContext(dispatchers.io) {
+        // Update notes in repository
+        noteRepository.updateNotes(notes)
+
+        // Update only relevant widgets
+        widgetUpdater.updateWidgetsForNotes(notes)
+    }
+}
+
+class DeleteNoteUseCase(
+    private val noteRepository: NoteRepository,
+    private val widgetUpdater: WidgetUpdater,
+    private val notificationHelper: NotificationHelper,
+    private val dispatchers: CoroutineDispatchers = DefaultCoroutineDispatchers()
+) {
+    suspend operator fun invoke(note: Note) = withContext(dispatchers.io) {
+        // Delete note from repository
+        noteRepository.deleteNote(note)
+
+        // Cancel any existing notifications
+        notificationHelper.cancelNotification(note.id)
+
+        // Update widgets if note was in trash
+        if (note.isTrashed) {
+//            widgetUpdater.handleNoteDeleted()
+        }
+    }
+}
+
+class EmptyTrashUseCase(
+    private val noteRepository: NoteRepository,
+    private val widgetUpdater: WidgetUpdater,
+    private val dispatchers: CoroutineDispatchers = DefaultCoroutineDispatchers()
+) {
+    suspend operator fun invoke() = withContext(dispatchers.io) {
+        // Empty trash in repository
+        noteRepository.emptyTrashWithTags()
+
+        // Update widgets after emptying trash
+//        widgetUpdater.handleNoteDeleted()
+    }
+}
+
 
 /*
 class NotesUseCasesImpl(private val repository: NoteRepository) : NotesUseCasesInterface {

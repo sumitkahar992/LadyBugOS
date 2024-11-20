@@ -56,11 +56,15 @@ class MainActivity : ComponentActivity() {
                 } ?: AppWidgetManager.INVALID_APPWIDGET_ID
             }
 
+            // If opened from widget, ensure proper activity flags
+            if (noteId != -1L) {
+                intent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }
 
             // Initialize the NavController
             val navController = rememberNavController()
-            val theme by mainActivityViewModel.theme.collectAsStateWithLifecycle()
-            val dynamicColor by mainActivityViewModel.dynamicTheme.collectAsStateWithLifecycle()
+
+            val themeConfig by mainActivityViewModel.themeConfig.collectAsStateWithLifecycle()
 
 
             // Preload note data if opened from widget
@@ -74,17 +78,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            LadyBugOSTheme(theme = theme, dynamicColor = dynamicColor) {
-                    Timber.tag("DEBUG").d("MainActivity_[noteId]=[$noteId]")
-                     Timber.tag("DEBUG").d("MainActivity_[widgetId]=[$widgetId]")
+            LadyBugOSTheme(themeConfig) {
+                Timber.tag("DEBUG").d("MainActivity_[noteId]=[$noteId]")
+                Timber.tag("DEBUG").d("MainActivity_[widgetId]=[$widgetId]")
 
-                     PermissionContent {
-                         MainContent(
-                             navController = navController,
-                             noteId = noteId
-                         )
-                     }
-//                NoteeApp()
+                PermissionContent {
+                    MainContent(
+                        navController = navController,
+                        noteId = noteId
+                    )
+                }
             }
         }
     }
@@ -146,77 +149,4 @@ class MainActivity : ComponentActivity() {
             startActivity(it)
         }
     }
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

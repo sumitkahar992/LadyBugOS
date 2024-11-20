@@ -1,7 +1,6 @@
 package com.example.ladybugos.ui.components
 
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,11 +23,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -39,6 +35,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import com.example.ladybugos.R
 import com.example.ladybugos.navigation.Screen
+import com.example.ladybugos.ui.components.DrawerItem.Companion.DRAWER_DESTINATIONS
 import com.example.ladybugos.ui.theme.LadyBugOSTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,23 +59,10 @@ fun DrawerContent(
         Spacer(Modifier.height(14.dp))
 
         // Display App Logo or Title (e.g., Google Keep)
-        Text(
-            text = "Lost SouL",
-            modifier = Modifier.padding(start = 16.dp, top = 12.dp),
-            fontSize = 33.sp,
-            fontWeight = FontWeight.SemiBold,
-            fontFamily = FontFamily.SansSerif,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        DrawerHeader()
 
         // Optional Divider after App Title
-        HorizontalDivider(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 16.dp, bottom = 16.dp),
-            thickness = 0.5.dp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
-        )
+        HDivider()
 
 
         DrawerItems(
@@ -87,6 +71,31 @@ fun DrawerContent(
             coroutineScope = coroutineScope
         )
     }
+}
+
+@Composable
+private fun DrawerHeader() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp, horizontal = 28.dp)
+    ) {
+        Text(
+            text = "Lost SouL",
+            style = MaterialTheme.typography.titleLarge
+        )
+    }
+}
+
+@Composable
+private fun HDivider() {
+    HorizontalDivider(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, bottom = 16.dp),
+        thickness = 0.5.dp,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.2f)
+    )
 }
 
 @Composable
@@ -150,43 +159,49 @@ private fun DrawerItems(
 @Serializable
 data class DrawerItem(
     val route: Screen,
-    @StringRes val label: Int,
-    @DrawableRes val icon: Int
-)
-
-
-val DRAWER_DESTINATIONS = listOf(
-    DrawerItem(
-        route = Screen.NoteList(),
-        label = R.string.drawer_notes,
-        icon = R.drawable.notes
-    ),
-    DrawerItem(
-        route = Screen.Reminders,
-        label = R.string.drawer_reminders,
-        icon = R.drawable.reminders
-    ),
-    DrawerItem(
-        route = Screen.Archive,
-        label = R.string.drawer_archive,
-        icon = R.drawable.archive
-    ),
-    DrawerItem(
-        route = Screen.Trash,
-        label = R.string.drawer_trash,
-        icon = R.drawable.trash
-    ),
-    DrawerItem(
-        route = Screen.Settings,
-        label = R.string.drawer_settings,
-        icon = R.drawable.settings
-    ),
-    DrawerItem(
-        route = Screen.HelpAndFeedback,
-        label = R.string.drawer_help_feedback,
-        icon = R.drawable.help_feedback
-    )
-)
+    val label: Int,
+    val icon: Int
+) {
+    companion object {
+        val DRAWER_DESTINATIONS = listOf(
+            DrawerItem(
+                route = Screen.NoteList(),
+                label = R.string.drawer_notes,
+                icon = R.drawable.notes
+            ),
+            DrawerItem(
+                route = Screen.Reminders,
+                label = R.string.drawer_reminders,
+                icon = R.drawable.reminders
+            ),
+            DrawerItem(
+                route = Screen.Archive,
+                label = R.string.drawer_archive,
+                icon = R.drawable.archive
+            ),
+            DrawerItem(
+                route = Screen.Labels,
+                label = R.string.drawer_create_label,
+                icon = R.drawable.add
+            ),
+            DrawerItem(
+                route = Screen.Trash,
+                label = R.string.drawer_trash,
+                icon = R.drawable.trash
+            ),
+            DrawerItem(
+                route = Screen.Settings,
+                label = R.string.drawer_settings,
+                icon = R.drawable.settings
+            ),
+            DrawerItem(
+                route = Screen.HelpAndFeedback,
+                label = R.string.drawer_help_feedback,
+                icon = R.drawable.help_feedback
+            )
+        )
+    }
+}
 
 
 @PreviewLightDark

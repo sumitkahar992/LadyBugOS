@@ -3,7 +3,6 @@ package com.example.ladybugos.ui.drawer.trash
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Menu
@@ -42,9 +41,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ladybugos.R
 import com.example.ladybugos.model.Note
-import com.example.ladybugos.ui.components.SwipeToDismissContentSnack
+import com.example.ladybugos.ui.components.EmptyStateContent
 import com.example.ladybugos.ui.components.NoteGridTags
+import com.example.ladybugos.ui.components.SwipeToDismissContentSnack
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,7 +56,6 @@ fun TrashScreen(
     navigateToNoteDetail: (Long) -> Unit,
 ) {
     val trashedNotes by viewModel.trashedNotes.collectAsStateWithLifecycle()
-    val theme by viewModel.theme.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val snackBarHostState = remember { SnackbarHostState() }
     var selectedNotes by remember { mutableStateOf(setOf<Note>()) }
@@ -63,7 +63,6 @@ fun TrashScreen(
 
     // grid layout
     val gridLayout by viewModel.gridLayout.collectAsState()
-
 
     LaunchedEffect(lastRestoredNotes) {
         lastRestoredNotes?.let { restoredNotes ->
@@ -132,11 +131,9 @@ fun TrashScreen(
         content = { padding ->
             Box(modifier = Modifier.padding(padding)) {
                 if (trashedNotes.isEmpty()) {
-                    Text(
-                        text = "No trashed notes available",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .wrapContentSize()
+                    EmptyStateContent(
+                        icon = R.drawable.trash,
+                        title = "No trashed notes available"
                     )
                 } else {
                     NoteGridTags(
@@ -145,10 +142,7 @@ fun TrashScreen(
                         selectedNotes = selectedNotes,
                         onNoteClick = ::handleNoteClick,
                         onNoteLongPress = ::toggleSelection,
-                        theme = theme,
-                        searchHeightPadding = 0.dp,
                         pinnedHeader = false,
-                        gridContent = {},
                         gridLayout = gridLayout
                     )
                 }

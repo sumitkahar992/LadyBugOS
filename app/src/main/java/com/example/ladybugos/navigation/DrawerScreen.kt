@@ -3,10 +3,14 @@ package com.example.ladybugos.navigation
 import kotlinx.serialization.Serializable
 
 
+
 sealed interface Screen {
 
     @Serializable
-    data class NoteList(val deletedId: Long? = null) : Screen
+    data class NoteList(
+        val deletedId: Long? = null,
+        val archivedId: Long? = null,
+    ) : Screen
 
     @Serializable
     data class NoteDetail(val id: Long = -1L) : Screen
@@ -23,9 +27,23 @@ sealed interface Screen {
     @Serializable
     data object Settings : Screen
 
+    @Serializable
+    data object BackupAndRestore : Screen
 
     @Serializable
     data object HelpAndFeedback : Screen
+
+
+    @Serializable
+    data object OSLicense : Screen
+
+    @Serializable
+    data object Labels : Screen
+
+
+
+//    @Serializable
+//    data object PrivacyPolicy : Screen
 
 }
 

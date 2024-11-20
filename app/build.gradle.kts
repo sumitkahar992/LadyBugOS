@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.about.library)
+    id("kotlin-parcelize")
 }
 
 android {
@@ -40,6 +42,10 @@ android {
 
     signingConfigs {
         create("release") {
+            storeFile = file("${project.rootDir}/keystore/keystore.jks")
+            storePassword = "releaseO"
+            keyAlias = "releaseO"
+            keyPassword = "releaseO"
         }
         getByName("debug") {
         }
@@ -55,7 +61,7 @@ android {
             )
             isDebuggable = false
             isDefault = false
-            resValue("string", "application_name", "Kot Weather")
+//            resValue("string", "application_name", "Kot Weather")
             signingConfig = signingConfigs.getByName("release")
         }
         debug {
@@ -64,8 +70,8 @@ android {
 
             isDebuggable = true
             isDefault = true
-            applicationIdSuffix = ".debug"
-            resValue("string", "application_name", "Kot Weather - Debug")
+//            applicationIdSuffix = ".debug"
+//            resValue("string", "application_name", "Kot Weather - Debug")
             signingConfig = signingConfigs.getByName("debug")
         }
     }
@@ -95,6 +101,11 @@ android {
 }
 
 dependencies {
+
+    implementation(libs.androidx.compose.animation)
+
+    implementation(libs.aboutlibrary.core)
+    implementation(libs.aboutlibrary.compose)
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)

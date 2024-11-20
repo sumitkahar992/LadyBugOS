@@ -2,71 +2,73 @@ package com.example.ladybugos.ui.drawer.note_detail
 
 
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.glance.GlanceId
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import com.example.ladybugos.datastore.SettingsRepo
 import com.example.ladybugos.model.Note
 import com.example.ladybugos.model.NoteWithTags
 import com.example.ladybugos.model.Tag
 import com.example.ladybugos.model.colorPalette
+import com.example.ladybugos.navigation.NoteAction
 import com.example.ladybugos.navigation.Screen
 import com.example.ladybugos.repository.NoteRepository
-import com.example.ladybugos.ui.theme.Theme
-import com.example.ladybugos.widget.WidgetUpdater
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+
 class NoteDetailViewModel(
-    settingsRepo: SettingsRepo,
     savedStateHandle: SavedStateHandle,
-    private val widgetUpdater: WidgetUpdater,
     private val noteRepository: NoteRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NoteUiState())
     val uiState: StateFlow<NoteUiState> = _uiState.asStateFlow()
 
-    val theme: StateFlow<Theme> = settingsRepo.get { theme }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = Theme.System
-    )
+    private val _noteUpdateTrigger = MutableSharedFlow<NoteUpdatePayload>()
+
 
     init {
         val noteId = savedStateHandle.toRoute<Screen.NoteDetail>().id
-        loadNoteById(noteId)
+
+        if (noteId > 0) {
+            loadNoteById(noteId)   // Load existing note
+        } else {
+            updateUiState {       // Initialize new note
+                it.initializeNewNote().copy(isLoading = false)
+            }
+        }
+
         fetchTags()
+        setupNoteUpdateFlow()
     }
 
-
-    /*    fun preloadNoteData(noteId: Long, glanceId: GlanceId) {
-            viewModelScope.launch {
-                try {
-                    val note = loadNoteData(noteId)
-                    updateNoteState { note }
-                    originalNote = note
-                    _noteTitle.value = TextFieldValue(note.title)
-                    _noteContent.value = TextFieldValue(note.content)
-                    widgetUpdater.updateSingleWidget(note)
-                } catch (e: Exception) {
-                    Timber.e(e, "Error preloading note data")
+    private fun loadNoteById(id: Long) {
+        viewModelScope.launch {
+            noteRepository.getNoteWithTagsById(id).catch { e -> Timber.e(e, "Error loading note") }
+                .firstOrNull()?.let { noteWithTags ->
+                    updateUiState { it.fromNoteWithTags(noteWithTags).copy(isLoading = false) }
                 }
-            }
-        }*/
+        }
+    }
+
 
     fun preloadNoteData(noteId: Long, glanceId: GlanceId) {
         viewModelScope.launch {
@@ -74,9 +76,6 @@ class NoteDetailViewModel(
                 val noteWithTags = noteRepository.getNoteWithTagsById(noteId).firstOrNull()
                 updateUiState { it.fromNoteWithTags(noteWithTags) }
 
-                noteWithTags?.note?.let { note ->
-                    widgetUpdater.updateSingleWidget(note)
-                }
             } catch (e: Exception) {
                 Timber.e(e, "Error preloading note data")
                 // Optionally, you could add error handling in the UI state if needed:
@@ -85,49 +84,110 @@ class NoteDetailViewModel(
         }
     }
 
-    fun updateNoteTitle(newTitle: TextFieldValue) {
-        updateUiState {
+
+    @OptIn(FlowPreview::class)
+    private fun setupNoteUpdateFlow() {
+        viewModelScope.launch {
+            _noteUpdateTrigger.debounce(500L).distinctUntilChanged().flowOn(Dispatchers.Default)
+                .catch { e ->
+                    Timber.e(e, "Error in note update flow")
+                }.collect { payload ->
+                    try {
+                        noteRepository.updateNoteWithTags(payload.note, payload.tagIds)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Error updating note")
+                    }
+                }
+        }
+    }
+
+    fun updateNoteTitle(newValue: TextFieldValue) {
+        updateUiStateAndTriggerSave {
             it.copy(
-                title = newTitle,
+                title = newValue.text,
+                titleSelection = newValue.selection,
                 updateDate = NoteUiState.getCurrentFormattedDate()
             )
         }
-        updateNote() // Add this to update date on title change
     }
 
-    fun updateNoteContent(newContent: TextFieldValue) {
-        updateUiState {
+    fun updateNoteContent(newValue: TextFieldValue) {
+        updateUiStateAndTriggerSave {
             it.copy(
-                content = newContent,
+                content = newValue.text,
+                contentSelection = newValue.selection,
                 updateDate = NoteUiState.getCurrentFormattedDate()
             )
         }
-        updateNote() // Add this to update date on content change
     }
 
-    fun toggleTag(tagId: Long) =
-        updateUiState { it.copy(selectedTagIds = it.selectedTagIds.toggle(tagId)) }
+    private fun updateUiStateAndTriggerSave(update: (NoteUiState) -> NoteUiState) {
+        updateUiState(update)
+        viewModelScope.launch {
+            val currentState = _uiState.value
+            try {
+                // If it's a new note (id = 0), insert it first
+                if (currentState.id == 0L) {
+                    val noteId = noteRepository.insertNoteWithTags(
+                        currentState.toNote(),
+                        currentState.selectedTagIds.toList()
+                    )
+                    // Update the UI state with the new ID
+                    updateUiState { it.copy(id = noteId) }
+                } else {
+                    // Existing note, update as normal
+                    _noteUpdateTrigger.emit(
+                        NoteUpdatePayload(
+                            note = currentState.toNote(),
+                            tagIds = currentState.selectedTagIds.toList()
+                        )
+                    )
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Error saving/updating note")
+            }
+        }
+    }
 
-    fun togglePinStatus() = updateNoteStatus { it.copy(isPinned = !it.isPinned) }
+    fun toggleTag(tagId: Long) {
+        updateUiStateAndTriggerSave {
+            it.copy(selectedTagIds = it.selectedTagIds.toggle(tagId))
+        }
+    }
+
+    fun togglePinStatus() {
+        updateUiStateAndTriggerSave { currentState ->
+            val updatedNote = currentState.toNote().copy(isPinned = !currentState.isPinned)
+            currentState.copy(
+                isPinned = updatedNote.isPinned, updateDate = NoteUiState.getCurrentFormattedDate()
+            )
+        }
+    }
+
+    fun updateColor(newColor: Int?) {
+        updateUiStateAndTriggerSave { currentState ->
+            currentState.copy(
+                lightColor = newColor ?: currentState.lightColor,
+                updateDate = NoteUiState.getCurrentFormattedDate()
+            )
+        }
+    }
 
     fun updateNoteReminder(noteId: Long, reminderDate: Long?) {
         viewModelScope.launch {
             noteRepository.updateNoteReminder(noteId, reminderDate)
-            // Fetch the updated note to ensure we have the latest data
-            noteRepository.getNoteById(noteId).first()?.let { updatedNote ->
-                updateUiState {
+            noteRepository.getNoteById(noteId).firstOrNull()?.let { updatedNote ->
+                updateUiStateAndTriggerSave {
                     it.copy(
                         reminderDate = updatedNote.reminderDate,
                         id = updatedNote.id,
-                        isDone = updatedNote.isDone
+                        isDone = updatedNote.isDone,
+                        updateDate = NoteUiState.getCurrentFormattedDate()
                     )
                 }
             }
         }
     }
-
-    fun updateColor(newColor: Int?) =
-        updateNoteStatus { it.copy(lightColor = newColor ?: it.lightColor) }
 
     fun saveNote(onComplete: () -> Unit, onSkip: () -> Unit) {
         viewModelScope.launch {
@@ -141,49 +201,56 @@ class NoteDetailViewModel(
         }
     }
 
-    fun deleteReminder() {
-        viewModelScope.launch {
-            val noteId = _uiState.value.id
-            if (noteId != 0L) {
-                noteRepository.deleteReminder(noteId)
-                updateUiState { it.copy(reminderDate = null, isDone = false) }
-            }
+    private suspend fun saveOrUpdateNote(note: Note) {
+        if (note.id == 0L) {
+            noteRepository.insertNoteWithTags(note, _uiState.value.selectedTagIds.toList())
+        } else {
+            _noteUpdateTrigger.emit(
+                NoteUpdatePayload(
+                    note = note, tagIds = _uiState.value.selectedTagIds.toList()
+                )
+            )
         }
     }
 
-    fun deleteNoteAndUpdateLists(onDelete: (deletedNoteId: Long?) -> Unit) {
-        viewModelScope.launch {
-            moveNoteToTrash()
-
-            noteRepository.getAllNotesWithTags().first { updatedList ->
+    fun handleNoteAction(
+        action: NoteAction,
+        onComplete: (noteId: Long) -> Unit
+    ) {
+        viewModelScope.launch(Dispatchers.Main) {
+            try {
                 val noteId = _uiState.value.id
-                val isDeleted = updatedList.any { it.note.id == noteId && it.note.isTrashed }
-                if (isDeleted) {
-                    onDelete(noteId)
+
+                // Update UI state based on action type
+                updateUiState {
+                    when (action) {
+                        is NoteAction.Delete -> it.copy(
+                            isTrashed = true,
+                            isPinned = false
+                        )
+
+                        is NoteAction.Archive -> it.copy(
+                            isArchived = true,
+                            isPinned = false
+                        )
+
+                        is NoteAction.Unarchive -> it.copy(isArchived = false)
+                    }
                 }
-                isDeleted
+                // Navigate with action
+                onComplete(noteId)
+            } catch (e: Exception) {
+                Timber.e(e, "Error handling note action: ${action.message}")
+                // Revert UI state on error
+                updateUiState {
+                    it.copy(
+                        isArchived = _uiState.value.isArchived,
+                        isTrashed = _uiState.value.isTrashed,
+                    )
+                }
             }
         }
     }
-
-    fun archiveNoteAndUpdateLists(onArchive: (archivedNoteId: Long?) -> Unit) {
-        viewModelScope.launch {
-            moveNoteToArchive()
-
-            noteRepository.getAllNotesWithTags().first { updatedList ->
-                val noteId = _uiState.value.id
-                val isArchived = updatedList.any { it.note.id == noteId && it.note.isArchived }
-                if (isArchived) {
-                    onArchive(noteId)
-                }
-                isArchived
-            }
-        }
-    }
-
-    private fun moveNoteToTrash() = updateNoteStatus { it.copy(isTrashed = true) }
-
-    private fun moveNoteToArchive() = updateNoteStatus { it.copy(isArchived = true) }
 
     fun deleteNoteIfEmpty() {
         viewModelScope.launch {
@@ -194,18 +261,13 @@ class NoteDetailViewModel(
         }
     }
 
-    private fun loadNoteById(id: Long) {
-        viewModelScope.launch {
-            val noteWithTags = noteRepository.getNoteWithTagsById(id).firstOrNull()
-            updateUiState { it.fromNoteWithTags(noteWithTags) }
-        }
-    }
 
     private fun fetchTags() {
         viewModelScope.launch {
-            noteRepository.getAllTags().collect { tags ->
-                updateUiState { it.copy(allTags = tags) }
-            }
+            noteRepository.getAllTags().catch { e -> Timber.e(e, "Error fetching tags") }
+                .collect { tags ->
+                    updateUiState { it.copy(allTags = tags) }
+                }
         }
     }
 
@@ -213,85 +275,52 @@ class NoteDetailViewModel(
         _uiState.update(update)
     }
 
-    private fun updateNoteStatus(update: (Note) -> Note) {
-        updateUiState { currentState ->
-            val updatedNote = update(currentState.toNote())
-            currentState.copy(
-                id = updatedNote.id,
-                title = TextFieldValue(updatedNote.title),
-                content = TextFieldValue(updatedNote.content),
-                lightColor = updatedNote.lightColor,
-                isPinned = updatedNote.isPinned,
-                isArchived = updatedNote.isArchived,
-                isTrashed = updatedNote.isTrashed,
-                reminderDate = updatedNote.reminderDate,
-                isDone = updatedNote.isDone,
-                updateDate = updatedNote.updateDate
-            )
-        }
-        updateNote()
-    }
-
-
-    private fun updateNote() {
-        viewModelScope.launch {
-            try {
-                val note = _uiState.value.toNote()
-                noteRepository.updateNote(note, _uiState.value.selectedTagIds.toList())
-
-                widgetUpdater.updateSingleWidget(note)
-            } catch (e: Exception) {
-                Timber.e(e, "Error updating note")
-            }
-        }
-    }
-
-    private suspend fun saveOrUpdateNote(note: Note) {
-        if (note.id == 0L) {
-            noteRepository.insertNote(note, _uiState.value.selectedTagIds.toList())
-        } else {
-            noteRepository.updateNote(note, _uiState.value.selectedTagIds.toList())
-        }
-        widgetUpdater.updateSingleWidget(note)
-    }
-
     private fun Set<Long>.toggle(id: Long) = if (contains(id)) minus(id) else plus(id)
+
+    private data class NoteUpdatePayload(
+        val note: Note, val tagIds: List<Long>
+    )
 }
 
+
+// Main UI state
 data class NoteUiState(
+    val isLoading: Boolean = true,
     val id: Long = 0,
-    val title: TextFieldValue = TextFieldValue(),
-    val content: TextFieldValue = TextFieldValue(),
-    val lightColor: Int = generateRandomColor(),
+    val title: String = "",
+    val titleSelection: TextRange = TextRange(0),
+    val content: String = "",
+    val contentSelection: TextRange = TextRange(0),
+    val lightColor: Int = 0,
     val isPinned: Boolean = false,
     val isArchived: Boolean = false,
     val isTrashed: Boolean = false,
     val reminderDate: Long? = null,
     val isDone: Boolean = false,
-    val updateDate: String = getCurrentFormattedDate(),
+    val updateDate: String = "",
     val allTags: List<Tag> = emptyList(),
-    val selectedTagIds: Set<Long> = emptySet()
+    val selectedTagIds: Set<Long> = emptySet(),
 ) {
     fun toNote() = Note(
         id = id,
-        title = title.text,
-        content = content.text,
+        title = title,
+        content = content,
         lightColor = lightColor,
         isPinned = isPinned,
         isArchived = isArchived,
         isTrashed = isTrashed,
         reminderDate = reminderDate,
         isDone = isDone,
-        updateDate = updateDate
+        updateDate = updateDate,
     )
 
-    fun isEmpty() = title.text.isBlank() && content.text.isBlank()
+    fun isEmpty() = title.isBlank() && content.isBlank()
 
     fun fromNoteWithTags(noteWithTags: NoteWithTags?) = noteWithTags?.let {
         copy(
             id = it.note.id,
-            title = TextFieldValue(it.note.title),
-            content = TextFieldValue(it.note.content),
+            title = it.note.title,
+            content = it.note.content,
             lightColor = it.note.lightColor,
             isPinned = it.note.isPinned,
             isArchived = it.note.isArchived,
@@ -299,9 +328,19 @@ data class NoteUiState(
             reminderDate = it.note.reminderDate,
             isDone = it.note.isDone,
             updateDate = it.note.updateDate,
-            selectedTagIds = it.tags.map { tag -> tag.id }.toSet()
+            selectedTagIds = it.tags.map { tag -> tag.id }.toSet(),
         )
     } ?: this
+
+    private fun toTextFieldValue(text: String, selection: TextRange) = TextFieldValue(
+        text = text, selection = selection
+    )
+
+    val titleFieldValue: TextFieldValue
+        get() = toTextFieldValue(title, titleSelection)
+
+    val contentFieldValue: TextFieldValue
+        get() = toTextFieldValue(content, contentSelection)
 
     companion object {
         fun getCurrentFormattedDate(): String =
@@ -309,11 +348,12 @@ data class NoteUiState(
 
         private fun generateRandomColor(): Int = colorPalette.random().toArgb()
     }
+
+    // Add initialization logic for new notes
+    fun initializeNewNote() = copy(
+        lightColor = generateRandomColor(), updateDate = getCurrentFormattedDate()
+    )
 }
-
-
-
-
 
 
 

@@ -50,9 +50,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -158,7 +156,6 @@ fun ExpandableSearchView(
     searchQuery: String,
     onGridLayoutClick: () -> Unit,
     onSearchQueryChanged: (String) -> Unit,
-    onSearchClosed: () -> Unit,
     selectedNotes: Set<Note>,
     onClearSelection: () -> Unit,
     onPinNotes: (List<Note>) -> Unit,
@@ -167,14 +164,15 @@ fun ExpandableSearchView(
     onDeleteNotes: (List<Note>) -> Unit,
     modifier: Modifier = Modifier,
     isSearchBarVisible: MutableState<Boolean>,
-    onSetReminder: () -> Unit
+    onSetReminder: () -> Unit,
+    isSearchExpanded: Boolean,
+    onSearchExpandedChanged: (Boolean) -> Unit
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
-    LaunchedEffect(isExpanded) {
-        if (isExpanded) {
+    LaunchedEffect(isSearchExpanded) {
+        if (isSearchExpanded) {
             delay(100) // Add a small delay before focusing
             focusRequester.requestFocus()
         } else {
@@ -194,7 +192,7 @@ fun ExpandableSearchView(
                     .padding(horizontal = 12.dp)
             ) {
                 val transitionState = remember { MutableTransitionState(false) }
-                transitionState.targetState = selectedNotes.isNotEmpty() || isExpanded
+                transitionState.targetState = selectedNotes.isNotEmpty() || isSearchExpanded
 
                 val transition = rememberTransition(transitionState, label = "searchTransition")
 
@@ -214,9 +212,9 @@ fun ExpandableSearchView(
                     label = "collapsedAlpha"
                 ) { state -> if (state) 0f else 1f }
 
-                // CollapsedSearchView (always present, fades out when not active)
+                // CollapsedSearchView
                 CollapsedSearchView(
-                    onExpandedChanged = { isExpanded = true },
+                    onExpandedChanged = { onSearchExpandedChanged(true) },
                     modifier = Modifier.alpha(collapsedAlpha),
                     onMenuClick = onMenuClick,
                     onGridLayoutClick = onGridLayoutClick
@@ -247,15 +245,17 @@ fun ExpandableSearchView(
                             )
                         }
 
-                        isExpanded -> {
+                        isSearchExpanded -> {
                             ExpandedSearchView(
                                 searchQuery = searchQuery,
                                 onSearchQueryChanged = onSearchQueryChanged,
                                 onBackClick = {
-                                    isExpanded = false
+                                    onSearchExpandedChanged(false)
                                     onSearchQueryChanged("")
                                 },
-                                onSearchClosed = onSearchClosed,
+                                onSearchClosed = {
+                                    focusManager.clearFocus()
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .focusRequester(focusRequester)
@@ -265,15 +265,13 @@ fun ExpandableSearchView(
                 }
             }
         }
-
     }
-
 }
 
 
 sealed class ScreenType {
-    object List : ScreenType()
-    object Archive : ScreenType()
+    data object List : ScreenType()
+    data object Archive : ScreenType()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -282,7 +280,7 @@ fun SelectionTopBar(
     onClearSelection: () -> Unit,
     onPinNotes: () -> Unit = {},
     onUnpinNotes: () -> Unit = {},
-    onSetReminder: () -> Unit,
+    onSetReminder: () -> Unit = {},
     onArchiveNotes: () -> Unit = {},
     onUnarchiveNotes: () -> Unit = {},
     onDeleteNotes: () -> Unit,
@@ -314,8 +312,10 @@ fun SelectionTopBar(
                 }
 
                 ScreenType.Archive -> {
-                    IconButton(onClick = onPinNotes) {
-                        Icon(Icons.Outlined.PushPin, contentDescription = "Pin notes")
+                    PinUnpinIcon(selectedNotes, onPinNotes, onUnpinNotes)
+
+                    IconButton(onClick = onSetReminder) {
+                        Icon(Icons.Outlined.NotificationAdd, contentDescription = "Reminder notes")
                     }
                     IconButton(onClick = onUnarchiveNotes) {
                         Icon(Icons.Outlined.Unarchive, contentDescription = "Unarchive notes")

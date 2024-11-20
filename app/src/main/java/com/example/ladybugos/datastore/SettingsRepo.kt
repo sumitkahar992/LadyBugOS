@@ -1,6 +1,6 @@
 package com.example.ladybugos.datastore
 
-import com.example.ladybugos.ui.drawer.home.GridLayout
+import com.example.ladybugos.ui.theme.GridLayout
 import com.example.ladybugos.ui.theme.Settings
 import com.example.ladybugos.ui.theme.Theme
 import kotlinx.coroutines.flow.Flow

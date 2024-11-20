@@ -1,5 +1,6 @@
 package com.example.ladybugos.model
 
+import android.database.SQLException
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.Color
 import androidx.room.Dao
@@ -29,18 +30,18 @@ data class Note(
     val updateDate: String = "",
     val lightColor: Int = 0,
     var isPinned: Boolean = false,
+    val pinnedDate: Long? = null,
     var isArchived: Boolean = false,
     var isTrashed: Boolean = false,
     var reminderDate: Long? = null,
     var isDone: Boolean = false,
+    var isChecklist: Boolean = false, // New field
+
 ) {
     fun matchesSearch(query: String): Boolean =
         title.contains(query, ignoreCase = true) || content.contains(query, ignoreCase = true)
 }
 
-enum class RepeatInterval {
-    DAILY, WEEKLY, MONTHLY, YEARLY, CUSTOM
-}
 
 @Dao
 interface NoteDao {
@@ -53,6 +54,24 @@ interface NoteDao {
     @Update
     suspend fun updateNote(note: Note)
 
+    @Transaction // Add this for nested operations
+    suspend fun insertNoteWithTags(note: Note, tagIds: List<Long>): Long {
+        val noteId = insertNote(note)
+        tagIds.forEach { tagId ->
+            insertNoteTagCrossRef(NoteTagCrossRef(noteId, tagId))
+        }
+        return noteId
+    }
+
+    @Transaction // Add this for nested operations
+    suspend fun updateNoteWithTags(note: Note, tagIds: List<Long>) {
+        updateNote(note)
+        deleteAllTagsForNote(note.id)
+        tagIds.forEach { tagId ->
+            insertNoteTagCrossRef(NoteTagCrossRef(note.id, tagId))
+        }
+    }
+
     @Update
     suspend fun updateNotes(notes: List<Note>)
 
@@ -62,8 +81,6 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE id = :id")
     fun getNoteById(id: Long): Flow<Note?>
 
-    @Query("SELECT * FROM notes WHERE title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%'")
-    fun searchNotes(query: String): Flow<List<Note>>
 
     @Query("DELETE FROM notes WHERE isTrashed = 1")
     suspend fun emptyTrash()
@@ -80,8 +97,6 @@ interface NoteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNoteTagCrossRef(crossRef: NoteTagCrossRef)
 
-    @Delete
-    suspend fun deleteNoteTagCrossRef(crossRef: NoteTagCrossRef)
 
     @Query("DELETE FROM note_tag_cross_ref WHERE noteId = :noteId")
     suspend fun deleteAllTagsForNote(noteId: Long)
@@ -96,41 +111,27 @@ interface NoteDao {
         deleteNote(note)
     }
 
-    // Reminder
-//    @Query("UPDATE notes SET reminderDate = :reminderDate WHERE id = :noteId")
-//    suspend fun updateNoteReminder(noteId: Long, reminderDate: Long?)
-
-//    @Query("SELECT * FROM notes WHERE reminderDate IS NOT NULL AND reminderDate > :currentTime ORDER BY reminderDate ASC")
-//    fun getUpcomingReminders(currentTime: Long): Flow<List<Note>>
-
 
     @Query("UPDATE notes SET isDone = :isDone WHERE id = :noteId")
     suspend fun updateNoteDoneStatus(noteId: Long, isDone: Boolean)
 
-    @Query("SELECT isDone FROM notes WHERE id = :noteId")
-    suspend fun isNoteDone(noteId: Long): Boolean
 
     // Update NoteDao with a new query to reset isDone along with reminder
     @Query("UPDATE notes SET reminderDate = :reminderDate, isDone = :isDone WHERE id = :noteId")
     suspend fun updateNoteReminderAndIsDone(noteId: Long, reminderDate: Long?, isDone: Boolean)
 
 
-    // BATCH
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertNotes(notes: List<Note>)
-
     // Delete reminder
     @Query("UPDATE notes SET reminderDate = NULL, isDone = 0 WHERE id = :noteId")
     suspend fun deleteReminder(noteId: Long)
 
-    // New methods for categorized reminders
     @Transaction
     @Query("SELECT * FROM notes WHERE reminderDate > :currentTime AND isDone = 0")
-    fun getUpcomingRemindersWithTags(currentTime: Long): Flow<List<NoteWithTags>>
+    fun getUpcomingReminders(currentTime: Long): Flow<List<NoteWithTags>>
 
     @Transaction
     @Query("SELECT * FROM notes WHERE reminderDate <= :currentTime OR isDone = 1")
-    fun getCompletedRemindersWithTags(currentTime: Long): Flow<List<NoteWithTags>>
+    fun getCompletedReminders(currentTime: Long): Flow<List<NoteWithTags>>
 
 
     @Query("DELETE FROM note_tag_cross_ref WHERE noteId IN (SELECT id FROM notes WHERE isTrashed = 1)")
@@ -142,19 +143,150 @@ interface NoteDao {
         emptyTrash()
     }
 
+    // Back & Restore
+
+
+    @Query("SELECT * FROM notes")
+    fun getAllNotesStream(): Flow<List<Note>>
+
+
+    @Transaction
+    suspend fun mergeBackupData(
+        notes: List<Note>,
+        tags: List<Tag>,
+        crossRefs: List<NoteTagCrossRef>
+    ) {
+        try {
+            // Get existing data first
+            val existingTags = getAllTagsSync()
+            val existingNotes = getAllNotesSync()
+            val existingTagsMap = existingTags.associateBy { it.name }
+            val existingNotesMap = existingNotes.associateBy {
+                "${it.title}${it.content}${it.updateDate}"
+            }
+
+            // Process tags first
+            val tagIdMapping = processTags(tags, existingTagsMap)
+
+            // Process notes
+            val noteIdMapping = processNotes(notes, existingNotesMap)
+
+            // Process cross references
+            processCrossRefs(crossRefs, noteIdMapping, tagIdMapping)
+
+        } catch (e: SQLException) {
+            throw SQLException("Failed to merge backup data: ${e.message}")
+        }
+    }
+
+    @Query("SELECT * FROM tags")
+    suspend fun getAllTagsSync(): List<Tag>
+
+    @Query("SELECT * FROM notes")
+    suspend fun getAllNotesSync(): List<Note>
+
+    private suspend fun processTags(
+        backupTags: List<Tag>,
+        existingTagsMap: Map<String, Tag>
+    ): Map<Long, Long> {
+        val tagIdMapping = mutableMapOf<Long, Long>()
+
+        backupTags.forEach { backupTag ->
+            val existingTag = existingTagsMap[backupTag.name]
+            if (existingTag != null) {
+                tagIdMapping[backupTag.id] = existingTag.id
+
+            } else {
+                // Insert new tag
+                val newTagId = insertTag(backupTag.copy(id = 0))
+                tagIdMapping[backupTag.id] = newTagId
+            }
+        }
+
+        return tagIdMapping
+    }
+
+    private suspend fun processNotes(
+        backupNotes: List<Note>,
+        existingNotesMap: Map<String, Note>
+    ): Map<Long, Long> {
+        val noteIdMapping = mutableMapOf<Long, Long>()
+
+        backupNotes.forEach { backupNote ->
+            val noteKey = "${backupNote.title}${backupNote.content}${backupNote.updateDate}"
+            val existingNote = existingNotesMap[noteKey]
+
+            if (existingNote != null) {
+                noteIdMapping[backupNote.id] = existingNote.id
+                // Update if other properties changed
+                if (hasNotePropertiesChanged(existingNote, backupNote)) {
+                    updateNote(
+                        existingNote.copy(
+                            lightColor = backupNote.lightColor,
+                            isPinned = backupNote.isPinned,
+                            isArchived = backupNote.isArchived,
+                            isTrashed = backupNote.isTrashed,
+                            reminderDate = backupNote.reminderDate,
+                            isDone = backupNote.isDone
+                        )
+                    )
+                }
+            } else {
+                // Insert new note
+                val newNoteId = insertNote(backupNote.copy(id = 0))
+                noteIdMapping[backupNote.id] = newNoteId
+            }
+        }
+
+        return noteIdMapping
+    }
+
+    private suspend fun processCrossRefs(
+        backupCrossRefs: List<NoteTagCrossRef>,
+        noteIdMapping: Map<Long, Long>,
+        tagIdMapping: Map<Long, Long>
+    ) {
+        val processedCrossRefs = backupCrossRefs.mapNotNull { crossRef ->
+            val newNoteId = noteIdMapping[crossRef.noteId] ?: return@mapNotNull null
+            val newTagId = tagIdMapping[crossRef.tagId] ?: return@mapNotNull null
+            NoteTagCrossRef(
+                noteId = newNoteId,
+                tagId = newTagId
+            )
+        }
+
+        insertCrossRefsWithIgnore(processedCrossRefs)
+    }
+
+    private fun hasNotePropertiesChanged(existingNote: Note, backupNote: Note): Boolean {
+        return existingNote.lightColor != backupNote.lightColor ||
+                existingNote.isPinned != backupNote.isPinned ||
+                existingNote.isArchived != backupNote.isArchived ||
+                existingNote.isTrashed != backupNote.isTrashed ||
+                existingNote.reminderDate != backupNote.reminderDate ||
+                existingNote.isDone != backupNote.isDone
+    }
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTag(tag: Tag): Long
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertCrossRefsWithIgnore(crossRefs: List<NoteTagCrossRef>)
+
 
 }
 
 
 @Database(
-    entities = [Note::class, Tag::class, NoteTagCrossRef::class],
-    version = 1
+    entities = [Note::class, Tag::class, NoteTagCrossRef::class, ChecklistItem::class],
+    version = 2
 )
 abstract class NoteDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
     abstract fun tagDao(): TagDao
+    abstract fun noteTagCrossRefDao(): NoteTagCrossRefDao
+    abstract fun checklistDao(): ChecklistItemDao
 }
-
 
 val colorPalette = listOf(
     Color(0xFFFFDAC1), Color(0xFFC5E2D2), Color(0xFFB2EBF2),

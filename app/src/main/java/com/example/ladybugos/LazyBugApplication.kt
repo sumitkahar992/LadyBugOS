@@ -45,7 +45,7 @@ class LazyBugApplication : Application(), KoinComponent {
         appModule,
         databaseModule,
         dataStoreModule,
-        notificationModule
+        notificationModule,
     )
 
 
