@@ -1,4 +1,4 @@
-package com.example.ladybugos.ui.drawer.settings
+package com.example.ladybugos.ui.screens.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -48,6 +47,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.example.ladybugos.ui.components.NoteeDialog
 import com.example.ladybugos.ui.theme.LocalThemeProvider
 import com.example.ladybugos.ui.theme.Theme
 import org.koin.androidx.compose.koinViewModel
@@ -190,30 +190,27 @@ fun SettingsScreen(
             }
         }
     }
-    if (showThemeDialog) {
-        AlertDialog(
-            onDismissRequest = { showThemeDialog = false },
-            title = { Text("Choose Theme") },
-            text = {
-                Column(Modifier.selectableGroup()) {
-                    ThemeOption(Theme.Light, theme) {
-                        viewModel.updateTheme(Theme.Light)
-                        showThemeDialog = false
-                    }
-                    ThemeOption(Theme.Dark, theme) {
-                        viewModel.updateTheme(Theme.Dark)
-                        showThemeDialog = false
-                    }
-                    ThemeOption(Theme.System, theme) {
-                        viewModel.updateTheme(Theme.System)
-                        showThemeDialog = false
-                    }
+    NoteeDialog(
+        enabled = showThemeDialog,
+        title = "Choose Theme",
+        onDismiss = { showThemeDialog = false },
+        description = {
+            Column(Modifier.selectableGroup()) {
+                ThemeOption(Theme.Light, theme) {
+                    viewModel.updateTheme(Theme.Light)
+                    showThemeDialog = false
                 }
-            },
-            confirmButton = { },  // Empty to remove the button
-            dismissButton = { }   // Empty to remove the button
-        )
-    }
+                ThemeOption(Theme.Dark, theme) {
+                    viewModel.updateTheme(Theme.Dark)
+                    showThemeDialog = false
+                }
+                ThemeOption(Theme.System, theme) {
+                    viewModel.updateTheme(Theme.System)
+                    showThemeDialog = false
+                }
+            }
+        }
+    )
 }
 
 

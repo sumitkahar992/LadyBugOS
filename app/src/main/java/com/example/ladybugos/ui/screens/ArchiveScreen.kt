@@ -1,26 +1,22 @@
-package com.example.ladybugos.ui.drawer
+package com.example.ladybugos.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
@@ -34,27 +30,28 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ladybugos.R
 import com.example.ladybugos.model.Note
 import com.example.ladybugos.navigation.NoteActionType
+import com.example.ladybugos.ui.components.CollapsedSearchView
 import com.example.ladybugos.ui.components.ExpandedSearchView
 import com.example.ladybugos.ui.components.NoteGridTags
 import com.example.ladybugos.ui.components.NoteScreenContent
 import com.example.ladybugos.ui.components.ScreenType
 import com.example.ladybugos.ui.components.SelectionTopBar
-import com.example.ladybugos.ui.drawer.home.HandleNoteActions
-import com.example.ladybugos.ui.drawer.home.NoteListViewModel
-import com.example.ladybugos.ui.drawer.home.NoteSnackBarHandler
-import com.example.ladybugos.ui.drawer.home.ReminderDialog
-import com.example.ladybugos.ui.drawer.home.SwipeableSnackBarHost
+import com.example.ladybugos.ui.screens.home.HandleNoteActions
+import com.example.ladybugos.ui.screens.home.NoteListViewModel
+import com.example.ladybugos.ui.screens.home.NoteSnackBarHandler
+import com.example.ladybugos.ui.screens.home.ReminderDialog
+import com.example.ladybugos.ui.screens.home.SwipeableSnackBarHost
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -63,6 +60,7 @@ import org.koin.androidx.compose.koinViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArchivedScreen(
+    modifier: Modifier = Modifier,
     viewModel: NoteListViewModel = koinViewModel(),
     onMenuClick: () -> Unit,
     navigateToNoteDetail: (Long) -> Unit,
@@ -71,16 +69,18 @@ fun ArchivedScreen(
     clearNoteAction: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val archivedNotes = uiState.notes.filter { it.note.isArchived }
+    val archivedNotes = uiState.notes.filter { it.note.isArchived && !it.note.isTrashed }
     val snackbarMessage by viewModel.snackBarMessage.collectAsStateWithLifecycle()
 
-    var isSearchExpanded by rememberSaveable { mutableStateOf(false) }
+    val isSearchBarVisible = rememberSaveable { mutableStateOf(false) }
     val snackBarHostState = remember { SnackbarHostState() }
     var selectedNotes by remember { mutableStateOf(setOf<Note>()) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val scope = rememberCoroutineScope()
     var showReminderDialog by remember { mutableStateOf(false) }
+
+    var isSearchMode by rememberSaveable { mutableStateOf(false) }
 
 
     fun toggleSelection(note: Note) {
@@ -89,12 +89,18 @@ fun ArchivedScreen(
         }
     }
 
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+
     // Also clear snackBar when navigating to detail
     fun handleNoteClick(note: Note) {
         if (selectedNotes.isNotEmpty()) {
             toggleSelection(note)
         } else {
-            viewModel.clearSnackbarMessage()
+            keyboardController?.hide()
+            focusManager.clearFocus()
+            viewModel.clearSnackBarMessage()
             navigateToNoteDetail(note.id)
         }
     }
@@ -116,10 +122,12 @@ fun ArchivedScreen(
         actionType = actionType,
         viewModel = viewModel,
         clearAction = { clearNoteAction() },
-        isSearchExpanded = isSearchExpanded,
-        setSearchExpanded = { isSearchExpanded = it },
+        isSearchExpanded = isSearchBarVisible.value,
+        setSearchExpanded = { isSearchBarVisible.value = it },
         selectedNotes = selectedNotes,
-        clearSelectedNotes = { selectedNotes = emptySet() }
+        clearSelectedNotes = { selectedNotes = emptySet() },
+        isSearchMode = isSearchMode,
+        setSearchMode = { isSearchMode = it }
     )
 
     // Handle snackBar
@@ -127,14 +135,15 @@ fun ArchivedScreen(
 
     Scaffold(
         snackbarHost = { SwipeableSnackBarHost(snackBarHostState) },
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             AnimatedTopBar(
+                title = "Archive",
                 selectedNotes = selectedNotes,
-                isSearchActive = isSearchExpanded,
-                onSearchActiveChange = { isSearchExpanded = it },
+                isSearchActive = isSearchBarVisible.value,
+                onSearchActiveChange = { isSearchBarVisible.value = it },
                 onClearSelection = { selectedNotes = emptySet() },
                 onSetReminder = {
                     showReminderDialog = true
@@ -157,92 +166,110 @@ fun ArchivedScreen(
                         "${selectedNotes.size} notes moved to trash"
                     )
                 },
-                title = "Archive",
                 onMenuClick = onMenuClick,
                 searchQuery = uiState.searchQuery,
                 onSearchQueryChange = viewModel::updateSearchQuery,
                 scrollBehavior = scrollBehavior
             )
-        },
-        content = { padding ->
-            NoteScreenContent(
-                paddingValues = padding,
+        }
+    ) { padding ->
+        NoteScreenContent(
+            modifier = modifier,
+            paddingValues = padding,
+            notes = archivedNotes,
+            isInitialized = uiState.isNotesInitialized,
+            searchQuery = uiState.searchQuery,
+            emptyIcon = R.drawable.archive,
+            emptyTitle = "No archived notes available"
+        ) {
+            NoteGridTags(
+                modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
                 notes = archivedNotes,
-                isInitialized = uiState.isNotesInitialized,
-                searchQuery = uiState.searchQuery,
-                emptyIcon = R.drawable.archive,
-                emptyTitle = "No archived notes available"
-            ) {
-                NoteGridTags(
-                    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-                    notes = archivedNotes,
-                    selectedNotes = selectedNotes,
-                    onNoteClick = ::handleNoteClick,
-                    onNoteLongPress = ::toggleSelection,
-                    searchHeightPadding = 0.dp,
-                    pinnedHeader = false,
-                    gridLayout = uiState.gridLayout,
-                )
-            }
-
-            val initialDate = selectedNotes.firstOrNull()?.reminderDate
-
-            ReminderDialog(
-                showDialog = showReminderDialog,
-                onDismiss = { showReminderDialog = false },
-                onSetReminder = { reminderDate ->
-                    // Update reminder for all selected notes
-                    selectedNotes.forEach { note ->
-                        viewModel.updateNoteReminder(
-                            noteId = note.id,
-                            reminderDate = reminderDate,
-                        )
-                    }
-                    selectedNotes = emptySet() // Clear selection after updating reminder
-                    showReminderDialog = false
-                },
-                initialDate = initialDate,
+                selectedNotes = selectedNotes,
+                onNoteClick = ::handleNoteClick,
+                onNoteLongPress = ::toggleSelection,
+                gridLayout = uiState.gridLayout,
+                searchHeightPadding = 0.dp,
+                pinnedHeader = false
             )
         }
 
-    )
+
+        val initialDate = selectedNotes.firstOrNull()?.reminderDate
+
+        ReminderDialog(
+            showDialog = showReminderDialog,
+            onDismiss = { showReminderDialog = false },
+            onSetReminder = { reminderDate ->
+                // Update reminder for all selected notes
+                selectedNotes.forEach { note ->
+                    viewModel.updateNoteReminder(
+                        noteId = note.id,
+                        reminderDate = reminderDate,
+                    )
+                }
+                selectedNotes = emptySet() // Clear selection after updating reminder
+                showReminderDialog = false
+            },
+            initialDate = initialDate,
+            onDeleteReminder = {
+                selectedNotes.forEach { note ->
+                    viewModel.updateNoteReminder(
+                        noteId = note.id,
+                        reminderDate = null,
+                    )
+                }
+                selectedNotes = emptySet()
+                showReminderDialog = false
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnimatedTopBar(
+    modifier: Modifier = Modifier,
+    title: String = "",
+    onMenuClick: () -> Unit,
     selectedNotes: Set<Note>,
+    onClearSelection: () -> Unit,
     isSearchActive: Boolean,
     onSearchActiveChange: (Boolean) -> Unit,
-    onClearSelection: () -> Unit,
     onSetReminder: () -> Unit,
     onPinNotes: () -> Unit,
-    onUnarchiveNotes: () -> Unit,
     onDeleteNotes: () -> Unit,
-    title: String,
-    onMenuClick: () -> Unit,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
+    onUnarchiveNotes: () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior
 ) {
+    val isFocused = remember { mutableStateOf(true) }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
 
-    LaunchedEffect(isSearchActive) {
-        if (isSearchActive) {
-            delay(100) // Add a small delay before focusing
-            focusRequester.requestFocus()
-        } else {
+    var topBarSize by remember { mutableStateOf(IntSize.Zero) }
+    val interactionSource = remember { MutableInteractionSource() }
+
+    val isFocuseds = interactionSource.collectIsFocusedAsState().value
+    val shouldClearFocus = !isSearchActive && isFocuseds
+    LaunchedEffect(isFocused) {
+        if (shouldClearFocus) {
+            delay(100)
             focusManager.clearFocus()
         }
     }
 
+    BackHandler(enabled = isSearchActive) {
+        onSearchActiveChange(false)
+    }
 
-    var topBarSize by remember { mutableStateOf(IntSize.Zero) }
-//    val density = LocalDensity.current
+//    BackHandler(enabled = searchQuery.isNotBlank() && isFocused.value.not()) {
+//        onSearchQueryChange("")
+//    }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .onSizeChanged { topBarSize = it }
     ) {
@@ -263,13 +290,43 @@ fun AnimatedTopBar(
             label = "expandProgress"
         ) { state -> if (state) 1f else 0f }
 
-
-        NormalTopBar(
+        CollapsedSearchView(
+            modifier = Modifier,
             title = title,
             onMenuClick = onMenuClick,
             onSearchClick = { onSearchActiveChange(true) },
-            scrollBehavior = scrollBehavior
+            screenType = ScreenType.Archive,
+            scrollBehavior = scrollBehavior,
         )
+
+        /*        SearchBar(
+                    inputField = {
+                        SearchBarDefaults.InputField(
+                            query = searchQuery,
+                            onQueryChange = onSearchQueryChange,
+                            onSearch = onSearchQueryChange,
+                            expanded = false,
+                            onExpandedChange = {},
+                            enabled = true,
+                            placeholder = { Text("Search") },
+                            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = "Search") },
+                            trailingIcon = {
+
+                            },
+                            interactionSource = null,
+                        )
+                    },
+                    expanded = false,
+                    onExpandedChange = {},
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 36.dp, vertical = 18.dp),
+                    shape = SearchBarDefaults.inputFieldShape,
+                    tonalElevation = SearchBarDefaults.TonalElevation,
+                    shadowElevation = SearchBarDefaults.ShadowElevation,
+                    windowInsets = SearchBarDefaults.windowInsets,
+                    content =  {},
+                )*/
 
         // Expanded search view and Selection top bar container
         Box(
@@ -285,78 +342,50 @@ fun AnimatedTopBar(
                 selectedNotes.isNotEmpty() -> {
                     SelectionTopBar(
                         onClearSelection = onClearSelection,
-                        selectedNotes = selectedNotes,
-                        scrollBehavior = scrollBehavior,
                         onPinNotes = onPinNotes,
                         onUnpinNotes = onPinNotes,
+                        onSetReminder = onSetReminder,
                         onUnarchiveNotes = onUnarchiveNotes,
                         onDeleteNotes = onDeleteNotes,
+                        selectedNotes = selectedNotes,
                         screenType = ScreenType.Archive,
-                        onSetReminder = onSetReminder,
                     )
                 }
 
                 isSearchActive -> {
+
+
                     ExpandedSearchView(
+                        modifier = Modifier
+                            .padding(horizontal = 12.dp),
                         searchQuery = searchQuery,
                         onSearchQueryChanged = onSearchQueryChange,
-                        onBackClick = {
-                            onSearchActiveChange(false)
-                            onSearchQueryChange("")
-                        },
-                        onSearchClosed = {
-                            focusManager.clearFocus()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp)
-                            .focusRequester(focusRequester)
+                        isFocused = isFocused,
+                        focusRequester = focusRequester,
+                        focusManager = focusManager,
+                        onSearchActiveChange = onSearchActiveChange
                     )
+
                 }
             }
 
         }
-
-        /*
-                // SearchBar Overlay
-                AnimatedSearchBarOverlay(
-                    isVisible = isSearchActive,
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = onSearchQueryChange,
-                    onSearchActiveChange = onSearchActiveChange,
-                    suggestions = suggestions,
-                    onSuggestionSelected = onSuggestionSelected
-                )*/
     }
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun NormalTopBar(
-    title: String,
-    onMenuClick: () -> Unit,
-    onSearchClick: () -> Unit,
-    scrollBehavior: TopAppBarScrollBehavior
-) {
-    TopAppBar(
-        title = { Text(title, Modifier.padding(start = 16.dp)) },
-        navigationIcon = {
-            IconButton(onClick = onMenuClick) {
-                Icon(Icons.Outlined.Menu, contentDescription = "Menu")
-            }
-        },
-        actions = {
-            IconButton(onClick = onSearchClick) {
-                Icon(Icons.Outlined.Search, contentDescription = "Search")
-            }
-        },
-        scrollBehavior = scrollBehavior
-    )
-}
-
-
 /*
+        // SearchBar Overlay
+        AnimatedSearchBarOverlay(
+            isVisible = isSearchActive,
+            searchQuery = searchQuery,
+            onSearchQueryChange = onSearchQueryChange,
+            onSearchActiveChange = onSearchActiveChange,
+            suggestions = suggestions,
+            onSuggestionSelected = onSuggestionSelected
+        )
+
+
 @Composable
 fun AnimatedSearchBarOverlay(
     isVisible: Boolean,

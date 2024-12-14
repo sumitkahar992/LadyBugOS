@@ -1,4 +1,4 @@
-package com.example.ladybugos.ui.drawer.home
+package com.example.ladybugos.ui.screens.home
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,6 +22,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -84,21 +85,43 @@ fun DatePickerContent(
 fun TimePickerContent(
     selectedTime: LocalTime,
     onTimeSelected: (LocalTime) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    isCurrentDate: Boolean = false
 ) {
     val timePickerState = rememberTimePickerState(
         initialHour = selectedTime.hour,
         initialMinute = selectedTime.minute
     )
 
+    val selectedTimeIsValid = remember(timePickerState.hour, timePickerState.minute, isCurrentDate) {
+        if (!isCurrentDate) true
+        else {
+            val currentTime = LocalTime.now()
+            val selectedTimes = LocalTime.of(timePickerState.hour, timePickerState.minute)
+            !selectedTimes.isBefore(currentTime)
+        }
+    }
+
     TimePickerDialog(
         onDismiss = onBack,
         onConfirm = {
             val newSelectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
             onTimeSelected(newSelectedTime)
-        }
+        },
+        confirmEnabled = selectedTimeIsValid,
+        showError = !selectedTimeIsValid
     ) {
-        TimePicker(state = timePickerState)
+        Column {
+            TimePicker(state = timePickerState)
+            if (!selectedTimeIsValid) {
+                Text(
+                    text = "The time has passed",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+                )
+            }
+        }
     }
 }
 
@@ -106,6 +129,8 @@ fun TimePickerContent(
 fun TimePickerDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
+    confirmEnabled: Boolean = true,
+    showError: Boolean = false,
     content: @Composable () -> Unit
 ) {
     Dialog(
@@ -138,7 +163,12 @@ fun TimePickerDialog(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     TextButton(onClick = onDismiss) { Text("Back") }
-                    Button(onClick = onConfirm) { Text("Set Reminder") }
+                    Button(
+                        onClick = onConfirm,
+                        enabled = confirmEnabled
+                    ) {
+                        Text("Set Reminder")
+                    }
                 }
             }
         }

@@ -1,4 +1,4 @@
-package com.example.ladybugos.ui.drawer.note_detail
+package com.example.ladybugos.ui.screens.note_detail
 
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -47,7 +48,9 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -57,18 +60,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -76,30 +79,35 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.ladybugos.model.darken
 import com.example.ladybugos.model.getRelativeTimeAgo
 import com.example.ladybugos.navigation.LocalNavAnimatedVisibilityScope
 import com.example.ladybugos.navigation.LocalSharedTransitionScope
 import com.example.ladybugos.navigation.NoteAction
 import com.example.ladybugos.navigation.NoteSharedElementKey
 import com.example.ladybugos.navigation.NoteSharedElementType
+import com.example.ladybugos.ui.components.NoteeDialog
 import com.example.ladybugos.ui.components.ReminderInfo
 import com.example.ladybugos.ui.components.TagChip
-import com.example.ladybugos.ui.drawer.home.ReminderDialog
-import com.example.ladybugos.ui.theme.LocalThemeProvider
+import com.example.ladybugos.ui.components.tag.rememberContainerColor
+import com.example.ladybugos.ui.components.tag.rememberTagColors
+import com.example.ladybugos.ui.screens.home.ReminderDialog
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -122,20 +130,17 @@ fun NoteDetailScreen(
     val rightBottomSheetState = rememberModalBottomSheetState()
     val noteId = uiState.id
     val scope = rememberCoroutineScope()
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    val disableInTrash = !uiState.isTrashed
 
     // Don't render anything while loading
     if (uiState.isLoading) {
         return
     }
 
-    // Calculate container color based on theme
-    val isDarkTheme = LocalThemeProvider.isDarkTheme
 
-    val containerColor = when {
-        uiState.lightColor == 0 -> MaterialTheme.colorScheme.surface
-        isDarkTheme -> remember(uiState.lightColor) { Color(uiState.lightColor).darken(0.4f) }
-        else -> remember(uiState.lightColor) { Color(uiState.lightColor) }
-    }
+    val containerColor = rememberContainerColor(uiState.lightColor)
 
     // Handler for note actions
     val handleAction: (NoteAction) -> Unit = { action ->
@@ -149,6 +154,42 @@ fun NoteDetailScreen(
             }
         }
     }
+
+    // Handle disabled interactions for trash-related snackBars
+    val handleTrashRestore: () -> Unit = {
+        scope.launch {
+            snackBarHostState.showSnackbar(
+                message = "Can't edit in Trash",
+                actionLabel = "RESTORE",
+                duration = SnackbarDuration.Long,
+                withDismissAction = true
+            ).let { result ->
+                if (result == SnackbarResult.ActionPerformed) {
+                    viewModel.restoreFromTrash(onComplete = {
+                        scope.launch {
+                            snackBarHostState.showSnackbar(
+                                message = "Note restored",
+                                actionLabel = "UNDO",
+                                duration = SnackbarDuration.Short
+                            ).let { undoResult ->
+                                if (undoResult == SnackbarResult.ActionPerformed) {
+                                    viewModel.undoRestore()
+                                }
+                            }
+                        }
+                    })
+                }
+            }
+        }
+    }
+
+    // Show initial snackBar when entering trashed note
+    LaunchedEffect(uiState.isTrashed) {
+        if (uiState.isTrashed) {
+            handleTrashRestore()
+        }
+    }
+
 
     DisposableEffect(Unit) {
         onDispose {
@@ -193,11 +234,13 @@ fun NoteDetailScreen(
             containerColor = containerColor,
             contentColor = MaterialTheme.colorScheme.onSurface,
             snackbarHost = { SnackbarHost(snackBarHostState) },
+
             topBar = {
                 EditNoteTopAppBar(
                     containerColor = Color.Transparent,
                     isPinned = uiState.isPinned,
                     isArchived = uiState.isArchived,
+                    isTrashed = uiState.isTrashed,
                     onBack = {
                         viewModel.saveNote(
                             onComplete = onBack,
@@ -247,23 +290,11 @@ fun NoteDetailScreen(
                 onOpenColorPicker = { isColorPickerDialogVisible = true },
                 onClickReminderInfo = { showReminderDialog = true },
                 isDone = uiState.isDone,
-                onRemoveReminder = {
-                    viewModel.updateNoteReminder(
-                        noteId = uiState.id,
-                        reminderDate = null
-                    )
-                },
+                onDisabledClick = handleTrashRestore,
+                enabled = !uiState.isTrashed,
                 content = {
-
-                    val selectedContainerColor =
-                        if (isDarkTheme) Color.White.copy(alpha = 0.15f) // Semi-transparent white for dark theme
-                        else Color.White.copy(alpha = 0.85f) // More opaque white for light theme
-
-
-                    val selectedLabelColor =
-                        if (isDarkTheme) Color.White.copy(alpha = 0.87f)
-                        else Color.Black.copy(alpha = 0.87f)
-
+                    // Calculate colors based on theme and noteColor
+                    val tagColors = rememberTagColors(uiState.lightColor)
 
                     LazyRow(
                         modifier = Modifier
@@ -275,10 +306,11 @@ fun NoteDetailScreen(
                         items(uiState.allTags) { tag ->
                             TagChip(
                                 tag = tag,
+                                enabled = disableInTrash,
                                 isSelected = uiState.selectedTagIds.contains(tag.id),
                                 onClick = { viewModel.toggleTag(tag.id) },
-                                containerColor = selectedContainerColor,
-                                labelColor = selectedLabelColor
+                                containerColor = tagColors.backgroundColor,
+                                labelColor = tagColors.contentColor
                             )
                         }
                     }
@@ -287,8 +319,24 @@ fun NoteDetailScreen(
 
         }
 
+        // Delete confirmation dialog
+        NoteeDialog(
+            enabled = showDeleteDialog,
+            title = "Delete note ?",
+            description = " Are you sure you want to delete this note? This note will be permanently deleted?",
+            confirmText = "Delete",
+            dismissText = "Cancel",
+            onConfirm = {
+                showDeleteDialog = false
+                viewModel.deleteNoteForever(onComplete = onBack)
+            },
+            onDismiss = {
+                showDeleteDialog = false
+            }
+        )
+
         // Dialogs
-        if (isColorPickerDialogVisible) {
+        if (isColorPickerDialogVisible && disableInTrash) {
             ColorPickerDialog(
                 selectedColor = containerColor,
                 onColorSelected = { selectedColor ->
@@ -299,7 +347,7 @@ fun NoteDetailScreen(
             )
         }
 
-        if (showReminderDialog) {
+        if (showReminderDialog && disableInTrash) {
             ReminderDialog(
                 showDialog = true,
                 initialDate = uiState.reminderDate,
@@ -310,13 +358,20 @@ fun NoteDetailScreen(
                         reminderDate = reminderDate
                     )
                     showReminderDialog = false
+                },
+                onDeleteReminder = {
+                    viewModel.updateNoteReminder(
+                        noteId = uiState.id,
+                        reminderDate = null
+                    )
+                    showReminderDialog = false
                 }
             )
         }
     }
 
     // Bottom Sheets
-    if (showLeftBottomSheet) {
+    if (showLeftBottomSheet && disableInTrash) {
         ModalBottomSheet(
             onDismissRequest = { showLeftBottomSheet = false },
             sheetState = leftBottomSheetState,
@@ -337,6 +392,23 @@ fun NoteDetailScreen(
             containerColor = containerColor
         ) {
             RightBottomSheetContent(
+                isTrashed = uiState.isTrashed,
+                onRestore = {
+                    viewModel.restoreFromTrash(onComplete = {
+                        scope.launch {
+                            snackBarHostState.showSnackbar(
+                                message = "Note restored",
+                                actionLabel = "UNDO",
+                                duration = SnackbarDuration.Short
+                            ).let { result ->
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    viewModel.undoRestore()
+                                }
+                            }
+                        }
+                    })
+                },
+                onDeleteForever = { showDeleteDialog = true },
                 containerColor = containerColor
             )
         }
@@ -353,28 +425,244 @@ fun EditNoteContent(
     onOpenColorPicker: () -> Unit,
     onClickReminderInfo: () -> Unit,
     isDone: Boolean,
-    onRemoveReminder: () -> Unit,
-    content: @Composable () -> Unit
+    onDisabledClick: () -> Unit = {},
+    enabled: Boolean,
+    content: @Composable () -> Unit = {}
 ) {
     val sharedTransitionScope = LocalSharedTransitionScope.current
         ?: throw IllegalStateException("No scope found")
+    val contentFocusRequester = remember { FocusRequester() }
 
-    with(sharedTransitionScope) {
-        LazyColumn(
-            modifier = modifier.fillMaxSize(),
-            state = rememberLazyListState(),
-            contentPadding = PaddingValues(
-                start = 6.dp,
-                end = 6.dp,
-                top = 0.dp,
-                bottom = 60.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(0.dp) // Default spacing between items
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        state = rememberLazyListState(),
+        contentPadding = PaddingValues(
+            start = 6.dp,
+            end = 6.dp,
+            top = 0.dp,
+            bottom = 20.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(0.dp) // Default spacing between items
+    ) {
+        item { content() }
+
+        item { Spacer(modifier = Modifier.height(6.dp)) } // Reduced from 16.dp
+
+        // Title section
+        item {
+            NoteTitleSection(
+                uiState = uiState,
+                onTitleChange = onTitleChange,
+                onOpenColorPicker = onOpenColorPicker,
+                enabled = enabled,
+                onDisabledClick = onDisabledClick,
+                keyboardActions = KeyboardActions(
+                    onNext = {
+                        contentFocusRequester.requestFocus()
+                        // Move cursor to end of content
+                        onContentChange(
+                            uiState.contentFieldValue.copy(
+                                selection = TextRange(uiState.contentFieldValue.text.length)
+                            )
+                        )
+                    }
+                )
+            )
+        }
+
+        item { Spacer(modifier = Modifier.height(8.dp)) }
+
+        // Content section
+        item {
+            NoteContentSection(
+                modifier = Modifier.focusRequester(contentFocusRequester),
+                uiState = uiState,
+                onContentChange = onContentChange,
+                enabled = enabled,
+                onDisabledClick = onDisabledClick,
+            )
+        }
+
+        // Reminder section
+        uiState.reminderDate?.let { date ->
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                ReminderInfo(
+                    reminderDate = date,
+                    isDone = isDone,
+                    onClick = onClickReminderInfo,
+                    isClickable = true,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .animateItem(
+                            fadeInSpec = null, fadeOutSpec = null
+                        ),
+                )
+            }
+        }
+
+        item { Spacer(modifier = Modifier.height(20.dp)) }
+    }
+}
+
+sealed class NoteFieldType(
+    val placeholder: String,
+    val maxLines: Int,
+    val textStyle: @Composable () -> TextStyle,
+    val keyboardOptions: KeyboardOptions,
+    val minHeight: @Composable () -> Int = { 0 },
+    val maxHeight: @Composable () -> Int? = { null }
+) {
+    data object Title : NoteFieldType(
+        placeholder = "Title",
+        maxLines = 2,
+        textStyle = {
+            MaterialTheme.typography.titleLarge.copy(
+                fontSize = 22.sp,
+                lineHeight = 24.sp,
+                fontWeight = FontWeight.Normal,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        },
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.Sentences,
+            imeAction = ImeAction.Next
+        ),
+        minHeight = { with(LocalDensity.current) { 28.sp.toDp().value.toInt() } },
+        maxHeight = { with(LocalDensity.current) { (28.sp * 2.5f).toDp().value.toInt() } }
+    )
+
+    data object Content : NoteFieldType(
+        placeholder = "Content",
+        maxLines = Int.MAX_VALUE,
+        textStyle = {
+            MaterialTheme.typography.bodyLarge.copy(
+                fontSize = 16.sp,
+                lineHeight = 21.sp,
+                letterSpacing = 0.15.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+            )
+        },
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.Sentences,
+            autoCorrectEnabled = true,
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Default
+        ),
+        minHeight = { 250 }
+    )
+}
+
+@Composable
+fun NoteTextField(
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    type: NoteFieldType,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onDisabledClick: () -> Unit,
+    keyboardActions: KeyboardActions = KeyboardActions.Default
+) {
+    val clickableModifier = if (!enabled) {
+        Modifier.clickable(onClick = onDisabledClick)
+    } else {
+        Modifier
+    }
+
+    val baseModifier = modifier
+        .heightIn(
+            min = type.minHeight().dp,
+            max = type.maxHeight()?.dp ?: Int.MAX_VALUE.dp
+        )
+        .then(clickableModifier)
+
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = baseModifier,
+        enabled = enabled,
+        textStyle = type.textStyle(),
+        maxLines = type.maxLines,
+        keyboardActions = keyboardActions,
+        keyboardOptions = type.keyboardOptions,
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        decorationBox = { innerTextField ->
+            if (value.text.isEmpty()) {
+                Text(
+                    text = type.placeholder,
+                    style = type.textStyle().copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                )
+            }
+            innerTextField()
+        }
+    )
+}
+
+@Composable
+fun NoteTitleSection(
+    uiState: NoteUiState,
+    onTitleChange: (TextFieldValue) -> Unit,
+    onOpenColorPicker: () -> Unit,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
+    onDisabledClick: () -> Unit,
+    keyboardActions: KeyboardActions
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        NoteTextField(
+            value = uiState.titleFieldValue,
+            onValueChange = onTitleChange,
+            type = NoteFieldType.Title,
+            modifier = Modifier.weight(1f),
+            enabled = enabled,
+            onDisabledClick = onDisabledClick,
+            keyboardActions = keyboardActions
+        )
+
+        IconButton(
+            enabled = enabled,
+            onClick = onOpenColorPicker,
         ) {
-            item { content() }
+            Icon(
+                imageVector = Icons.Default.Palette,
+                contentDescription = "Open color picker"
+            )
+        }
+    }
+}
 
-            item { Spacer(modifier = Modifier.height(6.dp)) } // Reduced from 16.dp
+@Composable
+fun NoteContentSection(
+    uiState: NoteUiState,
+    onContentChange: (TextFieldValue) -> Unit,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
+    onDisabledClick: () -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp)  // Match title section padding
+    ) {
+        NoteTextField(
+            value = uiState.contentFieldValue,
+            onValueChange = onContentChange,
+            type = NoteFieldType.Content,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = enabled,
+            onDisabledClick = onDisabledClick,
+        )
+    }
+}
 
+/*
             // Title section
             item {
                 Row(
@@ -410,10 +698,13 @@ fun EditNoteContent(
                         onTextLayout = { layoutResult ->
                             // Update height based on text layout
                             titleHeight = layoutResult.size.height
-                        }
+                        },
+                        enabled = enabled,
+                        onDisabledClick = onDisabledClick
                     )
 
                     IconButton(
+                        enabled = enabled,
                         onClick = onOpenColorPicker,
                         modifier = Modifier.skipToLookaheadSize()
                     ) {
@@ -442,33 +733,11 @@ fun EditNoteContent(
                     ),
                     maxLines = Int.MAX_VALUE,
                     singleLine = false,
-                    useBasicTextField = false
+                    useBasicTextField = false,
+                    enabled = enabled,
+                    onDisabledClick = onDisabledClick
                 )
             }
-
-            // Reminder section
-            uiState.reminderDate?.let { date ->
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ReminderInfo(
-                        reminderDate = date,
-                        isDone = isDone,
-                        onClick = onClickReminderInfo,
-                        isClickable = true,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .animateItem(
-                                fadeInSpec = null, fadeOutSpec = null
-                            ),
-                        onRemoveReminder = onRemoveReminder
-                    )
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(32.dp)) }
-        }
-    }
-}
 
 @Composable
 fun NoteTextField(
@@ -481,18 +750,28 @@ fun NoteTextField(
     singleLine: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     onTextLayout: (TextLayoutResult) -> Unit = {},
-    useBasicTextField: Boolean = false
+    useBasicTextField: Boolean = false,
+    enabled: Boolean = true,
+    onDisabledClick: () -> Unit = {}
 ) {
+    val clickableModifier = if (!enabled) {
+        Modifier.clickable(onClick = onDisabledClick)
+    } else {
+        Modifier
+    }
+
     if (useBasicTextField) {
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = modifier,
+            modifier = modifier.then(clickableModifier),
             textStyle = textStyle,
             maxLines = maxLines,
+            enabled = enabled,
             singleLine = singleLine,
             keyboardOptions = keyboardOptions,
             onTextLayout = onTextLayout,
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             decorationBox = { innerTextField ->
                 Box(
                     modifier = Modifier.padding(horizontal = 6.dp) // Match TextField's internal padding
@@ -513,9 +792,10 @@ fun NoteTextField(
         TextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = modifier,
+            modifier = modifier.then(clickableModifier),
             singleLine = singleLine,
             maxLines = maxLines,
+            enabled = enabled,
             keyboardOptions = keyboardOptions,
             textStyle = textStyle,
             placeholder = if (value.text.isEmpty()) {
@@ -527,11 +807,12 @@ fun NoteTextField(
                 disabledContainerColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent
+                disabledIndicatorColor = Color.Transparent,
+                errorIndicatorColor = Color.Transparent  // Remove the line
             )
         )
     }
-}
+}*/
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -539,6 +820,7 @@ fun EditNoteTopAppBar(
     containerColor: Color,
     isPinned: Boolean,
     isArchived: Boolean,
+    isTrashed: Boolean,
     onBack: () -> Unit,
     onDelete: () -> Unit,
     onArchive: () -> Unit,
@@ -557,30 +839,32 @@ fun EditNoteTopAppBar(
             }
         },
         actions = {
-            // Pin action
-            IconButton(onClick = onTogglePin) {
-                Icon(
-                    imageVector = if (isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
-                    contentDescription = if (isPinned) "Unpin note" else "Pin note"
-                )
-            }
+            if (!isTrashed) {
+                // Pin action
+                IconButton(onClick = onTogglePin) {
+                    Icon(
+                        imageVector = if (isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                        contentDescription = if (isPinned) "Unpin note" else "Pin note"
+                    )
+                }
 
-            // Archive/Unarchive action based on current state
-            IconButton(
-                onClick = if (isArchived) onUnarchive else onArchive
-            ) {
-                Icon(
-                    imageVector = if (isArchived) Icons.Filled.Unarchive else Icons.Outlined.Archive,
-                    contentDescription = if (isArchived) "Unarchive note" else "Archive note"
-                )
-            }
+                // Archive/Unarchive action based on current state
+                IconButton(
+                    onClick = if (isArchived) onUnarchive else onArchive
+                ) {
+                    Icon(
+                        imageVector = if (isArchived) Icons.Filled.Unarchive else Icons.Outlined.Archive,
+                        contentDescription = if (isArchived) "Unarchive note" else "Archive note"
+                    )
+                }
 
-            // Delete action
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Outlined.Delete,
-                    contentDescription = "Delete note"
-                )
+                // Delete action
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        imageVector = Icons.Outlined.Delete,
+                        contentDescription = "Delete note"
+                    )
+                }
             }
         }
     )
@@ -600,7 +884,7 @@ fun EditNoteTopAppBar(
     onTogglePin: () -> Unit
 ) {
     CenterAlignedTopAppBar(
-        title = { *//* Empty title *//* },
+        title = {  },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = containerColor),
         navigationIcon = {
             IconButton(onClick = onBack) {
@@ -777,6 +1061,9 @@ private fun LeftBottomSheetContent(
 
 @Composable
 private fun RightBottomSheetContent(
+    isTrashed: Boolean,
+    onRestore: () -> Unit,
+    onDeleteForever: () -> Unit,
     containerColor: Color = MaterialTheme.colorScheme.surface,
 ) {
     Column(
@@ -785,26 +1072,39 @@ private fun RightBottomSheetContent(
             .background(containerColor)
             .padding(vertical = 16.dp)
     ) {
-        BottomSheetItem(
-            icon = Icons.Default.PhotoCamera,
-            text = "Take photo",
-            onClick = { /* Handle take photo */ }
-        )
-        BottomSheetItem(
-            icon = Icons.Default.Image,
-            text = "Add image",
-            onClick = { /* Handle add image */ }
-        )
-        BottomSheetItem(
-            icon = Icons.Default.Draw,
-            text = "Drawing",
-            onClick = { /* Handle drawing */ }
-        )
-        BottomSheetItem(
-            icon = Icons.Default.KeyboardVoice,
-            text = "Recording",
-            onClick = { /* Handle recording */ }
-        )
+        if (isTrashed) {
+            BottomSheetItem(
+                icon = Icons.Outlined.Restore,
+                text = "Restore note",
+                onClick = onRestore
+            )
+            BottomSheetItem(
+                icon = Icons.Outlined.DeleteForever,
+                text = "Delete forever",
+                onClick = onDeleteForever
+            )
+        } else {
+            BottomSheetItem(
+                icon = Icons.Default.PhotoCamera,
+                text = "Take photo",
+                onClick = { /* Handle take photo */ }
+            )
+            BottomSheetItem(
+                icon = Icons.Default.Image,
+                text = "Add image",
+                onClick = { /* Handle add image */ }
+            )
+            BottomSheetItem(
+                icon = Icons.Default.Draw,
+                text = "Drawing",
+                onClick = { /* Handle drawing */ }
+            )
+            BottomSheetItem(
+                icon = Icons.Default.KeyboardVoice,
+                text = "Recording",
+                onClick = { /* Handle recording */ }
+            )
+        }
     }
 }
 

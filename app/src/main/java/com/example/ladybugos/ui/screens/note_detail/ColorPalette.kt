@@ -1,4 +1,4 @@
-package com.example.ladybugos.ui.drawer.note_detail
+package com.example.ladybugos.ui.screens.note_detail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,8 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.example.ladybugos.model.colorPalette
+import com.example.ladybugos.ui.theme.LadyBugOSTheme
 
 
 @Composable
@@ -118,7 +120,7 @@ fun ColorPickerDialog(
                                 Icon(
                                     imageVector = Icons.Outlined.ExpandMore,
                                     contentDescription = "Expand",
-                                    tint = MaterialTheme.colorScheme.onSurface
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             }
                         }
@@ -131,16 +133,19 @@ fun ColorPickerDialog(
 }
 
 
-@Preview(showBackground = true)
+@PreviewLightDark
 @Composable
 fun ColorPickerDialogPreview() {
     var selectedColor by remember { mutableStateOf(Color.Red) } // Example selected color
 
-    ColorPickerDialog(
-        selectedColor = selectedColor,
-        onColorSelected = { color ->
-            selectedColor = color // Update the selected color
-        },
-        onDismissRequest = { /* Handle dismiss action */ }
-    )
+    LadyBugOSTheme {
+        ColorPickerDialog(
+            selectedColor = selectedColor,
+            onColorSelected = { color ->
+                selectedColor = color // Update the selected color
+            },
+            onDismissRequest = { /* Handle dismiss action */ }
+        )
+    }
+
 }

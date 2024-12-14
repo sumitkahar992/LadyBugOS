@@ -1,4 +1,4 @@
-package com.example.ladybugos.ui.drawer.settings
+package com.example.ladybugos.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

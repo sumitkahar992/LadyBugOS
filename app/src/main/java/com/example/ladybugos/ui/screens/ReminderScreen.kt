@@ -1,4 +1,4 @@
-package com.example.ladybugos.ui.drawer
+package com.example.ladybugos.ui.screens
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -19,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -36,11 +37,11 @@ import com.example.ladybugos.ui.components.bottomWindowInsetsPadding
 import com.example.ladybugos.ui.components.endWindowInsetsPadding
 import com.example.ladybugos.ui.components.getSearchBarHeight
 import com.example.ladybugos.ui.components.startWindowInsetsPadding
-import com.example.ladybugos.ui.drawer.home.HandleNoteActions
-import com.example.ladybugos.ui.drawer.home.NoteListViewModel
-import com.example.ladybugos.ui.drawer.home.NoteSnackBarHandler
-import com.example.ladybugos.ui.drawer.home.ReminderDialog
-import com.example.ladybugos.ui.drawer.home.SwipeableSnackBarHost
+import com.example.ladybugos.ui.screens.home.HandleNoteActions
+import com.example.ladybugos.ui.screens.home.NoteListViewModel
+import com.example.ladybugos.ui.screens.home.NoteSnackBarHandler
+import com.example.ladybugos.ui.screens.home.ReminderDialog
+import com.example.ladybugos.ui.screens.home.SwipeableSnackBarHost
 import com.example.ladybugos.ui.theme.GridLayout
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -55,13 +56,16 @@ fun ReminderScreen(
     actionType: NoteActionType?,
     clearNoteAction: () -> Unit
 ) {
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val upcomingReminders = uiState.notes.filter {
-        !it.note.isDone && it.note.reminderDate != null
+        !it.note.isDone && it.note.reminderDate != null && !it.note.isTrashed
     }
     val completedReminders = uiState.notes.filter {
-        it.note.isDone && it.note.reminderDate != null
+        it.note.isDone && it.note.reminderDate != null && !it.note.isTrashed
     }
+
+    var isSearchMode by rememberSaveable { mutableStateOf(false) }
 
 
     var isSearchExpanded by remember { mutableStateOf(false) }
@@ -81,7 +85,7 @@ fun ReminderScreen(
         if (selectedNotes.isNotEmpty()) {
             toggleSelection(note)
         } else {
-            viewModel.clearSnackbarMessage()
+            viewModel.clearSnackBarMessage()
             navigateToNoteDetail(note.id)
         }
     }
@@ -106,7 +110,9 @@ fun ReminderScreen(
         isSearchExpanded = isSearchExpanded,
         setSearchExpanded = { isSearchExpanded = it },
         selectedNotes = selectedNotes,
-        clearSelectedNotes = { selectedNotes = emptySet() }
+        clearSelectedNotes = { selectedNotes = emptySet() },
+        isSearchMode = isSearchMode,
+        setSearchMode = { isSearchMode = it }
     )
 
     // Handle snackBar
@@ -119,6 +125,7 @@ fun ReminderScreen(
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             AnimatedTopBar(
+                title = "Reminder",
                 selectedNotes = selectedNotes,
                 isSearchActive = isSearchExpanded,
                 onSearchActiveChange = { isSearchExpanded = it },
@@ -142,7 +149,6 @@ fun ReminderScreen(
                         "${selectedNotes.size} notes moved to trash"
                     )
                 },
-                title = "Reminders",
                 onMenuClick = onMenuClick,
                 searchQuery = uiState.searchQuery,
                 onSearchQueryChange = viewModel::updateSearchQuery,
@@ -166,7 +172,7 @@ fun ReminderScreen(
                 onNoteClick = ::handleNoteClick,
                 onNoteLongPress = ::toggleSelection,
                 gridLayout = uiState.gridLayout,
-                searchHeightPadding = 0.dp
+                searchHeightPadding = 0.dp,
             )
         }
 
@@ -184,6 +190,16 @@ fun ReminderScreen(
                 showReminderDialog = false
             },
             initialDate = selectedNotes.firstOrNull()?.reminderDate,
+            onDeleteReminder = {
+                selectedNotes.forEach { note ->
+                    viewModel.updateNoteReminder(
+                        noteId = note.id,
+                        reminderDate = null,
+                    )
+                }
+                selectedNotes = emptySet()
+                showReminderDialog = false
+            }
         )
     }
 }

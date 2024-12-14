@@ -1,26 +1,15 @@
 package com.example.ladybugos.ui.components
 
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.rememberTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -28,14 +17,21 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.NotificationAdd
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.TableRows
-import androidx.compose.material.icons.outlined.Unarchive
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,289 +41,191 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.ladybugos.model.Note
-import kotlinx.coroutines.delay
-
-/*
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
-@Composable
-fun ExpandableSearchViewPreview() {
-    var searchQuery by remember { mutableStateOf("") }
-    var selectedTheme by remember { mutableStateOf(Theme.Light) }
-    var selectedNotes by remember { mutableStateOf(setOf<Note>()) }
-
-    MaterialTheme {
-        Column {
-            // Collapsed state
-            PreviewSection("Collapsed State") {
-                ExpandableSearchView(
-                    onMenuClick = {},
-                    selectedTheme = selectedTheme,
-                    onThemeChanged = { selectedTheme = it },
-                    searchQuery = "",
-                    onSearchQueryChanged = {},
-                    onSearchClosed = {},
-                    selectedNotes = emptySet(),
-                    onClearSelection = {},
-                    onPinNotes = {},
-                    onArchiveNotes = {},
-                    onDeleteNotes = {},
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            // Expanded search state
-            PreviewSection("Expanded Search State") {
-                ExpandableSearchView(
-                    onMenuClick = {},
-                    selectedTheme = selectedTheme,
-                    onThemeChanged = { selectedTheme = it },
-                    searchQuery = searchQuery,
-                    onSearchQueryChanged = { searchQuery = it },
-                    onSearchClosed = {},
-                    selectedNotes = emptySet(),
-                    onClearSelection = {},
-                    onPinNotes = {},
-                    onArchiveNotes = {},
-                    onDeleteNotes = {},
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            // Selection state
-            PreviewSection("Selection State") {
-                ExpandableSearchView(
-                    onMenuClick = {},
-                    selectedTheme = selectedTheme,
-                    onThemeChanged = { selectedTheme = it },
-                    searchQuery = "",
-                    onSearchQueryChanged = {},
-                    onSearchClosed = {},
-                    selectedNotes = setOf(
-                        Note(1, "Note 1", "Content 1", System.currentTimeMillis().toString()),
-                        Note(2, "Note 2", "Content 2", System.currentTimeMillis().toString())
-                    ),
-                    onClearSelection = {},
-                    onPinNotes = {},
-                    onArchiveNotes = {},
-                    onDeleteNotes = {},
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun PreviewSection(title: String, content: @Composable () -> Unit) {
-    Column(Modifier.padding(vertical = 16.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-        content()
-    }
-}
-*/
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ExpandableSearchView(
-    onMenuClick: () -> Unit,
-    searchQuery: String,
-    onGridLayoutClick: () -> Unit,
-    onSearchQueryChanged: (String) -> Unit,
-    selectedNotes: Set<Note>,
-    onClearSelection: () -> Unit,
-    onPinNotes: (List<Note>) -> Unit,
-    onUnPinNotes: (List<Note>) -> Unit,
-    onArchiveNotes: (List<Note>) -> Unit,
-    onDeleteNotes: (List<Note>) -> Unit,
-    modifier: Modifier = Modifier,
-    isSearchBarVisible: MutableState<Boolean>,
-    onSetReminder: () -> Unit,
-    isSearchExpanded: Boolean,
-    onSearchExpandedChanged: (Boolean) -> Unit
-) {
-    val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
-
-    LaunchedEffect(isSearchExpanded) {
-        if (isSearchExpanded) {
-            delay(100) // Add a small delay before focusing
-            focusRequester.requestFocus()
-        } else {
-            focusManager.clearFocus()
-        }
-    }
-
-    AnimatedVisibility(
-        visible = isSearchBarVisible.value,
-        enter = fadeIn() + slideInVertically(),
-        exit = fadeOut() + slideOutVertically(),
-    ) {
-        Box(modifier = modifier.fillMaxWidth()) {
-            Box(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp)
-            ) {
-                val transitionState = remember { MutableTransitionState(false) }
-                transitionState.targetState = selectedNotes.isNotEmpty() || isSearchExpanded
-
-                val transition = rememberTransition(transitionState, label = "searchTransition")
-
-                val expandProgress by transition.animateFloat(
-                    transitionSpec = {
-                        if (targetState) {
-                            tween(durationMillis = 300, easing = FastOutSlowInEasing)
-                        } else {
-                            tween(durationMillis = 200, easing = LinearOutSlowInEasing)
-                        }
-                    },
-                    label = "expandProgress"
-                ) { state -> if (state) 1f else 0f }
-
-                val collapsedAlpha by transition.animateFloat(
-                    transitionSpec = { tween(durationMillis = 200) },
-                    label = "collapsedAlpha"
-                ) { state -> if (state) 0f else 1f }
-
-                // CollapsedSearchView
-                CollapsedSearchView(
-                    onExpandedChanged = { onSearchExpandedChanged(true) },
-                    modifier = Modifier.alpha(collapsedAlpha),
-                    onMenuClick = onMenuClick,
-                    onGridLayoutClick = onGridLayoutClick
-                )
-
-                // Expanded search view and Selection top bar container
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .graphicsLayer {
-                            alpha = expandProgress
-                            scaleY = 0.8f + (0.2f * expandProgress)
-                            translationY = (-20f + (20f * expandProgress)).dp.toPx()
-                        }
-                ) {
-                    when {
-                        selectedNotes.isNotEmpty() -> {
-                            SelectionTopBar(
-                                onClearSelection = onClearSelection,
-                                onPinNotes = { onPinNotes(selectedNotes.toList()) },
-                                onArchiveNotes = { onArchiveNotes(selectedNotes.toList()) },
-                                onDeleteNotes = { onDeleteNotes(selectedNotes.toList()) },
-                                selectedNotes = selectedNotes,
-                                onUnpinNotes = { onUnPinNotes(selectedNotes.toList()) },
-                                onUnarchiveNotes = {},
-                                screenType = ScreenType.List,
-                                onSetReminder = onSetReminder
-                            )
-                        }
-
-                        isSearchExpanded -> {
-                            ExpandedSearchView(
-                                searchQuery = searchQuery,
-                                onSearchQueryChanged = onSearchQueryChanged,
-                                onBackClick = {
-                                    onSearchExpandedChanged(false)
-                                    onSearchQueryChanged("")
-                                },
-                                onSearchClosed = {
-                                    focusManager.clearFocus()
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .focusRequester(focusRequester)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 
 sealed class ScreenType {
     data object List : ScreenType()
     data object Archive : ScreenType()
+    data object Trash : ScreenType()
 }
+
+@Composable
+fun ExpandedSearchView(
+    searchQuery: String,
+    onSearchQueryChanged: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    focusRequester: FocusRequester,
+    isFocused: MutableState<Boolean>,
+    onSearchActiveChange: (Boolean) -> Unit,
+    focusManager: FocusManager
+) {
+
+    // Use LaunchedEffect with a specific condition
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+    TextField(
+        value = searchQuery,
+        onValueChange = onSearchQueryChanged,
+        placeholder = { Text("Search your notes", color = Color.Gray) },
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(top = 44.dp)
+            .focusRequester(focusRequester)
+            .onFocusChanged { isFocused.value = it.isFocused },
+        interactionSource = remember { MutableInteractionSource() },
+        trailingIcon = {
+            if (searchQuery.isNotBlank()) {
+                IconButton(onClick = { onSearchQueryChanged("") }) {
+                    Icon(
+                        Icons.Default.Clear,
+                        contentDescription = "Clear Search"
+                    )
+                }
+            }
+        },
+        leadingIcon = {
+            IconButton(onClick = {
+                onSearchActiveChange(false)
+                onSearchQueryChanged("")
+            }) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back"
+                )
+            }
+        },
+        colors = TextFieldDefaults.colors(
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent
+        ),
+        shape = MaterialTheme.shapes.medium,
+        keyboardOptions = KeyboardOptions(
+            capitalization = KeyboardCapitalization.Sentences,
+            autoCorrectEnabled = true,
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = {
+                focusManager.clearFocus()
+                isFocused.value = false
+            }
+        ),
+        singleLine = true
+    )
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectionTopBar(
+    modifier: Modifier = Modifier,
+    cornerRadius: Dp = 0.dp,
     onClearSelection: () -> Unit,
     onPinNotes: () -> Unit = {},
     onUnpinNotes: () -> Unit = {},
     onSetReminder: () -> Unit = {},
     onArchiveNotes: () -> Unit = {},
     onUnarchiveNotes: () -> Unit = {},
-    onDeleteNotes: () -> Unit,
+    onRestoreNotes: () -> Unit = {},
+    onDeleteNotes: () -> Unit = {},
     selectedNotes: Set<Note>,
-    scrollBehavior: TopAppBarScrollBehavior? = null,
     screenType: ScreenType
 ) {
-    TopAppBar(
-        title = { Text("${selectedNotes.size} selected") },
-        navigationIcon = {
-            IconButton(onClick = onClearSelection) {
-                Icon(Icons.Default.Close, contentDescription = "Clear selection")
-            }
-        },
-        actions = {
-            when (screenType) {
-                ScreenType.List -> {
-                    PinUnpinIcon(selectedNotes, onPinNotes, onUnpinNotes)
-                    IconButton(onClick = onSetReminder) {
-                        Icon(Icons.Outlined.NotificationAdd, contentDescription = "Reminder notes")
-                    }
-                    IconButton(onClick = onArchiveNotes) {
-                        Icon(Icons.Outlined.Archive, contentDescription = "Archive notes")
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .graphicsLayer {
+                shape = RoundedCornerShape(cornerRadius)
+                clip = true
+            },
+        tonalElevation = 4.dp
+    ) {
+        TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            ),
+            modifier = modifier,
+            title = { Text("${selectedNotes.size} selected") },
+            navigationIcon = {
+                IconButton(onClick = onClearSelection) {
+                    Icon(Icons.Default.Close, contentDescription = "Clear selection")
+                }
+            },
+            actions = {
+                when (screenType) {
+                    ScreenType.List -> {
+                        PinUnpinIcon(selectedNotes, onPinNotes, onUnpinNotes)
+                        IconButton(onClick = onSetReminder) {
+                            Icon(
+                                Icons.Outlined.NotificationAdd,
+                                contentDescription = "Reminder notes"
+                            )
+                        }
+                        IconButton(onClick = onArchiveNotes) {
+                            Icon(Icons.Outlined.Archive, contentDescription = "Archive notes")
+                        }
+
+                        IconButton(onClick = onDeleteNotes) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete notes")
+                        }
                     }
 
-                    IconButton(onClick = onDeleteNotes) {
-                        Icon(Icons.Default.Delete, contentDescription = "Delete notes")
+                    ScreenType.Archive -> {
+                        PinUnpinIcon(selectedNotes, onPinNotes, onUnpinNotes)
+
+                        IconButton(onClick = onSetReminder) {
+                            Icon(
+                                Icons.Outlined.NotificationAdd,
+                                contentDescription = "Reminder notes"
+                            )
+                        }
+                        IconButton(onClick = onUnarchiveNotes) {
+                            Icon(Icons.Default.Unarchive, contentDescription = "Unarchive notes")
+                        }
+                        IconButton(onClick = onDeleteNotes) {
+                            Icon(Icons.Outlined.DeleteOutline, contentDescription = "Delete notes")
+                        }
+                    }
+
+                    ScreenType.Trash -> {
+                        IconButton(onClick = onRestoreNotes) {
+                            Icon(Icons.Filled.Restore, contentDescription = "Restore notes")
+                        }
+                        IconButton(onClick = onDeleteNotes) {
+                            Icon(Icons.Outlined.DeleteOutline, contentDescription = "Delete notes")
+                        }
                     }
                 }
-
-                ScreenType.Archive -> {
-                    PinUnpinIcon(selectedNotes, onPinNotes, onUnpinNotes)
-
-                    IconButton(onClick = onSetReminder) {
-                        Icon(Icons.Outlined.NotificationAdd, contentDescription = "Reminder notes")
-                    }
-                    IconButton(onClick = onUnarchiveNotes) {
-                        Icon(Icons.Outlined.Unarchive, contentDescription = "Unarchive notes")
-                    }
-                    IconButton(onClick = onDeleteNotes) {
-                        Icon(Icons.Outlined.DeleteOutline, contentDescription = "Delete notes")
-                    }
-                }
-            }
-        },
-        scrollBehavior = scrollBehavior
-    )
+            },
+            scrollBehavior = null
+        )
+    }
 }
 
 @Composable
@@ -345,167 +243,147 @@ private fun PinUnpinIcon(
 }
 
 
-/*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SelectionTopBar(
-    selectedCount: Int,
-    onClearSelection: () -> Unit,
-    onPinNotes: () -> Unit,
-    onArchiveNotes: () -> Unit,
-    onDeleteNotes: () -> Unit,
-    selectedNotes: Set<Note>, // New parameter to access the selected notes
-    modifier: Modifier = Modifier
-) {
-    val isAllPinned = selectedNotes.all { it.isPinned }
-    val isAnyUnpinned = selectedNotes.any { !it.isPinned }
-
-    val isAllArchived = selectedNotes.all { it.isArchived }
-    val isAnyUnarchived = selectedNotes.any { !it.isArchived }
-
-    TopAppBar(
-        title = { Text("$selectedCount selected") },
-        navigationIcon = {
-            IconButton(onClick = onClearSelection) {
-                Icon(Icons.Default.Close, contentDescription = "Clear selection")
-            }
-        },
-        actions = {
-            IconButton(onClick = onPinNotes) {
-                Icon(
-                    imageVector = when {
-                        isAllPinned -> Icons.Filled.PushPin // Show filled icon if all selected are pinned
-                        isAnyUnpinned -> Icons.Outlined.PushPin // Show outlined icon if any unpinned notes are selected
-                        else -> Icons.Outlined.PushPin // Default to outlined if nothing is selected
-                    },
-                    contentDescription = "Pin notes",
-                    tint = if (selectedCount > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                )
-            }
-            IconButton(onClick = onArchiveNotes) {
-                Icon(
-                    imageVector = when {
-                        isAllArchived -> Icons.Filled.Archive
-                        isAnyUnarchived -> Icons.Outlined.Archive
-                        else -> Icons.Outlined.Archive
-                    },
-                    contentDescription = "Archive notes",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            IconButton(onClick = onDeleteNotes) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete notes",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-        },
-        modifier = modifier
-    )
-}
-*/
-
-@Composable
-fun ExpandedSearchView(
-    searchQuery: String,
-    onSearchQueryChanged: (String) -> Unit,
-    onSearchClosed: () -> Unit,
+fun CollapsedSearchView(
+    title: String = "",
+    onMenuClick: () -> Unit,
+    onSearchClick: () -> Unit = {},
+    onThemeClick: () -> Unit = {},
+    onGridLayoutClick: () -> Unit = {},
+    screenType: ScreenType,
+    onEmptyTrash: () -> Unit = {},
     modifier: Modifier = Modifier,
-    onBackClick: () -> Unit
+    scrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
-    TextField(
-        value = searchQuery,
-        onValueChange = onSearchQueryChanged,
-        placeholder = { Text("Search your notes", color = Color.Gray) },
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 44.dp),
-        trailingIcon = {
-            if (searchQuery.isNotBlank()) {
-                IconButton(onClick = { onSearchQueryChanged("") }) {
-                    Icon(Icons.Default.Clear, contentDescription = "Clear Search")
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    val keyboardActions = KeyboardActions(
+        onDone = {
+            keyboardController?.hide()
+        }
+    )
+
+    when (screenType) {
+        ScreenType.Archive -> {
+            TopAppBar(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(focusRequester),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                title = { Text(title, Modifier.padding(start = 16.dp)) },
+                navigationIcon = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(Icons.Outlined.Menu, contentDescription = "Menu")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        onSearchClick()
+                        focusRequester.requestFocus()
+                    }) {
+                        Icon(Icons.Outlined.Search, contentDescription = "Search")
+                    }
+                },
+                scrollBehavior = scrollBehavior
+            )
+        }
+
+        ScreenType.List -> {
+            Surface(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(top = 44.dp),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                tonalElevation = 4.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onSearchClick),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+
+                        IconButton(onMenuClick) {
+                            Icon(
+                                imageVector = Icons.Outlined.Menu,
+                                contentDescription = "Menu"
+                            )
+                        }
+
+                        Spacer(Modifier.width(40.dp))
+
+                        Text("Search notes..")
+                    }
+
+                    IconButton(onThemeClick) {
+                        Icon(
+                            Icons.Outlined.Palette,
+                            contentDescription = "Change Theme"
+                        )
+                    }
+
+                    IconButton(onGridLayoutClick) {
+                        Icon(
+                            Icons.Outlined.TableRows,
+                            contentDescription = "Change Grid Layout"
+                        )
+                    }
+
+                    Spacer(Modifier.width(8.dp))
+
+
                 }
             }
-        },
-        leadingIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-            }
-        },
-        colors = TextFieldDefaults.colors(
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent
-        ),
-        shape = MaterialTheme.shapes.medium,
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { onSearchClosed() }),
-        singleLine = true
-    )
-}
+        }
 
+        ScreenType.Trash -> {
+            var showMoreMenu by remember { mutableStateOf(false) }
 
-@Composable
-fun CollapsedSearchView(
-    onMenuClick: () -> Unit,
-    onGridLayoutClick: () -> Unit,
-    onExpandedChanged: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-
-
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 44.dp),
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 4.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onExpandedChanged),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-
-                Icon(
-                    modifier = Modifier.clickable { onMenuClick() },
-                    imageVector = Icons.Outlined.Menu,
-                    contentDescription = "Menu"
-                )
-                Spacer(Modifier.width(40.dp))
-//                Icon(Icons.Default.Search, contentDescription = "Search")
-//                Spacer(Modifier.width(12.dp))
-                Text("Search notes...", color = Color.Gray)
-            }
-            IconButton(
-                onClick = onGridLayoutClick,
-                modifier = Modifier
-                    .padding(end = 8.dp)
-                    .clickable(onClick = { })
-            ) {
-                Icon(Icons.Outlined.TableRows, contentDescription = "Change Grid Layout")
-            }
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                title = { Text("Trash", Modifier.padding(start = 16.dp)) },
+                navigationIcon = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { showMoreMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                    }
+                    DropdownMenu(
+                        expanded = showMoreMenu,
+                        onDismissRequest = { showMoreMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Empty Trash") },
+                            onClick = {
+                                showMoreMenu = false
+                                onEmptyTrash()
+                            }
+                        )
+                    }
+                },
+                scrollBehavior = scrollBehavior
+            )
         }
     }
+
 }
-
-
-
-
-
-
-
-
 
 
 

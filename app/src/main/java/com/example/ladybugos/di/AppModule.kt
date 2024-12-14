@@ -14,10 +14,10 @@ import com.example.ladybugos.notification.NotificationWorker
 import com.example.ladybugos.repository.NoteRepository
 import com.example.ladybugos.ui.backup.NativeBackupManager
 import com.example.ladybugos.ui.backup.NativeBackupViewModel
-import com.example.ladybugos.ui.drawer.home.NoteListViewModel
-import com.example.ladybugos.ui.drawer.note_detail.NoteDetailViewModel
-import com.example.ladybugos.ui.drawer.settings.SettingsViewModel
-import com.example.ladybugos.ui.drawer.trash.TrashViewModel
+import com.example.ladybugos.ui.screens.home.NoteListViewModel
+import com.example.ladybugos.ui.screens.note_detail.NoteDetailViewModel
+import com.example.ladybugos.ui.screens.settings.SettingsViewModel
+import com.example.ladybugos.ui.screens.trash.TrashViewModel
 import com.example.ladybugos.usecase.BatchUpdateNoteUseCase
 import com.example.ladybugos.usecase.DeleteNoteUseCase
 import com.example.ladybugos.usecase.EmptyTrashUseCase

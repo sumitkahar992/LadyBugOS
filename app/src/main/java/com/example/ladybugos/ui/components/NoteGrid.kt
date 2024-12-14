@@ -129,7 +129,7 @@ fun NoteItem(
     val darkTheme = LocalThemeProvider.isDarkTheme
 
     val surfaceColor = if (darkTheme) {
-        Color(note.lightColor).darken(0.4f)
+        Color(note.lightColor).darken(0.7f)
     } else {
         Color(note.lightColor)
     }
@@ -174,7 +174,7 @@ fun NoteItem(
                 Text(
                     text = content,
                     style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onSurface,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )

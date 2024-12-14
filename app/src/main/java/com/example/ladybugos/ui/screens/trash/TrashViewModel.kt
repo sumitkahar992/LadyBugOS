@@ -1,4 +1,4 @@
-package com.example.ladybugos.ui.drawer.trash
+package com.example.ladybugos.ui.screens.trash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

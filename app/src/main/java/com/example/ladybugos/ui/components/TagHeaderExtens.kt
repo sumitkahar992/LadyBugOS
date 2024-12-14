@@ -18,52 +18,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import com.example.ladybugos.model.NoteWithTags
 import com.example.ladybugos.model.Tag
-
-
-@Composable
-fun TagHeader(
-    tags: List<Tag>,
-    selectedTagId: Long?,
-    onTagClick: (Long) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val scroll = rememberLazyListState()
-    LazyRow(
-        modifier = modifier
-            .wrapContentSize(unbounded = true)
-            .width(LocalConfiguration.current.screenWidthDp.dp),
-        state = scroll,
-        contentPadding = PaddingValues(10.dp, 0.dp, 10.dp, 0.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        items(tags) { tag ->
-            TagChip(
-                tag = tag,
-                isSelected = tag.id == selectedTagId,
-                onClick = { onTagClick(tag.id) },
-            )
-        }
-    }
-}
 
 // Usage in LazyStaggeredGridScope
 fun LazyStaggeredGridScope.tagHeader(
     tags: List<Tag>,
-    notes: List<NoteWithTags>,
+    activeTagIds: Set<Long>,
     selectedTagId: Long?,
     onTagClick: (Long) -> Unit,
 ) {
-    // Filter tags that have associated notes
-    val tagsWithNotes = tags.filter { tag ->
-        notes.any { noteWithTags ->
-            noteWithTags.tags.any { it.id == tag.id }
-        }
-    }
+    // Only show tags that have active notes
+    val activeTags = tags.filter { it.id in activeTagIds }
 
-    // Only create the tag header if there are tags with notes
-    if (tagsWithNotes.isNotEmpty()) {
+    if (activeTags.isNotEmpty()) {
         item(span = StaggeredGridItemSpan.FullLine) {
             val scroll = rememberLazyListState()
             LazyRow(
@@ -74,7 +41,10 @@ fun LazyStaggeredGridScope.tagHeader(
                 contentPadding = PaddingValues(10.dp, 0.dp, 10.dp, 0.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                items(tagsWithNotes) { tag ->
+                items(
+                    items = activeTags,
+                    key = { it.id } // Add key for better performance
+                ) { tag ->
                     TagChip(
                         tag = tag,
                         isSelected = tag.id == selectedTagId,
@@ -86,17 +56,50 @@ fun LazyStaggeredGridScope.tagHeader(
     }
 }
 
+@Composable
+fun TagHeader(
+    tags: List<Tag>,
+    selectedTagId: Long?,
+    activeTagIds: Set<Long>,
+    onTagClick: (Long) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Only show tags that have active notes
+    val activeTags = tags.filter { it.id in activeTagIds }
+    val scroll = rememberLazyListState()
+    if (activeTags.isNotEmpty()) {
+
+        LazyRow(
+            modifier = modifier
+                .wrapContentSize(unbounded = true)
+                .width(LocalConfiguration.current.screenWidthDp.dp),
+            state = scroll,
+            contentPadding = PaddingValues(10.dp, 0.dp, 10.dp, 0.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            items(tags) { tag ->
+                TagChip(
+                    tag = tag,
+                    isSelected = tag.id == selectedTagId,
+                    onClick = { onTagClick(tag.id) },
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun TagChip(
     tag: Tag,
     isSelected: Boolean,
+    enabled: Boolean = true,
     onClick: () -> Unit,
     containerColor: Color = Color.Unspecified,
     labelColor: Color = Color.Unspecified
 ) {
     FilterChip(
         selected = isSelected,
+        enabled = enabled,
         label = { Text(text = tag.name) },
         modifier = Modifier
             .padding(end = 6.dp),

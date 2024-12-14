@@ -1,13 +1,16 @@
-package com.example.ladybugos.ui.drawer.home
+package com.example.ladybugos.ui.screens.home
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.FloatingActionButton
@@ -36,12 +39,15 @@ import com.example.ladybugos.R
 import com.example.ladybugos.model.Note
 import com.example.ladybugos.navigation.NoteAction
 import com.example.ladybugos.navigation.NoteActionType
-import com.example.ladybugos.ui.components.ExpandableSearchView
 import com.example.ladybugos.ui.components.NoteGridTags
 import com.example.ladybugos.ui.components.NoteScreenContent
+import com.example.ladybugos.ui.components.NoteeDialog
 import com.example.ladybugos.ui.components.SwipeToDismissContentSnack
 import com.example.ladybugos.ui.components.scrollConnectionToProvideVisibility
 import com.example.ladybugos.ui.components.tagHeader
+import com.example.ladybugos.ui.screens.settings.ThemeOption
+import com.example.ladybugos.ui.theme.LocalThemeProvider
+import com.example.ladybugos.ui.theme.Theme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -66,8 +72,13 @@ fun NoteListScreen(
 
     var showReminderDialog by remember { mutableStateOf(false) }
     var isSearchExpanded by rememberSaveable { mutableStateOf(false) }
+
     // grid layout
     var showLayoutDialog by remember { mutableStateOf(false) }
+    var showThemeDialog by remember { mutableStateOf(false) }
+    val theme = LocalThemeProvider.theme
+
+    var isSearchMode by rememberSaveable { mutableStateOf(false) }
 
     val snackBarMessage by viewModel.snackBarMessage.collectAsStateWithLifecycle()
 
@@ -100,7 +111,6 @@ fun NoteListScreen(
         if (selectedNotes.isNotEmpty()) {
             toggleSelection(note)
         } else {
-            viewModel.clearSnackbarMessage()
             navigateToDetail(note.id)
         }
     }
@@ -114,23 +124,26 @@ fun NoteListScreen(
         isSearchExpanded = isSearchExpanded,
         setSearchExpanded = { isSearchExpanded = it },
         selectedNotes = selectedNotes,
-        clearSelectedNotes = { selectedNotes = emptySet() }
+        clearSelectedNotes = { selectedNotes = emptySet() },
+        isSearchMode = isSearchMode,
+        setSearchMode = { isSearchMode = it }
     )
 
     // Handle snackBar
     NoteSnackBarHandler(snackBarMessage, snackBarHostState)
 
-
     Scaffold(
         snackbarHost = { SwipeableSnackBarHost(snackBarHostState) },
-        modifier = modifier.scrollConnectionToProvideVisibility(isSearchBarVisible),
+        modifier = modifier
+            .fillMaxSize()
+            .scrollConnectionToProvideVisibility(isSearchBarVisible),
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
         floatingActionButton = { NoteFAB(navigateToDetail) },
     ) { padding ->
         NoteScreenContent(
             modifier = modifier,
             paddingValues = padding,
-            notes = uiState.notes,
+            notes = notes,
             isInitialized = uiState.isNotesInitialized,
             searchQuery = uiState.searchQuery,
             emptyIcon = R.drawable.notes,
@@ -144,21 +157,65 @@ fun NoteListScreen(
                 onNoteLongPress = ::toggleSelection,
                 gridContent = {
                     tagHeader(
-                        tags = uiState.tags,
-                        notes = uiState.notes,
-                        selectedTagId = uiState.selectedTagId,
+                        tags = uiState.tagState.availableTags,
+                        activeTagIds = uiState.tagState.activeTagIds,
+                        selectedTagId = uiState.tagState.selectedTagId,
                         onTagClick = { tagId -> viewModel.toggleTag(tagId) },
                     )
                 },
                 gridLayout = uiState.gridLayout,
             )
         }
+        /*
+                NoteListSearchUI(
+                    onMenuClick = onMenuClick,
+                    searchQuery = uiState.searchQuery,
+                    onGridLayoutClick = { showLayoutDialog = true },
+                    onSearchQueryChanged = viewModel::updateSearchQuery,
+                    selectedNotes = selectedNotes,
+                    onClearSelection = { selectedNotes = emptySet() },
+                    onPinNotes = { handlePinNotes() },
+                    onUnPinNotes = { handlePinNotes() },
+                    onArchiveNotes = { selectedNotes ->
+                        handleAction(
+                            action = { viewModel.archiveNotes(selectedNotes.toList()) },
+                            message = "${selectedNotes.size} notes archived and unpinned",
+                            restoreAction = { viewModel.undoLastOperation() }
+                        )
+                    },
+                    onDeleteNotes = { selectedNotes ->
+                        handleAction(
+                            action = { viewModel.trashNotes(selectedNotes.toList()) },
+                            message = "${selectedNotes.size} notes moved to trash and unpinned",
+                            restoreAction = { viewModel.undoLastOperation() }
+                        )
+                    },
+                    isSearchBarVisible = isSearchBarVisible.value,
+                    onSetReminder = {
+                        showReminderDialog = true
+                    },
+                    isSearchActive = isSearchExpanded,
+                    onSearchActiveChange = { expanded ->
+                        isSearchExpanded = expanded
+                    },
+                    onThemeClick = {
+                        showThemeDialog = true
+                    },
+                    screenType = ScreenType.List,
+                    scrollBehavior = scrollBehavior
+                )*/
 
-        ExpandableSearchView(
-            onMenuClick = onMenuClick,
+        SearchBarWithActions(
             searchQuery = uiState.searchQuery,
-            onGridLayoutClick = { showLayoutDialog = true },
-            onSearchQueryChanged = viewModel::updateSearchQuery,
+            onSearchQueryChange = viewModel::updateSearchQuery,
+            onMenuClick = onMenuClick,
+            onLayoutClick = { showLayoutDialog = true },
+            isSearchMode = isSearchMode || uiState.searchQuery.isNotEmpty(),
+            onBackClick = {
+                isSearchMode = false  // Reset search mode
+                viewModel.updateSearchQuery("")  // Clear search query
+            },
+            isVisible = isSearchBarVisible.value,
             selectedNotes = selectedNotes,
             onClearSelection = { selectedNotes = emptySet() },
             onPinNotes = { handlePinNotes() },
@@ -177,18 +234,35 @@ fun NoteListScreen(
                     restoreAction = { viewModel.undoLastOperation() }
                 )
             },
-            isSearchBarVisible = isSearchBarVisible,
             onSetReminder = {
                 showReminderDialog = true
             },
-            isSearchExpanded = isSearchExpanded,
-            onSearchExpandedChanged = { expanded ->
-                isSearchExpanded = expanded
-            }
         )
     }
 
     val initialDate = selectedNotes.firstOrNull()?.reminderDate
+
+    NoteeDialog(
+        enabled = showThemeDialog,
+        title = "Choose Theme",
+        onDismiss = { showThemeDialog = false },
+        description = {
+            Column(Modifier.selectableGroup()) {
+                ThemeOption(Theme.Light, theme) {
+                    viewModel.updateTheme(Theme.Light)
+                    showThemeDialog = false
+                }
+                ThemeOption(Theme.Dark, theme) {
+                    viewModel.updateTheme(Theme.Dark)
+                    showThemeDialog = false
+                }
+                ThemeOption(Theme.System, theme) {
+                    viewModel.updateTheme(Theme.System)
+                    showThemeDialog = false
+                }
+            }
+        }
+    )
 
     ReminderDialog(
         showDialog = showReminderDialog,
@@ -205,18 +279,29 @@ fun NoteListScreen(
             showReminderDialog = false
         },
         initialDate = initialDate,
+        onDeleteReminder = {
+            selectedNotes.forEach { note ->
+                viewModel.updateNoteReminder(
+                    noteId = note.id,
+                    reminderDate = null,
+                )
+                selectedNotes = emptySet() // Clear selection after updating reminder
+                showReminderDialog = false
+            }
+        }
     )
-    if (showLayoutDialog) {
-        LayoutSelectionDialog(
-            currentLayout = uiState.gridLayout,
-            onLayoutSelected = { grid ->
-                viewModel.updateGridLayout(grid)
-                showLayoutDialog = false
-            },
-            onDismiss = { showLayoutDialog = false }
-        )
-    }
+    LayoutSelectionDialog(
+        enabled = showLayoutDialog,
+        currentLayout = uiState.gridLayout,
+        onLayoutSelected = { grid ->
+            viewModel.updateGridLayout(grid)
+            showLayoutDialog = false
+        },
+        onDismiss = { showLayoutDialog = false }
+    )
+
 }
+
 
 @Composable
 private fun NoteFAB(navigateToDetail: (Long) -> Unit) {
@@ -245,7 +330,9 @@ fun HandleNoteActions(
     setSearchExpanded: (Boolean) -> Unit,
     selectedNotes: Set<Note>,
     clearSelectedNotes: () -> Unit,
-    clearSearch: () -> Unit = { viewModel.updateSearchQuery("") }
+    clearSearch: () -> Unit = { viewModel.updateSearchQuery("") },
+    isSearchMode: Boolean,
+    setSearchMode: (Boolean) -> Unit
 ) {
     // Handle note actions from navigation
     LaunchedEffect(noteId, actionType) {
@@ -266,17 +353,23 @@ fun HandleNoteActions(
     // Clear snackBar when leaving screen
     DisposableEffect(Unit) {
         onDispose {
-            viewModel.clearSnackbarMessage()
+            viewModel.clearSnackBarMessage()
         }
     }
 
     // Handle back button
-    BackHandler(enabled = isSearchExpanded || selectedNotes.isNotEmpty()) {
+    BackHandler(enabled = isSearchExpanded || selectedNotes.isNotEmpty() || isSearchMode) {
         when {
             selectedNotes.isNotEmpty() -> clearSelectedNotes()
             isSearchExpanded -> {
                 setSearchExpanded(false)
                 clearSearch()
+                setSearchMode(false)
+            }
+
+            isSearchMode -> {
+                clearSearch()
+                setSearchMode(false)
             }
         }
     }

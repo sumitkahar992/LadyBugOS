@@ -3,6 +3,7 @@ package com.example.ladybugos.model
 import android.database.SQLException
 import androidx.annotation.Keep
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.room.Dao
 import androidx.room.Database
 import androidx.room.Delete
@@ -39,7 +40,8 @@ data class Note(
 
 ) {
     fun matchesSearch(query: String): Boolean =
-        title.contains(query, ignoreCase = true) || content.contains(query, ignoreCase = true)
+        title.contains(query, ignoreCase = true) ||
+                content.contains(query, ignoreCase = true)
 }
 
 
@@ -288,6 +290,7 @@ abstract class NoteDatabase : RoomDatabase() {
     abstract fun checklistDao(): ChecklistItemDao
 }
 
+/*
 val colorPalette = listOf(
     Color(0xFFFFDAC1), Color(0xFFC5E2D2), Color(0xFFB2EBF2),
     Color(0xFFFFE082), Color(0xFFD7CCC8), Color(0xFFDCD3FF), Color(0xFFFFE5C0),
@@ -304,6 +307,76 @@ val colorPalette = listOf(
     Color(0xFF60E3F3), Color(0xFFCE93D8), Color(0xFFFFAB91), Color(0xFFE6EE9C),
     Color(0xFFC5E1A5), Color(0xFFD0E0E3), Color(0xFFBED2E6),
 )
+*/
+
+// Enhanced color palette with more vibrant colors
+val colorPalette = listOf(
+    Color(0xFFFFE0B2),  // Warm Peach
+    Color(0xFFB2DFDB),  // Teal Light
+    Color(0xFFFFCDD2),  // Coral Pink
+    Color(0xFFDCEDC8),  // Fresh Lime
+    Color(0xFFE1BEE7),  // Bright Lavender
+    Color(0xFFFFCCBC),  // Deep Peach
+    Color(0xFFBBDEFB),  // Sky Blue
+    Color(0xFFF8BBD0),  // Rose Pink
+    Color(0xFFD7CCC8),  // Warm Gray
+    Color(0xFFC8E6C9),  // Mint Green
+    Color(0xFFD1C4E9),  // Light Purple
+    Color(0xFFFFF9C4),  // Soft Yellow
+    Color(0xFFFFECB3),  // Light Amber
+    Color(0xFFB3E5FC),  // Light Blue
+    Color(0xFFF0F4C3),  // Lime Light
+    Color(0xFFE6EE9C),  // Fresh Green
+    Color(0xFFCFD8DC),  // Blue Gray
+    Color(0xFFFFDAB9),  // Peach Puff
+    Color(0xFFEAEF5F),  // Deep Lavender
+    Color(0xFFFFAB91)   // Deep Coral
+)
+
+// Combined theme colors using Pairs (Dark, Light)
+val noteColorPairs = listOf(
+    Pair(Color(0xFF1E293B), Color(0xFFF8FAFC)),  // Slate
+    Pair(Color(0xFF1E3A8A), Color(0xFFDBEAFE)),  // Royal Blue
+    Pair(Color(0xFF312E81), Color(0xFFE0E7FF)),  // Indigo
+    Pair(Color(0xFF4C1D95), Color(0xFFF3E8FF)),  // Purple
+    Pair(Color(0xFF831843), Color(0xFFFCE7F3)),  // Magenta
+    Pair(Color(0xFF881337), Color(0xFFFFE4E6)),  // Rose
+    Pair(Color(0xFF7C2D12), Color(0xFFFFEDD5)),  // Orange
+    Pair(Color(0xFF3F6212), Color(0xFFECFCCB)),  // Green
+    Pair(Color(0xFF115E59), Color(0xFFCCFBF1)),  // Teal
+    Pair(Color(0xFF164E63), Color(0xFFCFFAFE)),  // Cyan
+    Pair(Color(0xFF1E293B), Color(0xFFF1F5F9)),  // Cool Gray
+    Pair(Color(0xFF374151), Color(0xFFF3F4F6)),  // Gray
+    Pair(Color(0xFF461B93), Color(0xFFEEE6FD)),  // Royal Purple
+    Pair(Color(0xFF701A75), Color(0xFFFAE8FF)),  // Pink
+    Pair(Color(0xFF9F1239), Color(0xFFFEE2E2)),  // Ruby
+    Pair(Color(0xFF7C2D12), Color(0xFFFEF3C7)),  // Brown
+    Pair(Color(0xFF365314), Color(0xFFD1FAE5)),  // Olive
+    Pair(Color(0xFF134E4A), Color(0xFFE5E7EB)),  // Pine
+    Pair(Color(0xFF1E3A8A), Color(0xFFDDEDFD)),  // Navy
+    Pair(Color(0xFF312E81), Color(0xFFE0F2FE))   // Midnight
+
+)
+
+
+fun findPairByColor(color: Int): Pair<Color, Color>? {
+    return noteColorPairs.find { pair ->
+        pair.first.toArgb() == color || pair.second.toArgb() == color
+    }
+}
+
+// Extension property to get the dark color
+val Pair<Color, Color>.darkColor: Color
+    get() = first
+
+// Extension property to get the light color
+val Pair<Color, Color>.lightColor: Color
+    get() = second
+
+// Usage example:
+fun getColorForTheme(colorPair: Pair<Color, Color>, isDarkTheme: Boolean): Color {
+    return if (isDarkTheme) colorPair.darkColor else colorPair.lightColor
+}
 
 
 // Darken extension function for Dark Theme
@@ -314,6 +387,7 @@ fun Color.darken(factor: Float): Color {
         blue = (this.blue * factor).coerceIn(0f, 1f)
     )
 }
+
 
 fun getRelativeTimeAgo(updateDateString: String): String {
     val inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")

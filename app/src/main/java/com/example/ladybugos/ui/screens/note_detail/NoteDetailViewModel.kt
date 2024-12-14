@@ -1,4 +1,4 @@
-package com.example.ladybugos.ui.drawer.note_detail
+package com.example.ladybugos.ui.screens.note_detail
 
 
 import androidx.compose.ui.graphics.toArgb
@@ -52,7 +52,7 @@ class NoteDetailViewModel(
             loadNoteById(noteId)   // Load existing note
         } else {
             updateUiState {       // Initialize new note
-                it.initializeNewNote().copy(isLoading = false)
+                it.initializeNewNote()
             }
         }
 
@@ -159,7 +159,7 @@ class NoteDetailViewModel(
         updateUiStateAndTriggerSave { currentState ->
             val updatedNote = currentState.toNote().copy(isPinned = !currentState.isPinned)
             currentState.copy(
-                isPinned = updatedNote.isPinned, updateDate = NoteUiState.getCurrentFormattedDate()
+                isPinned = updatedNote.isPinned
             )
         }
     }
@@ -168,7 +168,6 @@ class NoteDetailViewModel(
         updateUiStateAndTriggerSave { currentState ->
             currentState.copy(
                 lightColor = newColor ?: currentState.lightColor,
-                updateDate = NoteUiState.getCurrentFormattedDate()
             )
         }
     }
@@ -182,7 +181,6 @@ class NoteDetailViewModel(
                         reminderDate = updatedNote.reminderDate,
                         id = updatedNote.id,
                         isDone = updatedNote.isDone,
-                        updateDate = NoteUiState.getCurrentFormattedDate()
                     )
                 }
             }
@@ -280,6 +278,45 @@ class NoteDetailViewModel(
     private data class NoteUpdatePayload(
         val note: Note, val tagIds: List<Long>
     )
+
+    fun deleteNoteForever(onComplete: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                val currentNote = _uiState.value.toNote()
+                noteRepository.deleteNote(currentNote)
+                onComplete()
+            } catch (e: Exception) {
+                Timber.e(e, "Error deleting note permanently")
+            }
+        }
+    }
+
+    fun restoreFromTrash(onComplete: () -> Unit = {}) {
+        viewModelScope.launch {
+            try {
+                val currentNote = _uiState.value.toNote()
+                val restoredNote = currentNote.copy(isTrashed = false)
+                noteRepository.updateNotes(listOf(restoredNote))
+                updateUiState { it.copy(isTrashed = false) }
+                onComplete()
+            } catch (e: Exception) {
+                Timber.e(e, "Error restoring note from trash")
+            }
+        }
+    }
+
+    fun undoRestore() {
+        viewModelScope.launch {
+            try {
+                val currentNote = _uiState.value.toNote()
+                val trashedNote = currentNote.copy(isTrashed = true)
+                noteRepository.updateNotes(listOf(trashedNote))
+                updateUiState { it.copy(isTrashed = true) }
+            } catch (e: Exception) {
+                Timber.e(e, "Error undoing restore")
+            }
+        }
+    }
 }
 
 
@@ -293,6 +330,7 @@ data class NoteUiState(
     val contentSelection: TextRange = TextRange(0),
     val lightColor: Int = 0,
     val isPinned: Boolean = false,
+    val pinnedDate: Long? = null,
     val isArchived: Boolean = false,
     val isTrashed: Boolean = false,
     val reminderDate: Long? = null,
@@ -307,6 +345,7 @@ data class NoteUiState(
         content = content,
         lightColor = lightColor,
         isPinned = isPinned,
+        pinnedDate = pinnedDate,
         isArchived = isArchived,
         isTrashed = isTrashed,
         reminderDate = reminderDate,
@@ -323,6 +362,7 @@ data class NoteUiState(
             content = it.note.content,
             lightColor = it.note.lightColor,
             isPinned = it.note.isPinned,
+            pinnedDate = it.note.pinnedDate,
             isArchived = it.note.isArchived,
             isTrashed = it.note.isTrashed,
             reminderDate = it.note.reminderDate,
@@ -351,7 +391,11 @@ data class NoteUiState(
 
     // Add initialization logic for new notes
     fun initializeNewNote() = copy(
-        lightColor = generateRandomColor(), updateDate = getCurrentFormattedDate()
+        // lightColor = generateRandomColor(),
+        lightColor = 0, // Default color (0 means use theme color)
+        updateDate = getCurrentFormattedDate(),
+        pinnedDate = System.currentTimeMillis(),
+        isLoading = false
     )
 }
 

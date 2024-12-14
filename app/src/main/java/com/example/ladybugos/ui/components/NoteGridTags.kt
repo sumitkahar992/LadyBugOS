@@ -19,7 +19,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -44,20 +43,14 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
-import androidx.compose.material.icons.outlined.DoNotDisturbOn
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -80,12 +73,13 @@ import androidx.compose.ui.unit.times
 import com.example.ladybugos.model.Note
 import com.example.ladybugos.model.NoteWithTags
 import com.example.ladybugos.model.Tag
-import com.example.ladybugos.model.darken
 import com.example.ladybugos.navigation.FastOutSlowInEasing
 import com.example.ladybugos.navigation.LocalNavAnimatedVisibilityScope
 import com.example.ladybugos.navigation.LocalSharedTransitionScope
 import com.example.ladybugos.navigation.NoteSharedElementKey
 import com.example.ladybugos.navigation.NoteSharedElementType
+import com.example.ladybugos.ui.components.tag.rememberContainerColor
+import com.example.ladybugos.ui.components.tag.rememberTagColors
 import com.example.ladybugos.ui.theme.GridLayout
 import com.example.ladybugos.ui.theme.LocalThemeProvider
 import java.time.Instant
@@ -218,33 +212,40 @@ fun NoteItemTag(
     // Memorize haptic feedback
     val hapticFeedback = LocalHapticFeedback.current
 
-    // Optimize animations with custom specs
+    // Optimize border animation with custom spring spec
+    val borderAnimationSpec = remember {
+        spring<Color>(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessLow,
+            visibilityThreshold = null
+        )
+    }
+
     val borderColor by animateColorAsState(
         targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
         label = "borderColor",
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioMediumBouncy,
+        animationSpec = borderAnimationSpec,
+        finishedListener = { // Optional: Clean up animation resources
+//            if (!isSelected) {
+            // Any cleanup needed when animation finishes
+//            }
+        }
+    )
+
+    val shapeAnimationSpec = remember {
+        spring<Dp>(
+            dampingRatio = Spring.DampingRatioNoBouncy,
             stiffness = Spring.StiffnessLow
         )
-    )
+    }
 
     val shape by animateDpAsState(
         targetValue = if (isSelected) 16.dp else 12.dp,
         label = "shape",
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessLow
-        )
+        animationSpec = shapeAnimationSpec
     )
 
-    val darkTheme = LocalThemeProvider.isDarkTheme
-    val surfaceColor = remember(darkTheme, note.lightColor) {
-        if (darkTheme) {
-            Color(note.lightColor).darken(0.4f)
-        } else {
-            Color(note.lightColor)
-        }
-    }
+    val surfaceColor = rememberContainerColor(note.lightColor)
 
     val height = calculateNoteHeight(
         note = note,
@@ -272,16 +273,27 @@ fun NoteItemTag(
         if (it == EnterExitState.Visible) 12.dp else 0.dp
     }
 
+    val borderColors =
+        if (note.lightColor == 0) MaterialTheme.colorScheme.outlineVariant else Color.Transparent
+
+
     with(sharedTransitionScope) {
         Surface(
             modifier = modifier
                 .fillMaxWidth()
                 .height(height)
                 .padding(4.dp)
-                .border(
-                    width = 2.dp,
-                    color = borderColor,
-                    shape = RoundedCornerShape(shape)
+                .border(0.7.dp, borderColors, RoundedCornerShape(shape))
+                .then(
+                    if (isSelected) {
+                        Modifier.border(
+                            width = 2.dp,
+                            color = borderColor,
+                            shape = RoundedCornerShape(shape)
+                        )
+                    } else {
+                        Modifier
+                    }
                 )
                 .sharedBounds(
                     sharedContentState = rememberSharedContentState(
@@ -328,6 +340,7 @@ fun NoteItemTag(
     }
 }
 
+
 @Composable
 private fun NoteContent(
     modifier: Modifier = Modifier,
@@ -364,7 +377,7 @@ private fun NoteContent(
                 style = MaterialTheme.typography.bodyMedium.copy(
                     lineHeight = 20.sp
                 ),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurface,
                 overflow = TextOverflow.Ellipsis,
                 fontSize = contentSize,
                 modifier = Modifier.weight(1f, fill = false)
@@ -375,7 +388,8 @@ private fun NoteContent(
         BottomSection(
             reminderDate = note.reminderDate,
             isDone = note.isDone,
-            tags = tags
+            tags = tags,
+            noteColor = note.lightColor
         )
     }
 }
@@ -384,7 +398,8 @@ private fun NoteContent(
 private fun BottomSection(
     reminderDate: Long?,
     isDone: Boolean,
-    tags: List<Tag>
+    tags: List<Tag>,
+    noteColor: Int
 ) {
     Column(
         modifier = Modifier
@@ -403,187 +418,30 @@ private fun BottomSection(
 
         // Tags
         if (tags.isNotEmpty()) {
-            TagList(tags = tags)
+            TagList(tags = tags, noteColor = noteColor)
         }
     }
 }
 
-/*@OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class)
-@Composable
-fun NoteItemTag(
-    modifier: Modifier = Modifier,
-    noteWithTags: NoteWithTags,
-    theme: Theme,
-    gridLayout: GridLayout,
-    isSelected: Boolean,
-    onClick: () -> Unit,
-    onLongPress: () -> Unit,
-) {
-
-
-    val note = noteWithTags.note
-    val tags = noteWithTags.tags
-
-    val darkTheme = when (theme) {
-        Theme.System -> isSystemInDarkTheme()
-        Theme.Light -> false
-        Theme.Dark -> true
-    }
-
-    val hapticFeedback = LocalHapticFeedback.current
-
-    val borderColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-        label = "borderColor"
-    )
-    val shape by animateDpAsState(targetValue = if (isSelected) 16.dp else 12.dp, label = "shape")
-
-    val surfaceColor = remember(darkTheme, note.lightColor) {
-        if (darkTheme) {
-            Color(note.lightColor).darken(0.4f)
-        } else {
-            Color(note.lightColor)
-        }
-    }
-
-//    val height = remember(note.title, note.content) {
-//        calculateHeight(note)
-//    }
-
-    val height = remember(note.title, note.content, gridLayout) {
-        when (gridLayout) {
-            GridLayout.OneColumn -> calculateHeight(note)
-            GridLayout.TwoColumns -> calculateHeight(note)
-            GridLayout.ThreeColumns -> calculateHeightCompact(note)
-        }
-    }
-
-    val (titleSize, contentSize) = when (gridLayout) {
-        GridLayout.OneColumn -> 18.sp to 14.sp
-        GridLayout.TwoColumns -> 16.sp to 14.sp
-        GridLayout.ThreeColumns -> 14.sp to 12.sp
-    }
-
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-        ?: throw IllegalStateException("No Scope found")
-    val animatedVisibilityScope = LocalNavAnimatedVisibilityScope.current
-        ?: throw IllegalStateException("No Scope found")
-
-
-    val roundedCornerAnimation by animatedVisibilityScope.transition.animateDp(label = "Rounded corner") {
-        if (it == EnterExitState.Visible) 16.dp else 0.dp
-    }
-    with(sharedTransitionScope) {
-        Surface(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(height)
-                .padding(4.dp)
-                .border(width = 2.dp, color = borderColor, shape = RoundedCornerShape(shape))
-                .sharedBounds(
-                    sharedContentState = rememberSharedContentState(
-                        key = NoteSharedElementKey(note.id, NoteSharedElementType.Bounds)
-                    ),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    enter = EnterTransition.None,
-                    exit = ExitTransition.None,
-                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                    clipInOverlayDuringTransition = OverlayClip(
-                        RoundedCornerShape(
-                            roundedCornerAnimation
-                        )
-                    )
-                )
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onLongPress()
-                    }
-                ),
-            color = surfaceColor,
-            shape = RoundedCornerShape(roundedCornerAnimation),
-            shadowElevation = 1.dp
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(12.dp)
-                    .sharedBounds(
-                        sharedContentState = rememberSharedContentState(
-                            key = NoteSharedElementKey(note.id, NoteSharedElementType.Content)
-                        ),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                        clipInOverlayDuringTransition = OverlayClip(
-                            RoundedCornerShape(
-                                roundedCornerAnimation
-                            )
-                        ),
-                    ),
-            ) {
-                note.title.takeIf { it.isNotEmpty() }?.let { title ->
-                    Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = if (gridLayout == GridLayout.OneColumn) 1 else 3,
-                        overflow = TextOverflow.Ellipsis,
-                        fontSize = titleSize,
-                        modifier = Modifier
-
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-
-                note.content.takeIf { it.isNotEmpty() }?.let { content ->
-                    Text(
-                        text = content,
-                        style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        overflow = TextOverflow.Ellipsis,
-//                    maxLines = when (gridLayout) {
-//                        GridLayout.OneColumn -> 6
-//                        GridLayout.TwoColumns -> 5
-//                        GridLayout.ThreeColumns -> 3
-//                    },
-                        fontSize = contentSize,
-                        modifier = Modifier
-                            .weight(1f)
-                    )
-                }
-                note.reminderDate?.let { reminderDate ->
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ReminderInfo(
-                        reminderDate = reminderDate,
-                        isDone = note.isDone,
-                        onClick = {}
-                    )
-                }
-
-                if (tags.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(6.dp))
-                    TagList(tags = tags)
-                }
-            }
-        }
-    }
-}*/
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TagList(tags: List<Tag>) {
+private fun TagList(tags: List<Tag>, noteColor: Int) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
         maxItemsInEachRow = 3
     ) {
         tags.take(2).forEach { tag ->
-            TagChip(tag = tag)
+            TagChip(
+                tag = tag,
+                noteColor = noteColor
+            )
         }
 
         if (tags.size > 2) {
             TagChip(
-                text = "+${tags.size - 2}"
+                text = "+${tags.size - 2}",
+                noteColor = noteColor
             )
         }
     }
@@ -592,24 +450,15 @@ private fun TagList(tags: List<Tag>) {
 @Composable
 private fun TagChip(
     tag: Tag? = null,
-    text: String = tag?.name ?: ""
+    text: String = tag?.name ?: "",
+    noteColor: Int = 0
 ) {
-    val darkTheme = LocalThemeProvider.isDarkTheme
-    val backgroundColor = if (darkTheme) {
-        Color.White.copy(alpha = 0.15f) // Semi-transparent white for dark theme
-    } else {
-        Color.White.copy(alpha = 0.85f) // More opaque white for light theme
-    }
-
-    val contentColor = if (darkTheme) {
-        Color.White.copy(alpha = 0.87f)
-    } else {
-        Color.Black.copy(alpha = 0.87f)
-    }
+    // Calculate colors based on theme and noteColor
+    val tagColors = rememberTagColors(noteColor)
 
     Surface(
-        color = backgroundColor,
-        contentColor = contentColor,
+        color = tagColors.backgroundColor,
+        contentColor = tagColors.contentColor,
         shape = RoundedCornerShape(4.dp),
         modifier = Modifier.height(22.dp)
     ) {
@@ -622,16 +471,18 @@ private fun TagChip(
 }
 
 
-/*   val formattedDate = remember(reminderDate) {
+/*
+ val formattedDate = remember(reminderDate) {
        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
            .format(Date(reminderDate))
-   }*/
-/*    val newFormattedDate = remember(reminderDate) {
+   }
+   val newFormattedDate = remember(reminderDate) {
         val instant = Instant.ofEpochMilli(reminderDate)
         val dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
         val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a")
         dateTime.format(formatter)
-    }*/
+    }
+    */
 @Composable
 fun ReminderInfo(
     modifier: Modifier = Modifier,
@@ -639,9 +490,7 @@ fun ReminderInfo(
     isDone: Boolean,
     onClick: () -> Unit = {},
     isClickable: Boolean = false,
-    onRemoveReminder: () -> Unit = {}, // New parameter
 ) {
-    var showConfirmDialog by remember { mutableStateOf(false) }
 
     val formattedDate = remember(reminderDate) {
         formatReminderDate(reminderDate)
@@ -721,52 +570,7 @@ fun ReminderInfo(
                 )
             }
         }
-
-        // Only show remove icon if reminder is done
-        if (isDone && isClickable) {
-            Box(
-                modifier = Modifier
-                    .size(22.dp)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = ripple(bounded = false, radius = 12.dp)
-                    ) {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        showConfirmDialog = true
-                    },
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.DoNotDisturbOn,
-                    contentDescription = "Remove reminder",
-                    tint = contentColor.copy(alpha = 0.7f)
-                )
-            }
-        }
     }
-
-    if (showConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { showConfirmDialog = false },
-            title = { Text("Remove Reminder") },
-            text = { Text("Are you sure you want to remove this reminder?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showConfirmDialog = false
-                        onRemoveReminder()
-                    }
-                ) {
-                    Text("Remove")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showConfirmDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
 }
 
 
@@ -800,59 +604,6 @@ private fun formatReminderDate(reminderDate: Long): String {
             }"
     }
 }
-
-/*
-
-fun calculateHeight(note: Note): Dp {
-    return when {
-        note.title.isEmpty() || note.content.isEmpty() -> 64.dp // Minimum height for empty notes
-        note.title.isEmpty() -> if (note.content.length < 80) 75.dp else 140.dp
-        note.content.isEmpty() -> if (note.title.length < 40) 75.dp else 120.dp
-        else -> when {
-            note.content.length < 40 -> 150.dp
-            note.content.length < 80 -> 170.dp
-            note.content.length < 120 -> 190.dp
-            note.content.length < 170 -> 220.dp
-            note.content.length < 240 -> 260.dp
-            note.content.length < 480 -> 280.dp
-            note.content.length < 555 -> 330.dp
-            note.content.length < 666 -> 380.dp
-            else -> 420.dp
-        }
-    }
-}
-
-
-private fun calculateHeightCompact(note: Note): Dp {
-    return when {
-        // Empty or minimal content cases
-        note.title.isEmpty() && note.content.isEmpty() -> 100.dp  // Minimum height for empty notes
-
-        // Only title
-        note.content.isEmpty() -> when (note.title.length) {
-            in 0..20 -> 100.dp
-            in 21..40 -> 120.dp
-            else -> 140.dp
-        }
-
-        // Only content
-        note.title.isEmpty() -> when (note.content.length) {
-            in 0..40 -> 80.dp
-            in 41..80 -> 140.dp
-            else -> 180.dp
-        }
-
-        // Both title and content
-        else -> when (note.content.length) {
-            in 0..30 -> 120.dp    // Very short content
-            in 31..60 -> 160.dp   // Short content
-            in 61..90 -> 200.dp   // Medium content
-            in 91..120 -> 240.dp  // Medium-long content
-            else -> 260.dp        // Maximum height for extra long content
-        }
-    }
-}
-*/
 
 
 // Helper class to manage note dimensions
@@ -1011,7 +762,7 @@ if (isDone) {
 fun reminderIcon(repeatInterval: RepeatInterval?): Pair<ImageVector, String> {
     return when (repeatInterval) {
         RepeatInterval.DAILY, RepeatInterval.WEEKLY, RepeatInterval.MONTHLY,
-            -> Icons.Default.Autorenew to "Daily Reminder"
+            -> Icons.Default.AutoRenew to "Daily Reminder"
 
         RepeatInterval.YEARLY -> Icons.Outlined.EventRepeat to "Yearly Reminder"
         RepeatInterval.CUSTOM -> Icons.Outlined.EventRepeat to "Custom Repeat Reminder"

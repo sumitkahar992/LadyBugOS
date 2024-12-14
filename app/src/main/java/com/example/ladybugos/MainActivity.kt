@@ -14,6 +14,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,8 +27,8 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
-import com.example.ladybugos.notification.PermissionDialog
-import com.example.ladybugos.ui.drawer.note_detail.NoteDetailViewModel
+import com.example.ladybugos.ui.components.NoteeDialog
+import com.example.ladybugos.ui.screens.note_detail.NoteDetailViewModel
 import com.example.ladybugos.ui.theme.LadyBugOSTheme
 import dagger.hilt.android.AndroidEntryPoint
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -113,15 +115,19 @@ class MainActivity : ComponentActivity() {
             checkAndRequestNotificationPermission(notificationPermissionLauncher)
         }
 
-        if (showDialog) {
-            PermissionDialog(
-                onDismiss = { showDialog = false },
-                onSettingsClick = {
-                    showDialog = false
-                    openNotificationSettings()
-                }
-            )
-        }
+        NoteeDialog(
+            enabled = showDialog,
+            title = "Notification Permission",
+            description = "We need notification permissions to remind you about your notes.",
+            icon = Icons.Outlined.NotificationsActive,
+            confirmText = "Open Settings",
+            dismissText = "Dismiss",
+            onConfirm = {
+                showDialog = false
+                openNotificationSettings()
+            },
+            onDismiss = { showDialog = false }
+        )
         content()
     }
 

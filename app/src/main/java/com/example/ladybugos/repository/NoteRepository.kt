@@ -64,16 +64,19 @@ class NoteRepository(
     }
     */
     fun getAllNotesWithTags(): Flow<List<NoteWithTags>> {
-        return noteDao.getAllNotesWithTags().map { notesWithTags ->
-            notesWithTags.groupBy { it.note.isPinned }
-                .let { grouped ->
-                    // Sort pinned notes by pinnedDate
-                    (grouped[true]?.sortedByDescending { it.note.pinnedDate } ?: emptyList()) +
-                            // Sort unpinned notes by ID
-                            (grouped[false]?.sortedByDescending { it.note.id } ?: emptyList())
-                }
-        }
+        return noteDao.getAllNotesWithTags()
+//            .map { notesWithTags ->
+//                notesWithTags
+//                    .groupBy { it.note.isPinned }
+//                    .let { grouped ->
+//                        // Sort pinned notes by pinnedDate
+//                        (grouped[true]?.sortedByDescending { it.note.pinnedDate } ?: emptyList()) +
+//                                // Sort unpinned notes by ID
+//                                (grouped[false]?.sortedByDescending { it.note.id } ?: emptyList())
+//                    }
+//            }
     }
+
     fun getAllTags() = tagDao.getAllTags()
     fun getNoteWithTagsById(id: Long) = noteDao.getNoteWithTagsById(id)
 
