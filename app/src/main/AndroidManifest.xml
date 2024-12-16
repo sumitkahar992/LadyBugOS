@@ -5,12 +5,9 @@
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.UPDATE_APP_WIDGETS" />
-
     <!-- For Downloads directory access -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<!--    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />-->
+<!--    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />-->
 
 
     <application
@@ -42,42 +39,24 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="note" />
+                <data
+                    android:host="com.despicable.ladybugos"
+                    android:scheme="note" />
             </intent-filter>
 
         </activity>
 
         <receiver
-            android:name=".notification.NotificationActionReceiver"
+            android:name="com.despicable.notifications.NotificationActionReceiver"
             android:exported="false">
 
         </receiver>
 
 
-        <receiver
-            android:name=".widget.NotesWidgetReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/notes_widget_provider" />
-        </receiver>
 
 
-        <activity
-            android:name=".widget.ConfigWidgetActivity"
-            android:enabled="true"
-            android:exported="true"
-            android:imeOptions="actionSend|flagNoEnterAction"
-            android:theme="@style/Theme.LadyBugOS"
-            android:permission="android.permission.UPDATE_WIDGETS">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-        </activity>
+
+
 
 
     </application>

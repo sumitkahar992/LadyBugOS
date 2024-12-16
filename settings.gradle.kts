@@ -1,4 +1,8 @@
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             content {
@@ -20,5 +24,24 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "LadyBugOS"
+
 include(":app")
- 
+
+
+include(":notifications")
+include(":widgets")
+
+
+include(":core:model")
+include(":core:data")
+include(":core:domain")
+include(":core:database")
+include(":core:common")
+include(":core:design-system")
+include(":core:datastore")
+
+
+
+include(":feature:home")
+include(":feature:detail")
+include(":feature:settings")

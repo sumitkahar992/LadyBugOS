@@ -1,0 +1,20 @@
+package com.despicable.feature.settings
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.despicable.model.Theme
+import kotlinx.coroutines.launch
+
+class SettingsViewModel(
+    private val repo: com.despicable.core.datastore.SettingsRepo,
+) : ViewModel() {
+
+    fun updateTheme(theme: Theme) {
+        viewModelScope.launch { repo.setTheme(theme) }
+    }
+
+    fun updateDynamicColor(dynamicColor: Boolean) {
+        viewModelScope.launch { repo.setDynamicColor(dynamicColor) }
+    }
+
+}

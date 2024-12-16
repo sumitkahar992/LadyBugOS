@@ -1,0 +1,23 @@
+plugins {
+    alias(libs.plugins.deathnote.android.library)
+}
+
+android {
+    namespace = "com.despicable.core.data"
+}
+
+dependencies {
+
+    api(projects.core.model)
+    api(projects.core.common)
+    api(projects.core.database)
+    api(projects.core.datastore)
+
+    implementation(libs.javax.inject)
+
+    implementation(project.dependencies.platform(libs.koin.bom))
+    implementation(libs.koin.core)
+
+    implementation(projects.notifications)
+    implementation(libs.kotlinx.coroutines.android)
+}
