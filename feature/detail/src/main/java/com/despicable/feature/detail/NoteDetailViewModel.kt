@@ -9,12 +9,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.despicable.core.common.navigation.NoteAction
+import com.despicable.core.designsystem.colorPalette
 import com.despicable.core.domain.usecase.NoteDetailUseCases
+import com.despicable.core.model.Note
+import com.despicable.core.model.NoteWithTags
+import com.despicable.core.model.Tag
 import com.despicable.feature.detail.navigation.DetailRoute
-import com.despicable.model.Note
-import com.despicable.model.NoteWithTags
-import com.despicable.model.Tag
-import com.despicable.model.colorPalette
+import com.despicable.widgets.data.WidgetUpdater
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -34,8 +35,9 @@ import java.time.format.DateTimeFormatter
 
 
 class NoteDetailViewModel(
+    private val useCase: NoteDetailUseCases,
+    private val widgetUpdater: WidgetUpdater,
     savedStateHandle: SavedStateHandle,
-    private val useCase: NoteDetailUseCases
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NoteUiState())
@@ -69,19 +71,19 @@ class NoteDetailViewModel(
     }
 
 
-    /*    fun preloadNoteData(noteId: Long, glanceId: GlanceId) {
-            viewModelScope.launch {
-                try {
-                    val noteWithTags = noteRepository.getNoteWithTagsById(noteId).firstOrNull()
-                    updateUiState { it.fromNoteWithTags(noteWithTags) }
+    /*        fun preloadNoteData(noteId: Long, glanceId: GlanceId) {
+                viewModelScope.launch {
+                    try {
+                        val noteWithTags = noteRepository.getNoteWithTagsById(noteId).firstOrNull()
+                        updateUiState { it.fromNoteWithTags(noteWithTags) }
 
-                } catch (e: Exception) {
-                    Timber.e(e, "Error preloading note data")
-                    // Optionally, you could add error handling in the UI state if needed:
-                    // updateUiState { it.copy(error = e.localizedMessage) }
+                    } catch (e: Exception) {
+                        Timber.e(e, "Error preloading note data")
+                        // Optionally, you could add error handling in the UI state if needed:
+                        // updateUiState { it.copy(error = e.localizedMessage) }
+                    }
                 }
-            }
-        }*/
+            }*/
 
 
     @OptIn(FlowPreview::class)
@@ -141,6 +143,7 @@ class NoteDetailViewModel(
                             tagIds = currentState.selectedTagIds.toList()
                         )
                     )
+                    widgetUpdater.updateSingleWidget(currentState.toNote())
                 }
             } catch (e: Exception) {
                 Timber.e(e, "Error saving/updating note")
@@ -207,6 +210,8 @@ class NoteDetailViewModel(
                     note = note, tagIds = _uiState.value.selectedTagIds.toList()
                 )
             )
+            widgetUpdater.updateSingleWidget(note)
+
         }
     }
 
@@ -270,6 +275,7 @@ class NoteDetailViewModel(
 
     private fun updateUiState(update: (NoteUiState) -> NoteUiState) {
         _uiState.update(update)
+
     }
 
     private fun Set<Long>.toggle(id: Long) = if (contains(id)) minus(id) else plus(id)
@@ -297,6 +303,7 @@ class NoteDetailViewModel(
                 val restoredNote = currentNote.copy(isTrashed = false)
                 useCase.updateNotes(listOf(restoredNote))
                 updateUiState { it.copy(isTrashed = false) }
+                widgetUpdater.updateSingleWidget(restoredNote)
                 onComplete()
             } catch (e: Exception) {
                 Timber.e(e, "Error restoring note from trash")
@@ -311,6 +318,7 @@ class NoteDetailViewModel(
                 val trashedNote = currentNote.copy(isTrashed = true)
                 useCase.updateNotes(listOf(trashedNote))
                 updateUiState { it.copy(isTrashed = true) }
+                widgetUpdater.updateSingleWidget(trashedNote)
             } catch (e: Exception) {
                 Timber.e(e, "Error undoing restore")
             }

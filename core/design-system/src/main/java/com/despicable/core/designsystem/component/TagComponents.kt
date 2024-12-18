@@ -4,8 +4,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import com.despicable.core.designsystem.darken
 import com.despicable.core.designsystem.theme.LocalThemeProvider
-import com.despicable.model.darken
 
 
 /*

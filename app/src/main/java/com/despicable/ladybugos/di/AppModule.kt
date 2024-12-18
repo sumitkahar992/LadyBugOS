@@ -1,9 +1,7 @@
 package com.despicable.ladybugos.di
 
+import com.despicable.feature.home.screens.trash.TrashViewModel
 import com.despicable.ladybugos.MainViewModel
-import com.despicable.ladybugos.ui.backup.NativeBackupManager
-import com.despicable.ladybugos.ui.backup.NativeBackupViewModel
-import com.despicable.ladybugos.ui.screens.trash.TrashViewModel
 import com.despicable.widgets.data.CoroutineDispatchers
 import com.despicable.widgets.data.DefaultCoroutineDispatchers
 import org.koin.core.module.dsl.viewModel
@@ -19,10 +17,6 @@ val appModule = module {
 
     viewModel { MainViewModel(get()) }
     viewModel { TrashViewModel(get(), get(), get(), get(), get(), get()) }
-
-
-    single { NativeBackupManager(get(), get()) }
-    viewModel { NativeBackupViewModel(get()) }
 
 
 }

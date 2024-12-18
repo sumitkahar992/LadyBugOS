@@ -12,6 +12,7 @@ dependencies {
     implementation(projects.core.designSystem)
     implementation(projects.core.common)
     implementation(projects.core.domain)
+    implementation(projects.widgets)
 
     // Koin
     implementation(libs.koin.androidx.compose)

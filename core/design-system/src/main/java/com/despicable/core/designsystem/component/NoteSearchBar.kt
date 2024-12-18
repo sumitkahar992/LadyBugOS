@@ -64,7 +64,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.despicable.model.Note
+import com.despicable.core.model.Note
 
 sealed class ScreenType {
     data object List : ScreenType()

@@ -9,6 +9,7 @@ android {
 dependencies {
 
     api(projects.core.model)
+    api(projects.core.designSystem)
 
 
     implementation(project.dependencies.platform(libs.koin.bom))

@@ -21,6 +21,8 @@ import com.despicable.core.domain.usecase.SaveNoteUseCase
 import com.despicable.core.domain.usecase.UpdateNoteReminderUseCase
 import com.despicable.core.domain.usecase.UpdateNoteTagsUseCase
 import com.despicable.core.domain.usecase.UpdateNotesUseCase
+import com.despicable.core.domain.usecase.backup.CreateBackupUseCase
+import com.despicable.core.domain.usecase.backup.RestoreBackupUseCase
 import org.koin.dsl.module
 
 val domainModule = module {
@@ -62,4 +64,7 @@ val domainModule = module {
     // Sample Data
     single<AssetLoader> { AssetLoaderImpl(get()) }
     single { LoadSampleDataUseCase(get(), get(), get(), get(), get()) }
+
+    single { CreateBackupUseCase(get()) }
+    single { RestoreBackupUseCase(get()) }
 }

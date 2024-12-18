@@ -2,7 +2,7 @@ package com.despicable.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.despicable.model.Theme
+import com.despicable.core.designsystem.theme.Theme
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(

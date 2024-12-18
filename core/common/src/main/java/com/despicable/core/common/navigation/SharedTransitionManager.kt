@@ -1,5 +1,6 @@
 package com.despicable.core.common.navigation
 
+/*
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -144,4 +145,4 @@ object SharedTransitionManager {
             }
         }
     }
-} 
+} */

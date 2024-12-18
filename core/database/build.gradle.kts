@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.despicable.database"
+    namespace = "com.despicable.core.database"
 }
 
 dependencies {

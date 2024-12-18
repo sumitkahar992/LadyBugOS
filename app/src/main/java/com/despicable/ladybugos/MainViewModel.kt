@@ -3,8 +3,8 @@ package com.despicable.ladybugos
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.despicable.core.datastore.SettingsRepo
-import com.despicable.model.Settings
-import com.despicable.model.Theme
+import com.despicable.core.designsystem.theme.Settings
+import com.despicable.core.designsystem.theme.Theme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

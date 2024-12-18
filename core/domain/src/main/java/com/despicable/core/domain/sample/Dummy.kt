@@ -1,15 +1,13 @@
 package com.despicable.core.domain.sample
 
 import android.content.Context
-import androidx.compose.ui.graphics.toArgb
+import com.despicable.core.database.model.TagEntity
 import com.despicable.core.domain.usecase.GetAllNotesUseCase
 import com.despicable.core.domain.usecase.GetAllTagsUseCase
 import com.despicable.core.domain.usecase.GetInsertTagsUseCase
 import com.despicable.core.domain.usecase.InsertNoteWithTagsUseCase
-import com.despicable.database.model.TagEntity
-import com.despicable.model.Note
-import com.despicable.model.Tag
-import com.despicable.model.colorPalette
+import com.despicable.core.model.Note
+import com.despicable.core.model.Tag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -34,11 +32,8 @@ class LoadSampleDataUseCase(
                     insertTagsUseCase(tag)
                 }
 
-                val sampleNotes = getSampleNotes().map {
-                    it.copy(
-                        lightColor = colorPalette.random().toArgb()
-                    )
-                }
+                val sampleNotes = getSampleNotes()
+//                    .map { it.copy(lightColor = colorPalette.random().toArgb()) }
                 sampleNotes.forEach { note ->
                     val randomTags = sampleTags.shuffled().take(Random.nextInt(1, 4))
                     insertNoteWithTagsUseCase(note, randomTags.map { it.id })

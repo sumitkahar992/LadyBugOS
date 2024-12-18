@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.rememberNavController
 import com.despicable.core.designsystem.component.NoteeDialog
 import com.despicable.core.designsystem.theme.LadyBugOSTheme
+import com.despicable.ladybugos.ui.MainContent
 import dagger.hilt.android.AndroidEntryPoint
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
@@ -95,6 +96,8 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
+
+
         }
     }
 

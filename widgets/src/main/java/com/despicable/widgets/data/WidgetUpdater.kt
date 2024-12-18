@@ -7,7 +7,7 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.getAppWidgetState
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.state.PreferencesGlanceStateDefinition
-import com.despicable.model.Note
+import com.despicable.core.model.Note
 import com.despicable.widgets.model.WidgetKeys
 import com.despicable.widgets.ui.NoteWidget
 import kotlinx.coroutines.CoroutineDispatcher

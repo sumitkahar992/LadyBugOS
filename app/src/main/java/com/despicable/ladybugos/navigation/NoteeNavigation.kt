@@ -17,17 +17,18 @@ import com.despicable.core.common.navigation.LocalSharedTransitionScope
 import com.despicable.core.common.navigation.NoteAction
 import com.despicable.core.common.navigation.handleAction
 import com.despicable.core.common.navigation.popBackStackOnResume
-import com.despicable.core.common.navigation.rememberActionState
-import com.despicable.core.common.navigation.sharedElementComposable
+import com.despicable.feature.backup.navigation.navigateToBackup
 import com.despicable.feature.detail.navigation.DetailRoute
 import com.despicable.feature.detail.navigation.detailScreen
 import com.despicable.feature.detail.navigation.navigateToDetail
-import com.despicable.ladybugos.ui.backup.BackupScreen
-import com.despicable.ladybugos.ui.screens.ArchivedScreen
-import com.despicable.ladybugos.ui.screens.LabelScreen
-import com.despicable.ladybugos.ui.screens.ReminderScreen
-import com.despicable.feature.home.NoteListScreen
-import com.despicable.ladybugos.ui.screens.trash.TrashScreen
+import com.despicable.feature.home.navigation.HomeRoute
+import com.despicable.feature.home.navigation.homeScreen
+import com.despicable.feature.home.screens.navigation.archiveScreen
+import com.despicable.feature.home.screens.navigation.labelScreen
+import com.despicable.feature.home.screens.navigation.reminderScreen
+import com.despicable.feature.home.screens.navigation.trashScreen
+import com.despicable.feature.settings.navigation.OSLicense
+import com.despicable.feature.settings.navigation.settingsScreen
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -42,7 +43,7 @@ fun NoteeNavigation(
     val context = LocalContext.current
     val isOpenedFromWidget = remember(noteId) { noteId != -1L }
     val startDestination = remember(noteId) {
-        if (noteId == -1L) Screen.NoteList() else DetailRoute(noteId)
+        if (noteId == -1L) HomeRoute() else DetailRoute(noteId)
     }
 
 
@@ -57,20 +58,14 @@ fun NoteeNavigation(
                 navController = navController,
                 startDestination = startDestination
             ) {
-                // Note List Screen
-                sharedElementComposable<Screen.NoteList> {
-                    val actionState = rememberActionState(navController.currentBackStackEntry)
-                    NoteListScreen(
-                        navigateToDetail = navController::navigateToDetail,
-                        onMenuClick = { scope.launch { drawerState.open() } },
-                        noteId = actionState.noteId,
-                        actionType = actionState.actionType,
-                        clearNoteAction = { actionState.clear(navController.currentBackStackEntry) }
-                    )
-                }
 
-                // Note Detail Screen
-//                sharedElementComposable<Screen.NoteDetail> {  }
+                homeScreen(
+                    navController = navController,
+                    navigateToDetail = navController::navigateToDetail,
+                    onMenuClick = { scope.launch { drawerState.open() } },
+                )
+
+
                 Timber.tag("DEBUG").d("isOpenedFromWidget : [$isOpenedFromWidget]")
 
                 detailScreen(
@@ -92,83 +87,55 @@ fun NoteeNavigation(
                     })
 
 
-                sharedElementComposable<Screen.Archive> {
-                    val actionState = rememberActionState(navController.currentBackStackEntry)
-                    ArchivedScreen(
-                        onMenuClick = { scope.launch { drawerState.open() } },
-                        navigateToNoteDetail = navController::navigateToDetail,
-                        noteId = actionState.noteId,
-                        actionType = actionState.actionType,
-                        clearNoteAction = { actionState.clear(navController.currentBackStackEntry) }
-                    )
-                }
 
-                sharedElementComposable<Screen.Labels> {
-                    LabelScreen(
-                        onNavigateBack = navController::popBackStackOnResume
-                    )
-                }
+                archiveScreen(
+                    navController = navController,
+                    onMenuClick = { scope.launch { drawerState.open() } },
+                    navigateToDetail = navController::navigateToDetail,
+                )
 
-                sharedElementComposable<Screen.Trash> {
-                    TrashScreen(
-                        onMenuClick = { scope.launch { drawerState.open() } },
-                        navigateToDetail = navController::navigateToDetail
-                    )
-                }
+
+                labelScreen(
+                    onNavigateUp = navController::popBackStackOnResume
+                )
+
+
+                trashScreen(
+                    onMenuClick = { scope.launch { drawerState.open() } },
+                    navigateToDetail = navController::navigateToDetail
+                )
 
 
 
-                sharedElementComposable<Screen.Reminders> {
-                    val actionState = rememberActionState(navController.currentBackStackEntry)
-                    ReminderScreen(
-                        onMenuClick = { scope.launch { drawerState.open() } },
-                        navigateToNoteDetail = navController::navigateToDetail,
-                        noteId = actionState.noteId,
-                        actionType = actionState.actionType,
-                        clearNoteAction = { actionState.clear(navController.currentBackStackEntry) }
-                    )
-                }
 
-                sharedElementComposable<Screen.Settings> {
-                    com.despicable.feature.settings.SettingsScreen(
-                        onMenuClick = { scope.launch { drawerState.open() } },
-                        onPrivacyClick = {},
-                        onOSLicenseClick = { navController.navigate(Screen.OSLicense) },
-                        onBackUpClick = { navController.navigate(Screen.BackupAndRestore) }
-                    )
-                }
+                reminderScreen(
+                    navController = navController,
+                    onMenuClick = { scope.launch { drawerState.open() } },
+                    navigateToDetail = navController::navigateToDetail,
+                )
 
-                sharedElementComposable<Screen.BackupAndRestore> {
-                    BackupScreen(
-                        onNavigateUp = navController::popBackStackOnResume
-                    )
-                }
 
-                sharedElementComposable<Screen.OSLicense> {
-                    com.despicable.feature.settings.OSLicenseScreen(
-                        onBackPress = navController::popBackStackOnResume
-                    )
-                }
+                settingsScreen(
+                    onMenuClick = { scope.launch { drawerState.open() } },
+                    onPrivacyClick = {},
+                    onLicenseClick = { navController.navigate(OSLicense) },
+                    onBackUpClick = { navController.navigateToBackup() },
+                    onNavigateUp = navController::popBackStackOnResume
+                )
             }
         }
     }
 }
 
 
-// Separate class to handle navigation actions
 private class NavigationActions(private val navController: NavHostController) {
-//    fun navigateToNoteDetail(noteId: Long) {
-//        navController.navigate(Screen.NoteDetail(id = noteId)) {
-//            launchSingleTop = true
-//        }
-//    }
 
     fun handleWidgetNavigation(context: Context) {
         if (navController.currentBackStackEntry?.lifecycle?.currentState?.isAtLeast(
                 Lifecycle.State.CREATED
             ) == true
         ) {
-            navController.navigate(Screen.NoteList()) {
+            navController.navigate(HomeRoute()) {
                 popUpTo(navController.graph.id) {
                     inclusive = true
                 }

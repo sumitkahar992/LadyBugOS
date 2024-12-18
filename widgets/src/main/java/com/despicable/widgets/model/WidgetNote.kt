@@ -7,9 +7,9 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.serialization.Serializable
 
-
+@Keep
 @Serializable
- data class WidgetNote(
+data class WidgetNote(
     val id: String,
     val title: String,
     val content: String,
@@ -19,9 +19,6 @@ import kotlinx.serialization.Serializable
 )
 
 
-
-
-@Keep
 object WidgetKeys {
     object Prefs {
         val noteId = stringPreferencesKey("noteId")
@@ -33,7 +30,8 @@ object WidgetKeys {
 
         const val NOTE_ID_EXTRA = "NoteIdExtra"
 
-        val tempNoteId = stringPreferencesKey("temp_note_id")  // Make sure this is stringPreferencesKey, not booleanPreferencesKey as shown in the example
+        val tempNoteId =
+            stringPreferencesKey("temp_note_id")  // Make sure this is stringPreferencesKey, not booleanPreferencesKey as shown in the example
 
     }
 }

@@ -1,19 +1,54 @@
 package com.despicable.core.designsystem.theme
 
 import android.os.Build
+import androidx.annotation.Keep
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import com.despicable.model.Theme
-import com.despicable.model.ThemeConfig
-import com.despicable.model.ThemePreferences
+
+// Data class to hold theme-related state
+@Stable
+data class ThemePreferences(
+    val isDarkTheme: Boolean,
+    val colorScheme: ColorScheme,
+    override val theme: Theme,
+    override val dynamicColor: Boolean
+) : ThemeConfig
+
+
+// Sealed interface for better type safety and extensibility
+sealed interface ThemeConfig {
+    val theme: Theme
+    val dynamicColor: Boolean
+}
+
+// Grid layout enum
+enum class GridLayout {
+    OneColumn, TwoColumns, ThreeColumns
+}
+
+// Main settings data class
+
+data class Settings(
+    override val theme: Theme,
+    override val dynamicColor: Boolean = true,
+    val gridLayout: GridLayout = GridLayout.TwoColumns,
+) : ThemeConfig
+
+// Theme enum with string resources
+enum class Theme {
+    System,
+    Light,
+    Dark,
+}
 
 
 // Theme CompositionLocal

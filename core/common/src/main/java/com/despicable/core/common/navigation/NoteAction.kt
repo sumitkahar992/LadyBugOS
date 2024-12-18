@@ -2,6 +2,7 @@ package com.despicable.core.common.navigation
 
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.annotation.Keep
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
@@ -36,6 +37,7 @@ sealed interface NoteAction {
 /*
     Types of actions that can be performed on a note
 */
+@Keep
 enum class NoteActionType {
     DELETE,
     ARCHIVE,

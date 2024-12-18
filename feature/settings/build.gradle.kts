@@ -13,6 +13,8 @@ dependencies {
     api(projects.core.model)
     api(projects.core.datastore)
     api(projects.core.designSystem)
+    api(projects.core.common)
+    api(projects.feature.backup)
 
     implementation(libs.aboutlibrary.core)
     implementation(libs.aboutlibrary.compose)

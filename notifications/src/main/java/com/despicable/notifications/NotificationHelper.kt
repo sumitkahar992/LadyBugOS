@@ -1,7 +1,7 @@
 package com.despicable.notifications
 
 import android.content.Context
-import com.despicable.database.model.NoteEntity
+import com.despicable.core.database.model.NoteEntity
 
 class NotificationHelper(private val context: Context) {
 

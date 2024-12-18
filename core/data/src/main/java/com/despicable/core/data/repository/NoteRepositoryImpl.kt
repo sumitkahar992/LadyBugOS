@@ -6,13 +6,13 @@ import com.despicable.core.data.model.toNoteDomainList
 import com.despicable.core.data.model.toNoteEntityList
 import com.despicable.core.data.model.toNoteTagsDomainList
 import com.despicable.core.data.model.toTagDomainList
-import com.despicable.database.model.ChecklistItem
-import com.despicable.database.model.ChecklistItemDao
-import com.despicable.database.model.NoteDao
-import com.despicable.database.model.TagDao
-import com.despicable.model.Note
-import com.despicable.model.NoteWithTags
-import com.despicable.model.Tag
+import com.despicable.core.database.dao.NoteDao
+import com.despicable.core.database.dao.TagDao
+import com.despicable.core.database.model.ChecklistItem
+import com.despicable.core.database.model.ChecklistItemDao
+import com.despicable.core.model.Note
+import com.despicable.core.model.NoteWithTags
+import com.despicable.core.model.Tag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -23,7 +23,7 @@ class NoteRepositoryImpl @Inject constructor(
     private val noteDao: NoteDao,
     private val tagDao: TagDao,
     private val checklistItemDao: ChecklistItemDao
-) : NoteRepositoryInterface {
+) : NoteRepository {
 
     override fun getAllNotes(): Flow<List<Note>> =
         noteDao.getAllNotes().map { it.toNoteDomainList() }

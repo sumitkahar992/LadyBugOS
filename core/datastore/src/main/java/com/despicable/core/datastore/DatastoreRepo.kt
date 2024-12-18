@@ -7,9 +7,9 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.despicable.model.GridLayout
-import com.despicable.model.Settings
-import com.despicable.model.Theme
+import com.despicable.core.designsystem.theme.GridLayout
+import com.despicable.core.designsystem.theme.Settings
+import com.despicable.core.designsystem.theme.Theme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map

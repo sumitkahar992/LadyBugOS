@@ -62,10 +62,10 @@ import com.despicable.core.common.navigation.NoteSharedElementType
 import com.despicable.core.designsystem.component.ReminderInfo
 import com.despicable.core.designsystem.component.rememberContainerColor
 import com.despicable.core.designsystem.component.rememberTagColors
-import com.despicable.model.GridLayout
-import com.despicable.model.Note
-import com.despicable.model.NoteWithTags
-import com.despicable.model.Tag
+import com.despicable.core.designsystem.theme.GridLayout
+import com.despicable.core.model.Note
+import com.despicable.core.model.NoteWithTags
+import com.despicable.core.model.Tag
 
 
 @Composable
@@ -279,10 +279,7 @@ fun NoteItemTag(
                 )
                 .sharedBounds(
                     sharedContentState = rememberSharedContentState(
-                        key = com.despicable.core.common.navigation.NoteSharedElementKey(
-                            note.id,
-                            com.despicable.core.common.navigation.NoteSharedElementType.Bounds
-                        )
+                        key = NoteSharedElementKey(note.id, NoteSharedElementType.Bounds)
                     ),
                     animatedVisibilityScope = animatedVisibilityScope,
                     enter = EnterTransition.None,

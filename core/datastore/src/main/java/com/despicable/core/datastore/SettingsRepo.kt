@@ -1,8 +1,8 @@
 package com.despicable.core.datastore
 
-import com.despicable.model.GridLayout
-import com.despicable.model.Settings
-import com.despicable.model.Theme
+import com.despicable.core.designsystem.theme.GridLayout
+import com.despicable.core.designsystem.theme.Settings
+import com.despicable.core.designsystem.theme.Theme
 import kotlinx.coroutines.flow.Flow
 
 

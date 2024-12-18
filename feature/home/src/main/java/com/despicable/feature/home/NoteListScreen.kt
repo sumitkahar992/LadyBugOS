@@ -40,7 +40,7 @@ import com.despicable.core.designsystem.component.ReminderDialog
 import com.despicable.core.designsystem.component.SwipeToDismissContentSnack
 import com.despicable.core.designsystem.component.tagHeader
 import com.despicable.core.designsystem.theme.LocalThemeProvider
-import com.despicable.model.Note
+import com.despicable.core.model.Note
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel

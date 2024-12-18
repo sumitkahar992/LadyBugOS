@@ -1,6 +1,10 @@
 package com.despicable.feature.detail
 
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.core.animateDp
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +25,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -73,6 +78,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -97,7 +103,7 @@ import com.despicable.core.designsystem.component.ReminderInfo
 import com.despicable.core.designsystem.component.TagChip
 import com.despicable.core.designsystem.component.rememberContainerColor
 import com.despicable.core.designsystem.component.rememberTagColors
-import com.despicable.model.getRelativeTimeAgo
+import com.despicable.core.model.getRelativeTimeAgo
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -191,176 +197,176 @@ fun NoteDetailScreen(
         }
     }
 
-    /*    val sharedTransitionScope =
-            com.despicable.core.common.navigation.LocalSharedTransitionScope.current
-                ?: throw IllegalStateException("No Scope found")
-        val animatedVisibilityScope =
-            com.despicable.core.common.navigation.LocalNavAnimatedVisibilityScope.current
-                ?: throw IllegalStateException("No Scope found")
+    val sharedTransitionScope =
+        com.despicable.core.common.navigation.LocalSharedTransitionScope.current
+            ?: throw IllegalStateException("No Scope found")
+    val animatedVisibilityScope =
+        com.despicable.core.common.navigation.LocalNavAnimatedVisibilityScope.current
+            ?: throw IllegalStateException("No Scope found")
 
-        // Single corner animation for consistency
-        val roundedCornerAnim by animatedVisibilityScope.transition.animateDp(label = "Rounded corner") {
-            if (it != EnterExitState.Visible) 12.dp else 0.dp
-        }*/
+    // Single corner animation for consistency
+    val roundedCornerAnim by animatedVisibilityScope.transition.animateDp(label = "Rounded corner") {
+        if (it != EnterExitState.Visible) 12.dp else 0.dp
+    }
 
-//    with(sharedTransitionScope) {
-    Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            /*       .sharedBounds(
-                       rememberSharedContentState(
-                           key = com.despicable.core.common.navigation.NoteSharedElementKey(
-                               noteId = uiState.id,
-                               type = com.despicable.core.common.navigation.NoteSharedElementType.Bounds
-                           )
-                       ),
-                       animatedVisibilityScope,
-                       clipInOverlayDuringTransition = OverlayClip(
-                           RoundedCornerShape(roundedCornerAnim)
-                       ),
-                       enter = EnterTransition.None,
-                       exit = ExitTransition.None,
-                   )*/
-//            .clip(RoundedCornerShape(roundedCornerAnim))
-            .imePadding(),
-        containerColor = containerColor,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        snackbarHost = { SnackbarHost(snackBarHostState) },
-
-        topBar = {
-            EditNoteTopAppBar(
-                containerColor = Color.Transparent,
-                isPinned = uiState.isPinned,
-                isArchived = uiState.isArchived,
-                isTrashed = uiState.isTrashed,
-                onBack = {
-                    viewModel.saveNote(
-                        onComplete = onBack,
-                        onSkip = onBack
-                    )
-                },
-                onDelete = {
-                    handleAction(NoteAction.Delete(noteId))
-                },
-                onArchive = {
-                    handleAction(NoteAction.Archive(noteId))
-
-                },
-                onUnarchive = {
-                    handleAction(NoteAction.Unarchive(noteId))
-                },
-                onTogglePin = viewModel::togglePinStatus
-            )
-        },
-        bottomBar = {
-            NoteDetailBottomBar(
-                onLeftMenuClick = { showLeftBottomSheet = true },
-                onRightMenuClick = { showRightBottomSheet = true },
-                containerColor = containerColor,
-                uiState = uiState
-            )
-        }
-    ) { innerPadding ->
-        EditNoteContent(
+    with(sharedTransitionScope) {
+        Scaffold(
             modifier = Modifier
-                .padding(innerPadding),
-            /*          .sharedBounds(
-                          sharedContentState = rememberSharedContentState(
-                              key = com.despicable.core.common.navigation.NoteSharedElementKey(
-                                  uiState.id,
-                                  com.despicable.core.common.navigation.NoteSharedElementType.Content
-                              )
-                          ),
-                          animatedVisibilityScope = animatedVisibilityScope,
-                          clipInOverlayDuringTransition = OverlayClip(
-                              RoundedCornerShape(roundedCornerAnim)
-                          ),
-                      ),*/
-            uiState = uiState,
-            onTitleChange = viewModel::updateNoteTitle,
-            onContentChange = viewModel::updateNoteContent,
-            onOpenColorPicker = { isColorPickerDialogVisible = true },
-            onClickReminderInfo = { showReminderDialog = true },
-            isDone = uiState.isDone,
-            onDisabledClick = handleTrashRestore,
-            enabled = !uiState.isTrashed,
-            content = {
-                // Calculate colors based on theme and noteColor
-                val tagColors = rememberTagColors(uiState.lightColor)
-
-                LazyRow(
-                    modifier = Modifier
-                        .wrapContentSize(unbounded = true)
-                        .width(LocalConfiguration.current.screenWidthDp.dp),
-                    contentPadding = PaddingValues(16.dp, 0.dp, 10.dp, 0.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    items(uiState.allTags) { tag ->
-                        TagChip(
-                            tag = tag,
-                            enabled = disableInTrash,
-                            isSelected = uiState.selectedTagIds.contains(tag.id),
-                            onClick = { viewModel.toggleTag(tag.id) },
-                            containerColor = tagColors.backgroundColor,
-                            labelColor = tagColors.contentColor
+                .fillMaxSize()
+                .sharedBounds(
+                    rememberSharedContentState(
+                        key = com.despicable.core.common.navigation.NoteSharedElementKey(
+                            noteId = uiState.id,
+                            type = com.despicable.core.common.navigation.NoteSharedElementType.Bounds
                         )
+                    ),
+                    animatedVisibilityScope,
+                    clipInOverlayDuringTransition = OverlayClip(
+                        RoundedCornerShape(roundedCornerAnim)
+                    ),
+                    enter = EnterTransition.None,
+                    exit = ExitTransition.None,
+                )
+                .clip(RoundedCornerShape(roundedCornerAnim))
+                .imePadding(),
+            containerColor = containerColor,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            snackbarHost = { SnackbarHost(snackBarHostState) },
+
+            topBar = {
+                EditNoteTopAppBar(
+                    containerColor = Color.Transparent,
+                    isPinned = uiState.isPinned,
+                    isArchived = uiState.isArchived,
+                    isTrashed = uiState.isTrashed,
+                    onBack = {
+                        viewModel.saveNote(
+                            onComplete = onBack,
+                            onSkip = onBack
+                        )
+                    },
+                    onDelete = {
+                        handleAction(NoteAction.Delete(noteId))
+                    },
+                    onArchive = {
+                        handleAction(NoteAction.Archive(noteId))
+
+                    },
+                    onUnarchive = {
+                        handleAction(NoteAction.Unarchive(noteId))
+                    },
+                    onTogglePin = viewModel::togglePinStatus
+                )
+            },
+            bottomBar = {
+                NoteDetailBottomBar(
+                    onLeftMenuClick = { showLeftBottomSheet = true },
+                    onRightMenuClick = { showRightBottomSheet = true },
+                    containerColor = containerColor,
+                    uiState = uiState
+                )
+            }
+        ) { innerPadding ->
+            EditNoteContent(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .sharedBounds(
+                        sharedContentState = rememberSharedContentState(
+                            key = com.despicable.core.common.navigation.NoteSharedElementKey(
+                                uiState.id,
+                                com.despicable.core.common.navigation.NoteSharedElementType.Content
+                            )
+                        ),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        clipInOverlayDuringTransition = OverlayClip(
+                            RoundedCornerShape(roundedCornerAnim)
+                        ),
+                    ),
+                uiState = uiState,
+                onTitleChange = viewModel::updateNoteTitle,
+                onContentChange = viewModel::updateNoteContent,
+                onOpenColorPicker = { isColorPickerDialogVisible = true },
+                onClickReminderInfo = { showReminderDialog = true },
+                isDone = uiState.isDone,
+                onDisabledClick = handleTrashRestore,
+                enabled = !uiState.isTrashed,
+                content = {
+                    // Calculate colors based on theme and noteColor
+                    val tagColors = rememberTagColors(uiState.lightColor)
+
+                    LazyRow(
+                        modifier = Modifier
+                            .wrapContentSize(unbounded = true)
+                            .width(LocalConfiguration.current.screenWidthDp.dp),
+                        contentPadding = PaddingValues(16.dp, 0.dp, 10.dp, 0.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        items(uiState.allTags) { tag ->
+                            TagChip(
+                                tag = tag,
+                                enabled = disableInTrash,
+                                isSelected = uiState.selectedTagIds.contains(tag.id),
+                                onClick = { viewModel.toggleTag(tag.id) },
+                                containerColor = tagColors.backgroundColor,
+                                labelColor = tagColors.contentColor
+                            )
+                        }
                     }
                 }
-            }
-        )
+            )
 
-    }
-
-    // Delete confirmation dialog
-    NoteeDialog(
-        enabled = showDeleteDialog,
-        title = "Delete note ?",
-        description = " Are you sure you want to delete this note? This note will be permanently deleted?",
-        confirmText = "Delete",
-        dismissText = "Cancel",
-        onConfirm = {
-            showDeleteDialog = false
-            viewModel.deleteNoteForever(onComplete = onBack)
-        },
-        onDismiss = {
-            showDeleteDialog = false
         }
-    )
 
-    // Dialogs
-    if (isColorPickerDialogVisible && disableInTrash) {
-        ColorPickerDialog(
-            selectedColor = containerColor,
-            onColorSelected = { selectedColor ->
-                viewModel.updateColor(selectedColor.toArgb())
-                isColorPickerDialogVisible = false
+        // Delete confirmation dialog
+        NoteeDialog(
+            enabled = showDeleteDialog,
+            title = "Delete note ?",
+            description = " Are you sure you want to delete this note? This note will be permanently deleted?",
+            confirmText = "Delete",
+            dismissText = "Cancel",
+            onConfirm = {
+                showDeleteDialog = false
+                viewModel.deleteNoteForever(onComplete = onBack)
             },
-            onDismissRequest = { isColorPickerDialogVisible = false }
-        )
-    }
-
-    if (showReminderDialog && disableInTrash) {
-        ReminderDialog(
-            showDialog = true,
-            initialDate = uiState.reminderDate,
-            onDismiss = { showReminderDialog = false },
-            onSetReminder = { reminderDate ->
-                viewModel.updateNoteReminder(
-                    noteId = uiState.id,
-                    reminderDate = reminderDate
-                )
-                showReminderDialog = false
-            },
-            onDeleteReminder = {
-                viewModel.updateNoteReminder(
-                    noteId = uiState.id,
-                    reminderDate = null
-                )
-                showReminderDialog = false
+            onDismiss = {
+                showDeleteDialog = false
             }
         )
+
+        // Dialogs
+        if (isColorPickerDialogVisible && disableInTrash) {
+            ColorPickerDialog(
+                selectedColor = containerColor,
+                onColorSelected = { selectedColor ->
+                    viewModel.updateColor(selectedColor.toArgb())
+                    isColorPickerDialogVisible = false
+                },
+                onDismissRequest = { isColorPickerDialogVisible = false }
+            )
+        }
+
+        if (showReminderDialog && disableInTrash) {
+            ReminderDialog(
+                showDialog = true,
+                initialDate = uiState.reminderDate,
+                onDismiss = { showReminderDialog = false },
+                onSetReminder = { reminderDate ->
+                    viewModel.updateNoteReminder(
+                        noteId = uiState.id,
+                        reminderDate = reminderDate
+                    )
+                    showReminderDialog = false
+                },
+                onDeleteReminder = {
+                    viewModel.updateNoteReminder(
+                        noteId = uiState.id,
+                        reminderDate = null
+                    )
+                    showReminderDialog = false
+                }
+            )
+        }
     }
-//    }
 
     // Bottom Sheets
     if (showLeftBottomSheet && disableInTrash) {

@@ -49,7 +49,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.despicable.core.designsystem.component.NoteeDialog
 import com.despicable.core.designsystem.theme.LocalThemeProvider
-import com.despicable.model.Theme
+import com.despicable.core.designsystem.theme.Theme
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -58,7 +58,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = koinViewModel(),
     onMenuClick: () -> Unit,
     onPrivacyClick: () -> Unit,
-    onOSLicenseClick: () -> Unit,
+    onLicenseClick: () -> Unit,
     onBackUpClick: () -> Unit
 ) {
     var blackTheme by remember { mutableStateOf(false) }
@@ -179,7 +179,7 @@ fun SettingsScreen(
                     title = "License & Acknowledgement",
                     subtitle = "Show open source license information.",
                     icon = Icons.Default.Info,
-                    onClick = onOSLicenseClick
+                    onClick = onLicenseClick
                 )
                 SettingsItem(
                     title = "Privacy Policy",

@@ -29,8 +29,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import com.despicable.core.designsystem.colorPalette
 import com.despicable.core.designsystem.theme.LadyBugOSTheme
-import com.despicable.model.colorPalette
 
 
 @Composable

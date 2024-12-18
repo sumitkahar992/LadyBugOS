@@ -9,6 +9,6 @@ import org.koin.dsl.module
 
 val detailKoinModule = module {
     includes(domainModule, dataModule)
-    viewModel { NoteDetailViewModel(get(), get()) }
+    viewModel { NoteDetailViewModel(get(), get(), get()) }
 
 }

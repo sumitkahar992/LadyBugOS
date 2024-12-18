@@ -69,7 +69,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.despicable.core.designsystem.component.ScreenType
 import com.despicable.core.designsystem.component.SelectionTopBar
-import com.despicable.model.Note
+import com.despicable.core.model.Note
 import timber.log.Timber
 
 @Composable

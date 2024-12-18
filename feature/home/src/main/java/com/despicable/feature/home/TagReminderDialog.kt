@@ -39,8 +39,8 @@ import com.despicable.core.designsystem.component.DatePickerContent
 import com.despicable.core.designsystem.component.NoteeDialog
 import com.despicable.core.designsystem.component.ReminderDialog
 import com.despicable.core.designsystem.component.TimePickerContent
+import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.designsystem.theme.LadyBugOSTheme
-import com.despicable.model.GridLayout
 import java.time.LocalDate
 import java.time.LocalTime
 

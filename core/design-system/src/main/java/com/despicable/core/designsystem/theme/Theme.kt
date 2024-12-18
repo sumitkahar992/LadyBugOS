@@ -8,9 +8,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import com.despicable.model.Settings
-import com.despicable.model.Theme
-import com.despicable.model.ThemeConfig
 
 
 @Composable

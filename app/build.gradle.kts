@@ -46,9 +46,10 @@ dependencies {
     implementation(projects.core.datastore)
     implementation(projects.core.domain)
     implementation(projects.core.designSystem)
-    implementation(projects.feature.settings)
     implementation(projects.feature.home)
     implementation(projects.feature.detail)
+    implementation(projects.feature.settings)
+    implementation(projects.feature.backup)
 
     implementation(projects.widgets)
     implementation(projects.notifications)

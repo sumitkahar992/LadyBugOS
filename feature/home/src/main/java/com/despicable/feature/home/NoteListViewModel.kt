@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.despicable.core.common.navigation.NoteAction
 import com.despicable.core.datastore.SettingsRepo
+import com.despicable.core.designsystem.theme.GridLayout
+import com.despicable.core.designsystem.theme.Theme
 import com.despicable.core.domain.sample.LoadSampleDataUseCase
 import com.despicable.core.domain.usecase.GetAllNotesTagsUseCase
 import com.despicable.core.domain.usecase.GetAllTagsUseCase
@@ -15,11 +17,9 @@ import com.despicable.core.domain.usecase.GetNoteByIdUseCase
 import com.despicable.core.domain.usecase.GetUpdateTagsUseCase
 import com.despicable.core.domain.usecase.UpdateNoteReminderUseCase
 import com.despicable.core.domain.usecase.UpdateNotesUseCase
-import com.despicable.model.GridLayout
-import com.despicable.model.Note
-import com.despicable.model.NoteWithTags
-import com.despicable.model.Tag
-import com.despicable.model.Theme
+import com.despicable.core.model.Note
+import com.despicable.core.model.NoteWithTags
+import com.despicable.core.model.Tag
 import com.despicable.widgets.data.WidgetUpdater
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

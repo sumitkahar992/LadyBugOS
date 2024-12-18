@@ -1,5 +1,5 @@
 package com.despicable.core.common.navigation
-
+/*
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -68,7 +68,7 @@ fun slideScreenEnterAnimation(): EnterTransition = slideInAnimation()
 fun slideScreenExitAnimation(): ExitTransition = slideOutAnimation()
 
 
-/*
+
 
 fun NavGraphBuilder.animatedComposable(
     route: String,

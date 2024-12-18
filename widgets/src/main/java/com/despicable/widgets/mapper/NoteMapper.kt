@@ -1,11 +1,11 @@
 package com.despicable.widgets.mapper
 
-import com.despicable.database.model.NoteEntity
-import com.despicable.database.model.NoteWithTagsEntity
-import com.despicable.database.model.TagEntity
-import com.despicable.model.Note
-import com.despicable.model.Tag
-import com.despicable.model.NoteWithTags as DomainNoteWithTags
+import com.despicable.core.database.model.NoteEntity
+import com.despicable.core.database.model.NoteWithTagsEntity
+import com.despicable.core.database.model.TagEntity
+import com.despicable.core.model.Note
+import com.despicable.core.model.Tag
+import com.despicable.core.model.NoteWithTags as DomainNoteWithTags
 import com.despicable.widgets.model.WidgetNote
 import java.time.Instant
 import java.time.LocalDateTime

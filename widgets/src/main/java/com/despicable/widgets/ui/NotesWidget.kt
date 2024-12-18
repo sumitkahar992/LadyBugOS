@@ -41,8 +41,8 @@ import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
-import com.despicable.model.darken
-import com.despicable.model.getRelativeTimeAgo
+import com.despicable.core.designsystem.darken
+import com.despicable.core.model.getRelativeTimeAgo
 import com.despicable.widgets.R
 import com.despicable.widgets.data.ConfigWidgetActivity
 

@@ -32,7 +32,6 @@ dependencies {
     implementation(libs.javax.inject)
 
     implementation(libs.androidx.workmanager)
-    implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.androidx.material3)
 

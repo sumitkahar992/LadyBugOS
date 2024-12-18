@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import com.despicable.model.Tag
+import com.despicable.core.model.Tag
 
 // Usage in LazyStaggeredGridScope
 fun LazyStaggeredGridScope.tagHeader(

@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.deathnote.android.library)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -20,4 +21,7 @@ dependencies {
 
     implementation(projects.notifications)
     implementation(libs.kotlinx.coroutines.android)
+
+    implementation(libs.kotlinx.serialization.json)
+
 }

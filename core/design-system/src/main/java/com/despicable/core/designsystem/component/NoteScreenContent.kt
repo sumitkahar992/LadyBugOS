@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.despicable.core.designsystem.R
-import com.despicable.model.NoteWithTags
+import com.despicable.core.model.NoteWithTags
 
 /*@Composable
 fun NoteScreenContent(

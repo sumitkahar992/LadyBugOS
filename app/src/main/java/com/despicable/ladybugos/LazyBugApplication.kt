@@ -2,8 +2,9 @@ package com.despicable.ladybugos
 
 import android.app.Application
 import com.despicable.core.data.di.dataModule
+import com.despicable.core.database.di.databaseModule
 import com.despicable.core.datastore.di.dataStoreModule
-import com.despicable.database.di.databaseModule
+import com.despicable.feature.backup.di.backupModule
 import com.despicable.feature.detail.di.detailKoinModule
 import com.despicable.feature.home.di.homeModule
 import com.despicable.feature.settings.di.settingsModule
@@ -52,9 +53,10 @@ class LazyBugApplication : Application(), KoinComponent {
         dataStoreModule,
         notificationModule,
         widgetModule,
-        settingsModule,
         homeModule,
-        detailKoinModule
+        detailKoinModule,
+        backupModule,
+        settingsModule
     )
 
 

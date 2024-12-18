@@ -64,6 +64,13 @@ gradlePlugin {
             id = "io.despicable.android.room"
             implementationClass = "RoomPlugin"
         }
+
+             register("jvmLibrary") {
+            id = "io.despicable.jvm.library"
+            implementationClass = "LibraryJvmPlugin"
+        }
+
+
     }
 }
 

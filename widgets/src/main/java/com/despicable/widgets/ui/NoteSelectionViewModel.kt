@@ -3,8 +3,8 @@ package com.despicable.widgets.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.despicable.core.domain.usecase.GetAllNotesUseCase
-import com.despicable.model.Note
-import com.despicable.model.NoteWithTags
+import com.despicable.core.model.Note
+import com.despicable.core.model.NoteWithTags
 import com.despicable.widgets.data.CoroutineDispatchers
 import com.despicable.widgets.data.NoteWidgetRepository
 import kotlinx.coroutines.flow.MutableStateFlow

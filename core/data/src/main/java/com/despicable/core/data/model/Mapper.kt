@@ -1,14 +1,14 @@
 package com.despicable.core.data.model
 
-import com.despicable.database.model.NoteEntity
-import com.despicable.database.model.NoteWithTagsEntity
-import com.despicable.database.model.TagEntity
-import com.despicable.model.Note
-import com.despicable.model.NoteWithTags
-import com.despicable.model.Tag
+import com.despicable.core.database.model.NoteEntity
+import com.despicable.core.database.model.NoteWithTagsEntity
+import com.despicable.core.database.model.TagEntity
+import com.despicable.core.model.Note
+import com.despicable.core.model.NoteWithTags
+import com.despicable.core.model.Tag
 
-/**
- * Extension functions for mapping between domain and entity models
+/*
+    Extension functions for mapping between domain and entity models
  */
 
 // Note Mappings
@@ -59,6 +59,7 @@ fun NoteWithTagsEntity.toDomain(): NoteWithTags = NoteWithTags(
     tags = tags.map { it.toDomain() }
 )
 
+
 // List Mappings
 fun List<Note>.toNoteEntityList(): List<NoteEntity> = map { it.toEntity() }
 fun List<NoteEntity>.toNoteDomainList(): List<Note> = map { it.toDomain() }
@@ -66,7 +67,25 @@ fun List<Tag>.toTagEntityList(): List<TagEntity> = map { it.toEntity() }
 fun List<TagEntity>.toTagDomainList(): List<Tag> = map { it.toDomain() }
 fun List<NoteWithTagsEntity>.toNoteTagsDomainList(): List<NoteWithTags> = map { it.toDomain() }
 
+
 // Nullable Mappings
 fun NoteEntity?.toDomainOrNull(): Note? = this?.toDomain()
 fun TagEntity?.toDomainOrNull(): Tag? = this?.toDomain()
 fun NoteWithTagsEntity?.toDomainOrNull(): NoteWithTags? = this?.toDomain()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

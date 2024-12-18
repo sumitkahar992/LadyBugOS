@@ -213,6 +213,7 @@ deathnote-android-feature = { id = "io.despicable.android.feature" }
 deathnote-android-library-compose = { id = "io.despicable.android.library.compose" }
 deathnote-android-room = { id = "io.despicable.android.room" }
 deathnote-android-library = { id = "io.despicable.android.library" }
+deathnote-jvm-library = { id = "io.despicable.jvm.library" }
 deathnote-android-application-compose = { id = "io.despicable.android.application.compose" }
 #
 deathnote-android-application-firebase = { id = "nowinandroid.android.application.firebase" }
@@ -222,4 +223,3 @@ deathnote-android-library-jacoco = { id = "nowinandroid.android.library.jacoco" 
 deathnote-android-lint = { id = "nowinandroid.android.lint" }
 deathnote-android-test = { id = "nowinandroid.android.test" }
 deathnote-hilt = { id = "nowinandroid.hilt" }
-deathnote-jvm-library = { id = "nowinandroid.jvm.library" }
