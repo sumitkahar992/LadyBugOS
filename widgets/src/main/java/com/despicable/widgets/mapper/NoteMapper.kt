@@ -5,12 +5,12 @@ import com.despicable.core.database.model.NoteWithTagsEntity
 import com.despicable.core.database.model.TagEntity
 import com.despicable.core.model.Note
 import com.despicable.core.model.Tag
-import com.despicable.core.model.NoteWithTags as DomainNoteWithTags
 import com.despicable.widgets.model.WidgetNote
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import com.despicable.core.model.NoteWithTags as DomainNoteWithTags
 
 /**
  * Mapper class to convert between domain and entity models
