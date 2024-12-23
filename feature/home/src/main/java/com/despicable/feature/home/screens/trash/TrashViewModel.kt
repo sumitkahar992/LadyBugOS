@@ -2,12 +2,9 @@ package com.despicable.feature.home.screens.trash
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.despicable.core.data.repository.NoteRepository
 import com.despicable.core.datastore.SettingsRepo
 import com.despicable.core.designsystem.theme.GridLayout
-import com.despicable.core.domain.usecase.DeleteNoteUseCase
-import com.despicable.core.domain.usecase.EmptyTrashWithTagsUseCase
-import com.despicable.core.domain.usecase.GetAllNotesTagsUseCase
-import com.despicable.core.domain.usecase.UpdateNotesUseCase
 import com.despicable.core.model.Note
 import com.despicable.widgets.data.WidgetUpdater
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,15 +16,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class TrashViewModel(
-    private val getAllNotesTagsUseCase: GetAllNotesTagsUseCase,
-    private val updateNotesUseCase: UpdateNotesUseCase,
-    private val deleteNoteUseCase: DeleteNoteUseCase,
-    private val emptyTrashWithTagsUseCase: EmptyTrashWithTagsUseCase,
-    repo: SettingsRepo,
+    private val repo: NoteRepository,
+    settingsRepo: SettingsRepo,
     private val widgetUpdater: WidgetUpdater
 ) : ViewModel() {
 
-    val gridLayout = repo.get { gridLayout }
+    val gridLayout = settingsRepo.get { gridLayout }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), GridLayout.TwoColumns)
 
     private val _lastRestoredNotes =
@@ -35,26 +29,26 @@ class TrashViewModel(
     val lastRestoredNotes: StateFlow<List<Note>?> =
         _lastRestoredNotes.asStateFlow()
 
-    val trashedNotes = getAllNotesTagsUseCase()
+    val trashedNotes = repo.getAllNotesWithTags()
         .map { notes -> notes.filter { it.note.isTrashed } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyList())
 
     fun deleteNotesPermanently(notes: List<Note>) {
         viewModelScope.launch {
-            notes.forEach { deleteNoteUseCase(it) }
+            notes.forEach { repo.deleteNote(it) }
         }
     }
 
     fun emptyTrash() {
         viewModelScope.launch {
-            emptyTrashWithTagsUseCase()
+            repo.emptyTrashWithTags()
         }
     }
 
     fun restoreNotes(notes: List<Note>) {
         viewModelScope.launch {
             val updatedNotes = notes.map { it.copy(isTrashed = false) }
-            updateNotesUseCase(updatedNotes)
+            repo.updateNotes(updatedNotes)
             widgetUpdater.undoDeleteWidgets(updatedNotes)
 
 
@@ -66,7 +60,7 @@ class TrashViewModel(
         viewModelScope.launch {
             lastRestoredNotes.value?.let { notes ->
                 val updatedNotes = notes.map { it.copy(isTrashed = true) }
-                updateNotesUseCase(updatedNotes)
+                repo.updateNotes(updatedNotes)
                 _lastRestoredNotes.value = null
             }
         }

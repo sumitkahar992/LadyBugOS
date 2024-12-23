@@ -12,11 +12,11 @@ class FeaturePlugin : Plugin<Project> {
             }
 
             dependencies {
-//                add("implementation", project(":data:model"))
-//                add("implementation", project(":core:ui:common"))
+                add("implementation", project(":core:model"))
+                add("implementation", project(":core:common"))
 //                add("implementation", project(":core:resources"))
 //                add("implementation", project(":core:ui:navigation"))
-//                add("implementation", project(":core:design-system"))
+                add("implementation", project(":core:design-system"))
 
 
                 add("implementation", libs.findLibrary("coil.kt").get())

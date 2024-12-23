@@ -1,5 +1,6 @@
-package com.despicable.core.domain.usecase.backup
+package com.despicable.core.domain.usecase
 
+/*
 
 import android.net.Uri
 import com.despicable.core.data.repository.BackupRepository
@@ -14,3 +15,15 @@ class CreateBackupUseCase @Inject constructor(
         return backupRepository.createBackup(destinationUri)
     }
 }
+
+
+class RestoreBackupUseCase @Inject constructor(
+    private val backupRepository: BackupRepository
+) {
+    operator fun invoke(backupUri: Uri): Flow<BackupResults> {
+        return backupRepository.restoreBackup(backupUri)
+    }
+}
+
+
+*/

@@ -9,8 +9,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.despicable.core.domain.usecase.GetAllNotesUseCase
-import com.despicable.core.domain.usecase.GetNoteByIdUseCase
+import com.despicable.core.data.repository.NoteRepository
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
@@ -26,8 +25,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 
 class NoteWidgetRepository @Inject constructor(
     private val context: Context,
-    private val getAllNotesUseCase: GetAllNotesUseCase,
-    private val getNoteByIdUseCase: GetNoteByIdUseCase,
+    private val repo: NoteRepository,
     private val widgetUpdater: WidgetUpdater,
     private val dispatchers: CoroutineDispatchers = DefaultCoroutineDispatchers()
 ) {
@@ -59,7 +57,7 @@ class NoteWidgetRepository @Inject constructor(
                 }
 
                 // Update widget if note exists
-                getNoteByIdUseCase(noteId)
+                repo.getNoteById(noteId)
                     .firstOrNull()
                     ?.let { note ->
                         widgetUpdater.updateSingleWidget(note)
@@ -99,7 +97,7 @@ class NoteWidgetRepository @Inject constructor(
       Updates all widgets with current note data
      */
     private suspend fun updateAllWidgets() {
-        getAllNotesUseCase()
+        repo.getAllNotes()
             .first()
             .let { notes ->
                 widgetUpdater.updateAllWidgets(notes)

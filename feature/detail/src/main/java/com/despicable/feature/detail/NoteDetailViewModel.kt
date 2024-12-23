@@ -9,8 +9,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.despicable.core.common.navigation.NoteAction
+import com.despicable.core.data.repository.NoteRepository
 import com.despicable.core.designsystem.colorPalette
-import com.despicable.core.domain.usecase.NoteDetailUseCases
 import com.despicable.core.model.Note
 import com.despicable.core.model.NoteWithTags
 import com.despicable.core.model.Tag
@@ -35,7 +35,7 @@ import java.time.format.DateTimeFormatter
 
 
 class NoteDetailViewModel(
-    private val useCase: NoteDetailUseCases,
+    private val repo: NoteRepository,
     private val widgetUpdater: WidgetUpdater,
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
@@ -63,7 +63,7 @@ class NoteDetailViewModel(
 
     private fun loadNoteById(id: Long) {
         viewModelScope.launch {
-            useCase.getNoteWithTagsById(id).catch { e -> Timber.e(e, "Error loading note") }
+            repo.getNoteWithTagsById(id).catch { e -> Timber.e(e, "Error loading note") }
                 .firstOrNull()?.let { noteWithTags ->
                     updateUiState { it.fromNoteWithTags(noteWithTags).copy(isLoading = false) }
                 }
@@ -94,7 +94,7 @@ class NoteDetailViewModel(
                     Timber.e(e, "Error in note update flow")
                 }.collect { payload ->
                     try {
-                        useCase.updateNoteWithTags(payload.note, payload.tagIds)
+                        repo.updateNoteWithTags(payload.note, payload.tagIds)
                     } catch (e: Exception) {
                         Timber.e(e, "Error updating note")
                     }
@@ -129,7 +129,7 @@ class NoteDetailViewModel(
             try {
                 // If it's a new note (id = 0), insert it first
                 if (currentState.id == 0L) {
-                    val noteId = useCase.insertNoteWithTags(
+                    val noteId = repo.insertNoteWithTags(
                         currentState.toNote(),
                         currentState.selectedTagIds.toList()
                     )
@@ -176,8 +176,8 @@ class NoteDetailViewModel(
 
     fun updateNoteReminder(noteId: Long, reminderDate: Long?) {
         viewModelScope.launch {
-            useCase.updateNoteReminder(noteId, reminderDate)
-            useCase.getNoteByIdUseCase(noteId).firstOrNull()?.let { updatedNote ->
+            repo.updateNoteReminder(noteId, reminderDate)
+            repo.getNoteById(noteId).firstOrNull()?.let { updatedNote ->
                 updateUiStateAndTriggerSave {
                     it.copy(
                         reminderDate = updatedNote.reminderDate,
@@ -203,7 +203,7 @@ class NoteDetailViewModel(
 
     private suspend fun saveOrUpdateNote(note: Note) {
         if (note.id == 0L) {
-            useCase.insertNoteWithTags(note, _uiState.value.selectedTagIds.toList())
+            repo.insertNoteWithTags(note, _uiState.value.selectedTagIds.toList())
         } else {
             _noteUpdateTrigger.emit(
                 NoteUpdatePayload(
@@ -258,7 +258,7 @@ class NoteDetailViewModel(
         viewModelScope.launch {
             val currentState = _uiState.value
             if (currentState.isEmpty()) {
-                useCase.deleteNote(currentState.toNote())
+                repo.deleteNote(currentState.toNote())
             }
         }
     }
@@ -266,7 +266,7 @@ class NoteDetailViewModel(
 
     private fun fetchTags() {
         viewModelScope.launch {
-            useCase.getAllTags().catch { e -> Timber.e(e, "Error fetching tags") }
+            repo.getAllTags().catch { e -> Timber.e(e, "Error fetching tags") }
                 .collect { tags ->
                     updateUiState { it.copy(allTags = tags) }
                 }
@@ -288,7 +288,7 @@ class NoteDetailViewModel(
         viewModelScope.launch {
             try {
                 val currentNote = _uiState.value.toNote()
-                useCase.deleteNote(currentNote)
+                repo.deleteNote(currentNote)
                 onComplete()
             } catch (e: Exception) {
                 Timber.e(e, "Error deleting note permanently")
@@ -301,7 +301,7 @@ class NoteDetailViewModel(
             try {
                 val currentNote = _uiState.value.toNote()
                 val restoredNote = currentNote.copy(isTrashed = false)
-                useCase.updateNotes(listOf(restoredNote))
+                repo.updateNotes(listOf(restoredNote))
                 updateUiState { it.copy(isTrashed = false) }
                 widgetUpdater.updateSingleWidget(restoredNote)
                 onComplete()
@@ -316,7 +316,7 @@ class NoteDetailViewModel(
             try {
                 val currentNote = _uiState.value.toNote()
                 val trashedNote = currentNote.copy(isTrashed = true)
-                useCase.updateNotes(listOf(trashedNote))
+                repo.updateNotes(listOf(trashedNote))
                 updateUiState { it.copy(isTrashed = true) }
                 widgetUpdater.updateSingleWidget(trashedNote)
             } catch (e: Exception) {

@@ -1,13 +1,12 @@
-package com.despicable.core.domain.sample
+package com.despicable.core.data.sample
 
 import android.content.Context
+import androidx.compose.ui.graphics.toArgb
+import com.despicable.core.data.model.toDomain
+import com.despicable.core.data.repository.NoteRepository
+import com.despicable.core.database.model.NoteEntity
 import com.despicable.core.database.model.TagEntity
-import com.despicable.core.domain.usecase.GetAllNotesUseCase
-import com.despicable.core.domain.usecase.GetAllTagsUseCase
-import com.despicable.core.domain.usecase.GetInsertTagsUseCase
-import com.despicable.core.domain.usecase.InsertNoteWithTagsUseCase
-import com.despicable.core.model.Note
-import com.despicable.core.model.Tag
+import com.despicable.core.designsystem.colorPalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -15,55 +14,52 @@ import kotlinx.serialization.json.Json
 import kotlin.random.Random
 
 class LoadSampleDataUseCase(
-    private val getAllNotesUseCase: GetAllNotesUseCase,
-    private val getAllTagsUseCase: GetAllTagsUseCase,
-    private val insertTagsUseCase: GetInsertTagsUseCase,
-    private val insertNoteWithTagsUseCase: InsertNoteWithTagsUseCase,
+    private val repo: NoteRepository,
     private val assetLoader: AssetLoader
 ) {
     suspend operator fun invoke() {
         withContext(Dispatchers.IO) {
-            if (getAllNotesUseCase().first().isEmpty()
-                && getAllTagsUseCase().first().isEmpty()
+            if (repo.getAllNotes().first().isEmpty()
+                && repo.getAllTags().first().isEmpty()
             ) {
 
                 val sampleTags = createSampleTags()
                 sampleTags.forEach { tag ->
-                    insertTagsUseCase(tag)
+                    repo.insertTag(tag.toDomain())
                 }
 
                 val sampleNotes = getSampleNotes()
-//                    .map { it.copy(lightColor = colorPalette.random().toArgb()) }
+                    .map { it.copy(lightColor = colorPalette.random().toArgb()) }
                 sampleNotes.forEach { note ->
                     val randomTags = sampleTags.shuffled().take(Random.nextInt(1, 4))
-                    insertNoteWithTagsUseCase(note, randomTags.map { it.id })
+                    repo.insertNoteWithTags(note.toDomain(), randomTags.map { it.id })
                 }
             }
         }
     }
 
-    private fun createSampleTags(): List<Tag> {
+    private fun createSampleTags(): List<TagEntity> {
         return listOf(
-            Tag(1, "Work"),
-            Tag(2, "Personal"),
-            Tag(3, "Ideas"),
-            Tag(4, "Todo"),
-            Tag(5, "Important"),
-            Tag(6, "Project"),
-            Tag(7, "Meeting"),
-            Tag(8, "Family"),
-            Tag(9, "Travel"),
-            Tag(10, "Shopping"),
-            Tag(11, "Health"),
-            Tag(12, "Finance"),
-            Tag(13, "Education"),
-            Tag(14, "Hobby")
+            TagEntity(1, "Work"),
+            TagEntity(2, "Personal"),
+            TagEntity(3, "Ideas"),
+            TagEntity(4, "Todo"),
+            TagEntity(5, "Important"),
+            TagEntity(6, "Project"),
+            TagEntity(7, "Meeting"),
+            TagEntity(8, "Family"),
+            TagEntity(9, "Travel"),
+            TagEntity(10, "Shopping"),
+            TagEntity(11, "Health"),
+            TagEntity(12, "Finance"),
+            TagEntity(13, "Education"),
+            TagEntity(14, "Hobby")
         )
     }
 
-    private suspend fun getSampleNotes(): List<Note> {
+    private suspend fun getSampleNotes(): List<NoteEntity> {
         val json = assetLoader.loadTextAsset("noteee.json")
-        return Json.decodeFromString<List<Note>>(json)
+        return Json.decodeFromString<List<NoteEntity>>(json)
     }
 }
 

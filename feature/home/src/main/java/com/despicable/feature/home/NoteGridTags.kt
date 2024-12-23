@@ -11,10 +11,11 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -33,7 +34,9 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,6 +60,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.times
+import com.despicable.core.common.navigation.LocalNavAnimatedVisibilityScope
+import com.despicable.core.common.navigation.LocalSharedTransitionScope
 import com.despicable.core.common.navigation.NoteSharedElementKey
 import com.despicable.core.common.navigation.NoteSharedElementType
 import com.despicable.core.designsystem.component.ReminderInfo
@@ -184,56 +189,12 @@ fun NoteItemTag(
     onClick: () -> Unit,
     onLongPress: () -> Unit,
 ) {
-    // De-structure note and tags at composition time
+    // Hoist static values and calculations outside composition
     val note = noteWithTags.note
     val tags = noteWithTags.tags
-
-
-    // Memorize haptic feedback
     val hapticFeedback = LocalHapticFeedback.current
 
-    // Optimize border animation with custom spring spec
-    val borderAnimationSpec = remember {
-        spring<Color>(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessLow,
-            visibilityThreshold = null
-        )
-    }
-
-    val borderColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-        label = "borderColor",
-        animationSpec = borderAnimationSpec,
-        finishedListener = { // Optional: Clean up animation resources
-//            if (!isSelected) {
-            // Any cleanup needed when animation finishes
-//            }
-        }
-    )
-
-    val shapeAnimationSpec = remember {
-        spring<Dp>(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessLow
-        )
-    }
-
-    val shape by animateDpAsState(
-        targetValue = if (isSelected) 16.dp else 12.dp,
-        label = "shape",
-        animationSpec = shapeAnimationSpec
-    )
-
-    val surfaceColor = rememberContainerColor(note.lightColor)
-
-    val height = calculateNoteHeight(
-        note = note,
-        hasReminder = note.reminderDate != null,
-        hasTags = tags.isNotEmpty(),
-        gridLayout = gridLayout
-    )
-
+    // Memoize derived values
     val (titleSize, contentSize) = remember(gridLayout) {
         when (gridLayout) {
             GridLayout.OneColumn -> 18.sp to 14.sp
@@ -242,41 +203,34 @@ fun NoteItemTag(
         }
     }
 
-    // Get transition scopes
-    val sharedTransitionScope =
-        com.despicable.core.common.navigation.LocalSharedTransitionScope.current
-            ?: throw IllegalStateException("No Scope found")
-    val animatedVisibilityScope =
-        com.despicable.core.common.navigation.LocalNavAnimatedVisibilityScope.current
-            ?: throw IllegalStateException("No Scope found")
+    // Calculate height directly in composition since it uses Composable functions
+    val height = calculateNoteHeight(
+        note = note,
+        hasReminder = note.reminderDate != null,
+        hasTags = tags.isNotEmpty(),
+        gridLayout = gridLayout
+    )
 
-    // Optimize corner animation
-    val roundedCornerAnimation by animatedVisibilityScope.transition.animateDp(label = "Rounded corner") {
+
+    // Get transition scopes
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+        ?: throw IllegalStateException("No Scope found")
+    val animatedVisibilityScope = LocalNavAnimatedVisibilityScope.current
+        ?: throw IllegalStateException("No Scope found")
+
+    val roundedCornerAnimation by animatedVisibilityScope.transition.animateDp(
+        label = "Rounded corner",
+        transitionSpec = { spring(stiffness = Spring.StiffnessLow) }
+    ) {
         if (it == EnterExitState.Visible) 12.dp else 0.dp
     }
 
-    val borderColors =
-        if (note.lightColor == 0) MaterialTheme.colorScheme.outlineVariant else Color.Transparent
 
 
     with(sharedTransitionScope) {
-        Surface(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(height)
+        Box(
+            modifier = Modifier
                 .padding(4.dp)
-                .border(0.7.dp, borderColors, RoundedCornerShape(shape))
-                .then(
-                    if (isSelected) {
-                        Modifier.border(
-                            width = 2.dp,
-                            color = borderColor,
-                            shape = RoundedCornerShape(shape)
-                        )
-                    } else {
-                        Modifier
-                    }
-                )
                 .sharedBounds(
                     sharedContentState = rememberSharedContentState(
                         key = NoteSharedElementKey(note.id, NoteSharedElementType.Bounds)
@@ -295,19 +249,15 @@ fun NoteItemTag(
                         hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                         onLongPress()
                     }
-                ),
-            color = surfaceColor,
-            shape = RoundedCornerShape(roundedCornerAnimation),
-            shadowElevation = if (isSelected) 2.dp else 1.dp
+                )
         ) {
             NoteContent(
                 modifier = Modifier
+                    .fillMaxWidth()
+                    .height(height)
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(
-                            key = NoteSharedElementKey(
-                                note.id,
-                                NoteSharedElementType.Content
-                            )
+                            key = NoteSharedElementKey(note.id, NoteSharedElementType.Content)
                         ),
                         animatedVisibilityScope = animatedVisibilityScope,
                         resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
@@ -318,8 +268,9 @@ fun NoteItemTag(
                 note = note,
                 tags = tags,
                 gridLayout = gridLayout,
+                isSelected = isSelected,
                 titleSize = titleSize,
-                contentSize = contentSize,
+                contentSize = contentSize
             )
         }
     }
@@ -332,50 +283,106 @@ private fun NoteContent(
     note: Note,
     tags: List<Tag>,
     gridLayout: GridLayout,
+    isSelected: Boolean,
     titleSize: TextUnit,
     contentSize: TextUnit,
 ) {
-    Column(
-        modifier = modifier
-            .padding(12.dp)
-            .fillMaxWidth()
-    ) {
-        // Title Section
-        if (note.title.isNotBlank()) {
-            Text(
-                text = note.title,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.SemiBold
-                ),
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = if (gridLayout == GridLayout.OneColumn) 1 else 3,
-                overflow = TextOverflow.Ellipsis,
-                fontSize = titleSize
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-        }
-
-        // Content Section
-        if (note.content.isNotBlank()) {
-            Text(
-                text = note.content,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    lineHeight = 20.sp
-                ),
-                color = MaterialTheme.colorScheme.onSurface,
-                overflow = TextOverflow.Ellipsis,
-                fontSize = contentSize,
-                modifier = Modifier.weight(1f, fill = false)
-            )
-        }
-
-        // Bottom Section
-        BottomSection(
-            reminderDate = note.reminderDate,
-            isDone = note.isDone,
-            tags = tags,
-            noteColor = note.lightColor
+    // Cache animation specs
+    val borderAnimationSpec = remember {
+        spring<Color>(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessLow,
+            visibilityThreshold = null
         )
+    }
+
+    val shapeAnimationSpec = remember {
+        spring<Dp>(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    }
+
+    // Optimize animations by using remember for target values
+    val borderColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+        label = "borderColor",
+        animationSpec = borderAnimationSpec
+    )
+
+    val shape by animateDpAsState(
+        targetValue = if (isSelected) 16.dp else 12.dp,
+        label = "shape",
+        animationSpec = shapeAnimationSpec
+    )
+
+    // Cache colors - Move MaterialTheme.colorScheme access outside remember
+    val surfaceColor = rememberContainerColor(note.lightColor)
+    val outlineVariant = MaterialTheme.colorScheme.outlineVariant
+
+    val borderStroke =
+        if (note.lightColor == 0) BorderStroke(0.7.dp, outlineVariant)
+        else BorderStroke(0.dp, Color.Transparent)
+
+    val border = if (isSelected) {
+        BorderStroke(2.dp, borderColor)
+    } else {
+        borderStroke
+    }
+
+
+
+    OutlinedCard(
+        border = border,
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = surfaceColor
+        ),
+        elevation = CardDefaults.cardElevation(if (isSelected) 2.dp else 1.dp),
+        shape = RoundedCornerShape(shape)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxWidth()
+        ) {
+            // Title Section
+            if (note.title.isNotBlank()) {
+                Text(
+                    text = note.title,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = if (gridLayout == GridLayout.OneColumn) 1 else 3,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = titleSize
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+
+            // Content Section
+            if (note.content.isNotBlank()) {
+                Text(
+                    text = note.content,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        lineHeight = 20.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = contentSize,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+            }
+
+            // Bottom Section
+            BottomSection(
+                reminderDate = note.reminderDate,
+                isDone = note.isDone,
+                tags = tags,
+                noteColor = note.lightColor
+            )
+        }
     }
 }
 

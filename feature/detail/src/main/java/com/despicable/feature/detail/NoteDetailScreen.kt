@@ -96,7 +96,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.despicable.core.common.navigation.LocalNavAnimatedVisibilityScope
+import com.despicable.core.common.navigation.LocalSharedTransitionScope
 import com.despicable.core.common.navigation.NoteAction
+import com.despicable.core.common.navigation.NoteSharedElementKey
+import com.despicable.core.common.navigation.NoteSharedElementType
 import com.despicable.core.designsystem.component.NoteeDialog
 import com.despicable.core.designsystem.component.ReminderDialog
 import com.despicable.core.designsystem.component.ReminderInfo
@@ -197,12 +201,10 @@ fun NoteDetailScreen(
         }
     }
 
-    val sharedTransitionScope =
-        com.despicable.core.common.navigation.LocalSharedTransitionScope.current
-            ?: throw IllegalStateException("No Scope found")
-    val animatedVisibilityScope =
-        com.despicable.core.common.navigation.LocalNavAnimatedVisibilityScope.current
-            ?: throw IllegalStateException("No Scope found")
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+        ?: throw IllegalStateException("No Scope found")
+    val animatedVisibilityScope = LocalNavAnimatedVisibilityScope.current
+        ?: throw IllegalStateException("No Scope found")
 
     // Single corner animation for consistency
     val roundedCornerAnim by animatedVisibilityScope.transition.animateDp(label = "Rounded corner") {
@@ -215,9 +217,9 @@ fun NoteDetailScreen(
                 .fillMaxSize()
                 .sharedBounds(
                     rememberSharedContentState(
-                        key = com.despicable.core.common.navigation.NoteSharedElementKey(
+                        key = NoteSharedElementKey(
                             noteId = uiState.id,
-                            type = com.despicable.core.common.navigation.NoteSharedElementType.Bounds
+                            type = NoteSharedElementType.Bounds
                         )
                     ),
                     animatedVisibilityScope,
@@ -272,9 +274,9 @@ fun NoteDetailScreen(
                     .padding(innerPadding)
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(
-                            key = com.despicable.core.common.navigation.NoteSharedElementKey(
+                            key = NoteSharedElementKey(
                                 uiState.id,
-                                com.despicable.core.common.navigation.NoteSharedElementType.Content
+                                NoteSharedElementType.Content
                             )
                         ),
                         animatedVisibilityScope = animatedVisibilityScope,
@@ -413,7 +415,6 @@ fun NoteDetailScreen(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun EditNoteContent(
     modifier: Modifier = Modifier,
@@ -427,9 +428,9 @@ fun EditNoteContent(
     enabled: Boolean,
     content: @Composable () -> Unit = {}
 ) {
-    val sharedTransitionScope =
-        com.despicable.core.common.navigation.LocalSharedTransitionScope.current
-            ?: throw IllegalStateException("No scope found")
+//    val sharedTransitionScope =
+//        LocalSharedTransitionScope.current
+//            ?: throw IllegalStateException("No scope found")
     val contentFocusRequester = remember { FocusRequester() }
 
     LazyColumn(

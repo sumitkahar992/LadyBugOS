@@ -1,4 +1,5 @@
 package com.despicable.feature.home
+/*
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
@@ -137,7 +138,9 @@ fun NoteItem(
     val height = calculateNoteHeight(
         note = note,
         hasReminder = note.reminderDate != null,
-        hasTags = false /*tags.isNotEmpty()*/,
+        hasTags = false */
+/*tags.isNotEmpty()*//*
+,
         gridLayout = GridLayout.OneColumn
     )
     Surface(
@@ -181,3 +184,7 @@ fun NoteItem(
         }
     }
 }
+
+
+*/
+

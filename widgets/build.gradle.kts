@@ -9,8 +9,8 @@ android {
 
 dependencies {
 
-    implementation(projects.core.model)
     implementation(projects.core.domain)
+    implementation(projects.core.data)
 
 
     // Widgets

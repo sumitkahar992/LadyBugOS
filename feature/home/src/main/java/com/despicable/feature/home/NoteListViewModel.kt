@@ -6,17 +6,11 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.despicable.core.common.navigation.NoteAction
+import com.despicable.core.data.repository.NoteRepository
+import com.despicable.core.data.sample.LoadSampleDataUseCase
 import com.despicable.core.datastore.SettingsRepo
 import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.designsystem.theme.Theme
-import com.despicable.core.domain.sample.LoadSampleDataUseCase
-import com.despicable.core.domain.usecase.GetAllNotesTagsUseCase
-import com.despicable.core.domain.usecase.GetAllTagsUseCase
-import com.despicable.core.domain.usecase.GetInsertTagsUseCase
-import com.despicable.core.domain.usecase.GetNoteByIdUseCase
-import com.despicable.core.domain.usecase.GetUpdateTagsUseCase
-import com.despicable.core.domain.usecase.UpdateNoteReminderUseCase
-import com.despicable.core.domain.usecase.UpdateNotesUseCase
 import com.despicable.core.model.Note
 import com.despicable.core.model.NoteWithTags
 import com.despicable.core.model.Tag
@@ -60,16 +54,9 @@ data class SnackBarMessage(
 )
 
 class NoteListViewModel(
-    private val repo: SettingsRepo,
-    private val getAllTagsUseCase: GetAllTagsUseCase,
-    private val getAllNotesTagsUseCase: GetAllNotesTagsUseCase,
-    private val getNoteByIdUseCase: GetNoteByIdUseCase,
-    private val updateNoteReminderUseCase: UpdateNoteReminderUseCase,
-    private val updateNotesUseCase: UpdateNotesUseCase,
+    private val settingsRepo: SettingsRepo,
+    private val repo: NoteRepository,
     private val widgetUpdater: WidgetUpdater,
-    private val insertTagsUseCase: GetInsertTagsUseCase,
-    private val updateTagsUseCase: GetUpdateTagsUseCase,
-    private val deleteTagsUseCase: GetUpdateTagsUseCase,
     private val loadSampleDataUseCase: LoadSampleDataUseCase
 ) : ViewModel() {
 
@@ -84,16 +71,16 @@ class NoteListViewModel(
     init {
         initializeNotes()
         viewModelScope.launch {
-//            loadSampleDataUseCase()
+            loadSampleDataUseCase()
         }
     }
 
     private fun initializeNotes() {
         noteFlowJob = viewModelScope.launch {
             combine(
-                repo.get { gridLayout },
-                getAllTagsUseCase(),
-                getAllNotesTagsUseCase(),
+                settingsRepo.get { gridLayout },
+                repo.getAllTags(),
+                repo.getAllNotesWithTags(),
                 _uiState.map { it.searchQuery }
             ) { gridLayout, tags, allNotes, query ->
                 // Calculate active tag IDs (tags with non-trashed notes)
@@ -159,13 +146,25 @@ class NoteListViewModel(
             try {
                 // Store original state for undo
                 val originalNote =
-                    getNoteByIdUseCase(action.noteId).firstOrNull() ?: return@launch
+                    repo.getNoteById(action.noteId).firstOrNull() ?: return@launch
 
                 // Update database based on action
                 when (action) {
-                    is NoteAction.Archive -> archiveNotes(listOf(originalNote))
-                    is NoteAction.Delete -> trashNotes(listOf(originalNote))
-                    is NoteAction.Unarchive -> unarchiveNotes(listOf(originalNote))
+                    is NoteAction.Archive -> archiveNotes(
+                        listOf(
+                            originalNote
+                        )
+                    )
+
+                    is NoteAction.Delete -> trashNotes(
+                        listOf(
+                            originalNote
+                        )
+                    )
+
+                    is NoteAction.Unarchive -> unarchiveNotes(
+                        listOf(originalNote)
+                    )
                 }
 
                 // Show snackBar with undo option
@@ -182,7 +181,10 @@ class NoteListViewModel(
                     onAction = {
                         viewModelScope.launch {
                             when (action) {
-                                is NoteAction.Archive -> unarchiveNotes(listOf(originalNote))
+                                is NoteAction.Archive -> unarchiveNotes(
+                                    listOf(originalNote)
+                                )
+
                                 is NoteAction.Delete -> {
                                     updateNotes(
                                         notes = listOf(originalNote),
@@ -190,7 +192,9 @@ class NoteListViewModel(
                                     )
                                 }
 
-                                is NoteAction.Unarchive -> archiveNotes(listOf(originalNote))
+                                is NoteAction.Unarchive -> archiveNotes(
+                                    listOf(originalNote)
+                                )
                             }
                             _snackBarMessage.value = null
                         }
@@ -215,7 +219,7 @@ class NoteListViewModel(
                 delay(delayTime)
 
                 // Update database
-                updateNotesUseCase(updatedNotes)
+                repo.updateNotes(updatedNotes)
 
                 // Update widgets
                 widgetUpdater.updateWidgetsForNotes(updatedNotes)
@@ -251,17 +255,17 @@ class NoteListViewModel(
     }
 
     fun updateTheme(theme: Theme) {
-        viewModelScope.launch { repo.setTheme(theme) }
+        viewModelScope.launch { settingsRepo.setTheme(theme) }
     }
 
 
     fun updateGridLayout(gridLayout: GridLayout) {
-        viewModelScope.launch { repo.setGridLayout(gridLayout) }
+        viewModelScope.launch { settingsRepo.setGridLayout(gridLayout) }
     }
 
     fun updateNoteReminder(noteId: Long, reminderDate: Long?) {
         viewModelScope.launch {
-            updateNoteReminderUseCase(noteId, reminderDate)
+            repo.updateNoteReminder(noteId, reminderDate)
         }
     }
 
@@ -344,19 +348,19 @@ class NoteListViewModel(
 
     fun addTag(name: String) {
         viewModelScope.launch {
-            insertTagsUseCase(Tag(name = name))
+            repo.insertTag(Tag(name = name))
         }
     }
 
     fun updateTag(tag: Tag) {
         viewModelScope.launch {
-            updateTagsUseCase(tag)
+            repo.updateTag(tag)
         }
     }
 
     fun deleteTag(tag: Tag) {
         viewModelScope.launch {
-            deleteTagsUseCase(tag)
+            repo.deleteTag(tag)
         }
     }
 

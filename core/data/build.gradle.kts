@@ -16,7 +16,6 @@ dependencies {
 
     implementation(libs.javax.inject)
 
-    implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.core)
 
     implementation(projects.notifications)

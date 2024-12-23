@@ -6,5 +6,5 @@ import org.koin.dsl.module
 
 val backupModule = module {
 
-    viewModel { BackupViewModel(get(), get()) }
+    viewModel { BackupViewModel(get()) }
 }

@@ -2,7 +2,7 @@ package com.despicable.widgets.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.despicable.core.domain.usecase.GetAllNotesUseCase
+import com.despicable.core.data.repository.NoteRepository
 import com.despicable.core.model.Note
 import com.despicable.core.model.NoteWithTags
 import com.despicable.widgets.data.CoroutineDispatchers
@@ -28,7 +28,7 @@ sealed interface NoteSelectionUiState {
 }
 
 class NoteSelectionViewModel(
-    private val getAllNotesUseCase: GetAllNotesUseCase,
+    private val repo: NoteRepository,
     private val widgetRepository: NoteWidgetRepository,
     private val dispatchers: CoroutineDispatchers
 ) : ViewModel(), KoinComponent {
@@ -55,7 +55,7 @@ class NoteSelectionViewModel(
 
     private fun loadNotes() {
         viewModelScope.launch(dispatchers.io) {
-            getAllNotesUseCase()
+            repo.getAllNotes()
                 .map { notes ->
                     notes.filter {
                         !it.isTrashed && !it.isArchived

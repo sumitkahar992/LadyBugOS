@@ -1,4 +1,4 @@
-package com.despicable.core.common.navigation
+package com.despicable.ladybugos.navigation
 /*
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.EnterTransition

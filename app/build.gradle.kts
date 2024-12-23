@@ -60,6 +60,18 @@ dependencies {
     implementation(libs.aboutlibrary.compose)
 
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.androidx.navigation.runtime.ktx)
+
+
+
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
+
+    implementation(libs.aboutlibrary.core)
+    implementation(libs.aboutlibrary.compose)
+
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.compose.material.icons.extended)
 
     // Widgets
     implementation(libs.glance.appwidget)
@@ -73,29 +85,43 @@ dependencies {
 
 
     // Koin
-    implementation(project.dependencies.platform(libs.koin.bom))
+    implementation(libs.koin.androidx.compose)
     implementation(libs.koin.core)
+
     implementation(libs.javax.inject)
 
-    // DataStore
-    implementation(libs.androidx.dataStore.preferences)
 
     // Work
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.koin.androidx.workmanager)
-    implementation(libs.koin.androidx.compose)
 
+    implementation(libs.room.ktx)
+    implementation(libs.room.runtime)
+    ksp(libs.room.compiler)
 
+    implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.timber)
 
-
+    implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.datetime)
 
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.foundation.layout)
+
+    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.hilt.navigation.compose)
-    implementation(libs.androidx.navigation.compose)
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 
 
 }
