@@ -36,7 +36,7 @@ fun LadyBugOSTheme(
             typography = Typography,
             content = {
                 Surface(
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    color = MaterialTheme.colorScheme.background,
                     content = content
                 )
             }

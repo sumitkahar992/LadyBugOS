@@ -1,11 +1,11 @@
 package com.despicable.notifications
 
 import android.content.Context
-import com.despicable.core.database.model.NoteEntity
+import com.despicable.core.model.Note
 
 class NotificationHelper(private val context: Context) {
 
-    fun scheduleNotification(note: NoteEntity) {
+    fun scheduleNotification(note: Note) {
         note.reminderDate?.let { reminderDate ->
             NotificationWorker.scheduleNotification(
                 context,

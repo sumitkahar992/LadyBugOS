@@ -27,7 +27,7 @@ fun rememberContainerColor(noteColor: Int): Color {
     return remember(isDarkTheme, noteColor) {
         when {
             // When lightColor is 0 (default), use theme-specific surface colors
-            noteColor == 0 -> material.surfaceContainerLow
+            noteColor == 0 -> material.background
             // For user-selected colors, maintain existing dark/light logic
             isDarkTheme -> Color(noteColor).darken(0.4f)
             else -> Color(noteColor)

@@ -8,7 +8,8 @@ android {
 
 dependencies {
 
-    implementation(projects.core.database)
+    implementation(projects.core.data)
+    implementation(projects.core.model)
 
 
     // Koin

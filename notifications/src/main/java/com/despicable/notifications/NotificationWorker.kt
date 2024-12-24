@@ -13,7 +13,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.despicable.core.database.dao.NoteDao
+import com.despicable.core.data.repository.NoteRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
@@ -27,7 +27,7 @@ class NotificationWorker(
 ) : CoroutineWorker(context, params), KoinComponent {
 
     // Get noteDao from Koin
-    private val noteDao: NoteDao by inject()
+    private val repository: NoteRepository by inject()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val noteId = inputData.getLong(KEY_NOTE_ID, -1)
@@ -90,7 +90,7 @@ class NotificationWorker(
     private suspend fun updateNoteStatus(noteId: Long) {
         withContext(Dispatchers.IO) {
             try {
-                noteDao.updateNoteDoneStatus(noteId, true)
+                repository.updateNoteStatus(noteId, true)
                 Result.success()
             } catch (e: Exception) {
                 Result.failure()

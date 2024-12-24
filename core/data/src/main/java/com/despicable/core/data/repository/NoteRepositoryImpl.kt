@@ -1,5 +1,6 @@
 package com.despicable.core.data.repository
 
+import com.despicable.core.data.model.toDomain
 import com.despicable.core.data.model.toDomainOrNull
 import com.despicable.core.data.model.toEntity
 import com.despicable.core.data.model.toNoteDomainList
@@ -15,6 +16,7 @@ import com.despicable.core.model.NoteWithTags
 import com.despicable.core.model.Tag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -22,7 +24,8 @@ import javax.inject.Inject
 class NoteRepositoryImpl @Inject constructor(
     private val noteDao: NoteDao,
     private val tagDao: TagDao,
-    private val checklistItemDao: ChecklistItemDao
+    private val checklistItemDao: ChecklistItemDao,
+    private val reminderScheduler: ReminderScheduler
 ) : NoteRepository {
 
     override fun getAllNotes(): Flow<List<Note>> =
@@ -88,7 +91,18 @@ class NoteRepositoryImpl @Inject constructor(
         withContext(Dispatchers.IO) {
             val currentTime = System.currentTimeMillis()
             val isDone = reminderDate != null && reminderDate <= currentTime
+
+            // Update reminder and reset isDone status
             noteDao.updateNoteReminderAndIsDone(noteId, reminderDate, isDone)
+
+            val updatedNote = noteDao.getNoteById(noteId).first()
+            updatedNote?.let {
+                if (reminderDate != null) {
+                    reminderScheduler.scheduleReminder(it.toDomain())
+                } else {
+                    reminderScheduler.cancelReminder(noteId)
+                }
+            }
         }
     }
 
@@ -134,6 +148,10 @@ class NoteRepositoryImpl @Inject constructor(
             noteDao.updateNote(note.toEntity().copy(isChecklist = !note.isChecklist))
             items?.let { checklistItemDao.insertChecklistItems(it) }
         }
+
+    override suspend fun updateNoteStatus(noteId: Long, isDone: Boolean) {
+        noteDao.updateNoteDoneStatus(noteId, isDone)
+    }
 }
 
 

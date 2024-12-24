@@ -7,6 +7,7 @@ import com.despicable.core.model.Tag
 import kotlinx.coroutines.flow.Flow
 
 interface NoteRepository {
+
     // Note Operations
     fun getAllNotes(): Flow<List<Note>>
     fun getNoteById(id: Long): Flow<Note?>
@@ -39,4 +40,9 @@ interface NoteRepository {
     suspend fun deleteCheckedItems(noteId: Long)
     suspend fun reorderChecklistItems(noteId: Long, items: List<ChecklistItem>)
     suspend fun toggleNoteChecklist(note: Note, items: List<ChecklistItem>? = null)
+
+    // Notification Operations
+    suspend fun updateNoteStatus(noteId: Long, isDone: Boolean)
+
+
 }

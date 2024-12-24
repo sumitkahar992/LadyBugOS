@@ -51,6 +51,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
@@ -238,7 +239,7 @@ fun NoteItemTag(
                     animatedVisibilityScope = animatedVisibilityScope,
                     enter = EnterTransition.None,
                     exit = ExitTransition.None,
-                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
+                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(ContentScale.FillBounds),
                     clipInOverlayDuringTransition = OverlayClip(
                         RoundedCornerShape(roundedCornerAnimation)
                     )
@@ -260,7 +261,7 @@ fun NoteItemTag(
                             key = NoteSharedElementKey(note.id, NoteSharedElementType.Content)
                         ),
                         animatedVisibilityScope = animatedVisibilityScope,
-                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
+                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(ContentScale.FillBounds),
                         clipInOverlayDuringTransition = OverlayClip(
                             RoundedCornerShape(roundedCornerAnimation)
                         ),
@@ -338,7 +339,7 @@ private fun NoteContent(
         colors = CardDefaults.cardColors(
             containerColor = surfaceColor
         ),
-        elevation = CardDefaults.cardElevation(if (isSelected) 2.dp else 1.dp),
+        elevation = CardDefaults.cardElevation(if (isSelected) 2.dp else 0.dp),
         shape = RoundedCornerShape(shape)
     ) {
         Column(

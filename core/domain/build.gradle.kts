@@ -11,6 +11,8 @@ dependencies {
 
     api(projects.core.model)
     api(projects.core.data)
+    implementation(projects.notifications)
+
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.javax.inject)

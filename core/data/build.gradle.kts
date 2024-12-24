@@ -14,11 +14,11 @@ dependencies {
     api(projects.core.database)
     api(projects.core.datastore)
 
+
     implementation(libs.javax.inject)
 
     implementation(libs.koin.core)
 
-    implementation(projects.notifications)
     implementation(libs.kotlinx.coroutines.android)
 
     implementation(libs.kotlinx.serialization.json)
