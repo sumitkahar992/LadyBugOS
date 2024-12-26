@@ -13,12 +13,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -52,6 +55,7 @@ import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -215,6 +219,8 @@ fun NoteDetailScreen(
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
+                .imePadding()
+                .skipToLookaheadSize()
                 .sharedBounds(
                     rememberSharedContentState(
                         key = NoteSharedElementKey(
@@ -229,8 +235,7 @@ fun NoteDetailScreen(
                     enter = EnterTransition.None,
                     exit = ExitTransition.None,
                 )
-                .clip(RoundedCornerShape(roundedCornerAnim))
-                .imePadding(),
+                .clip(RoundedCornerShape(roundedCornerAnim)),
             containerColor = containerColor,
             contentColor = MaterialTheme.colorScheme.onSurface,
             snackbarHost = { SnackbarHost(snackBarHostState) },
@@ -267,9 +272,11 @@ fun NoteDetailScreen(
                     containerColor = containerColor,
                     uiState = uiState
                 )
-            }
+            },
+            contentWindowInsets = WindowInsets.ime,
         ) { innerPadding ->
             EditNoteContent(
+                skipModifier = Modifier.skipToLookaheadSize(),
                 modifier = Modifier
                     .padding(innerPadding)
                     .sharedBounds(
@@ -418,6 +425,7 @@ fun NoteDetailScreen(
 @Composable
 fun EditNoteContent(
     modifier: Modifier = Modifier,
+    skipModifier: Modifier = Modifier,
     uiState: NoteUiState,
     onTitleChange: (TextFieldValue) -> Unit,
     onContentChange: (TextFieldValue) -> Unit,
@@ -436,12 +444,7 @@ fun EditNoteContent(
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         state = rememberLazyListState(),
-        contentPadding = PaddingValues(
-            start = 6.dp,
-            end = 6.dp,
-            top = 0.dp,
-            bottom = 20.dp
-        ),
+        contentPadding = PaddingValues(horizontal = 6.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp) // Default spacing between items
     ) {
         item { content() }
@@ -451,6 +454,7 @@ fun EditNoteContent(
         // Title section
         item {
             NoteTitleSection(
+                modifier = skipModifier,
                 uiState = uiState,
                 onTitleChange = onTitleChange,
                 onOpenColorPicker = onOpenColorPicker,
@@ -475,7 +479,7 @@ fun EditNoteContent(
         // Content section
         item {
             NoteContentSection(
-                modifier = Modifier.focusRequester(contentFocusRequester),
+                modifier = skipModifier.focusRequester(contentFocusRequester),
                 uiState = uiState,
                 onContentChange = onContentChange,
                 enabled = enabled,
@@ -492,7 +496,7 @@ fun EditNoteContent(
                     isDone = isDone,
                     onClick = onClickReminderInfo,
                     isClickable = true,
-                    modifier = Modifier
+                    modifier = skipModifier
                         .padding(horizontal = 16.dp)
                         .animateItem(
                             fadeInSpec = null, fadeOutSpec = null
@@ -975,10 +979,11 @@ private fun NoteDetailBottomBar(
     uiState: NoteUiState
 ) {
     BottomAppBar(
+        modifier = Modifier.height(68.dp),
         contentPadding = PaddingValues(5.dp),
         containerColor = containerColor,
-        modifier = Modifier.height(68.dp),
         tonalElevation = 0.dp,
+        windowInsets = BottomAppBarDefaults.windowInsets.union(WindowInsets.ime),
         actions = {
             Row(
                 modifier = Modifier.fillMaxWidth(),

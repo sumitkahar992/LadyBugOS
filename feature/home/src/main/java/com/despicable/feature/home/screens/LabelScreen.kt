@@ -16,11 +16,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.add
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.BasicTextField
@@ -57,6 +65,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
@@ -64,14 +73,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.despicable.core.designsystem.component.NoteeDialog
 import com.despicable.core.designsystem.theme.LadyBugOSTheme
-import com.despicable.feature.home.NoteListViewModel
 import com.despicable.core.model.Tag
+import com.despicable.feature.home.NoteListViewModel
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
@@ -83,13 +93,11 @@ fun LabelScreen(
 
     val uiState by viewModel.uiState.collectAsState()
 
-    TagManagementScreen(
-        tags = uiState.tagState.availableTags,
+    TagManagementScreen(tags = uiState.tagState.availableTags,
         onNavigateBack = onNavigateBack,
         onAddTag = { tagName -> viewModel.addTag(tagName) },
         onUpdateTag = { tag -> viewModel.updateTag(tag) },
-        onDeleteTag = { tag -> viewModel.deleteTag(tag) }
-    )
+        onDeleteTag = { tag -> viewModel.deleteTag(tag) })
 }
 
 
@@ -128,147 +136,153 @@ fun TagManagementScreen(
         newTagName = ""
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        // Show error snackBar
-        AnimatedVisibility(
-            visible = showErrorSnackbar,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 62.dp) // Positioned below TopAppBar
-                .zIndex(1f), // Ensure it appears above other content
-            enter = fadeIn() + slideInHorizontally(),
-            exit = fadeOut() + slideOutHorizontally()
-        ) {
-            Snackbar(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                action = { },
-                dismissAction = {
-                    IconButton(onClick = { showErrorSnackbar = false }) {
-                        Icon(Icons.Default.Close, contentDescription = "Dismiss")
-                    }
-                }
-            ) {
-                Text(errorMessage)
-            }
-        }
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
-        Scaffold(
-            modifier = Modifier.imePadding(),
-            topBar = {
-                TopAppBar(
-                    title = { Text("Edit labels", Modifier.padding(start = 16.dp)) },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            clearFocusAndHideKeyboard()
-                            onNavigateBack()
-                        }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent
-                    )
-                )
-            }
-        ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-            ) {
-                // Top divider
+
+
+    Scaffold(modifier = Modifier
+        .fillMaxSize()
+        .nestedScroll(scrollBehavior.nestedScrollConnection),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),  // Reset window insets
+        topBar = {
+            TopAppBar(
+                title = { Text("Edit labels", Modifier.padding(start = 16.dp)) },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        clearFocusAndHideKeyboard()
+                        onNavigateBack()
+                    }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                    }
+                },
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
+                windowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
+            )
+        }) { padding ->
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .nestedScroll(scrollBehavior.nestedScrollConnection),
+            // Add windowInsetsPadding for IME to handle keyboard properly
+            contentPadding = WindowInsets.ime
+                .add(WindowInsets(bottom = 20.dp))
+                .asPaddingValues()
+        ) {
+            // Top divider
+            item {
                 HorizontalDivider(
                     modifier = Modifier.fillMaxWidth(),
                     thickness = 0.5.dp,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
                 )
+            }
 
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    item(key = "create_new") {
-                        TagListItem(
-                            tag = Tag(name = ""),
-                            isEditing = isCreatingNewTag,
-                            isNewTag = true,
-                            newTagName = newTagName,
-                            onNewTagNameChange = { newTagName = it },
-                            onEditClick = {
-                                editingTag = null
-                                isCreatingNewTag = true
-                                keyboardController?.show()
-                            },
-                            onDeleteClick = {
+            item(key = "create_new") {
+                TagListItem(tag = Tag(name = ""),
+                    isEditing = isCreatingNewTag,
+                    isNewTag = true,
+                    newTagName = newTagName,
+                    onNewTagNameChange = { newTagName = it },
+                    onEditClick = {
+                        editingTag = null
+                        isCreatingNewTag = true
+                        keyboardController?.show()
+                    },
+                    onDeleteClick = {
+                        clearFocusAndHideKeyboard()
+                    },
+                    onEditComplete = { tagName ->
+                        if (tagName.isNotBlank()) {
+                            if (sortedTags.any {
+                                    it.name.equals(
+                                        tagName, ignoreCase = false
+                                    )
+                                }) {
+                                errorMessage = "Tag already exists"
+                                showErrorSnackbar = true
+                            } else {
+                                onAddTag(tagName)
                                 clearFocusAndHideKeyboard()
-                            },
-                            onEditComplete = { tagName ->
-                                if (tagName.isNotBlank()) {
-                                    if (sortedTags.any {
-                                            it.name.equals(
-                                                tagName,
-                                                ignoreCase = false
-                                            )
-                                        }) {
-                                        errorMessage = "Tag already exists"
-                                        showErrorSnackbar = true
-                                    } else {
-                                        onAddTag(tagName)
-                                        clearFocusAndHideKeyboard()
-                                    }
-                                }
                             }
-                        )
-                    }
+                        }
+                    })
+            }
 
-                    items(
-                        items = sortedTags,
-                        key = { it.id }
-                    ) { tag ->
-                        TagListItem(
-                            modifier = Modifier.animateItem(
-                                fadeInSpec = null, fadeOutSpec = null, placementSpec = spring(
-                                    stiffness = Spring.StiffnessMediumLow,
-                                    visibilityThreshold = IntOffset.VisibilityThreshold
+            items(items = sortedTags, key = { it.id }) { tag ->
+                TagListItem(modifier = Modifier.animateItem(
+                    fadeInSpec = null, fadeOutSpec = null, placementSpec = spring(
+                        stiffness = Spring.StiffnessMediumLow,
+                        visibilityThreshold = IntOffset.VisibilityThreshold
+                    )
+                ),
+                    tag = tag,
+                    isEditing = editingTag?.id == tag.id,
+                    isNewTag = false,
+                    newTagName = "",
+                    onNewTagNameChange = {},
+                    onEditClick = {
+                        isCreatingNewTag = false
+                        newTagName = ""
+                        editingTag = tag
+                    },
+                    onDeleteClick = {
+                        tagToDelete = tag
+                        showDeleteDialog = true
+                    },
+                    onEditComplete = { newName ->
+                        if (sortedTags.any {
+                                it.id != tag.id && it.name.equals(
+                                    newName, ignoreCase = true
                                 )
-                            ),
-                            tag = tag,
-                            isEditing = editingTag?.id == tag.id,
-                            isNewTag = false,
-                            newTagName = "",
-                            onNewTagNameChange = {},
-                            onEditClick = {
-                                isCreatingNewTag = false
-                                newTagName = ""
-                                editingTag = tag
-                            },
-                            onDeleteClick = {
-                                tagToDelete = tag
-                                showDeleteDialog = true
-                            },
-                            onEditComplete = { newName ->
-                                if (sortedTags.any {
-                                        it.id != tag.id && it.name.equals(
-                                            newName,
-                                            ignoreCase = true
-                                        )
-                                    }) {
-                                    errorMessage = "Tag already exists"
-                                    showErrorSnackbar = true
-                                } else {
-                                    onUpdateTag(tag.copy(name = newName))
-                                    clearFocusAndHideKeyboard()
-                                }
-                            }
-                        )
-                    }
+                            }) {
+                            errorMessage = "Tag already exists"
+                            showErrorSnackbar = true
+                        } else {
+                            onUpdateTag(tag.copy(name = newName))
+                            clearFocusAndHideKeyboard()
+                        }
+                    })
+            }
+
+            item { Spacer(modifier = Modifier.height(16.dp)) }
+
+        }
+
+
+        Box(
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            // Show error snackBar
+            AnimatedVisibility(
+                visible = showErrorSnackbar,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 62.dp) // Positioned below TopAppBar
+                    .zIndex(1f), // Ensure it appears above other content
+                enter = fadeIn() + slideInHorizontally(),
+                exit = fadeOut() + slideOutHorizontally()
+            ) {
+                Snackbar(modifier = Modifier.padding(horizontal = 16.dp),
+                    action = { },
+                    dismissAction = {
+                        IconButton(onClick = { showErrorSnackbar = false }) {
+                            Icon(Icons.Default.Close, contentDescription = "Dismiss")
+                        }
+                    }) {
+                    Text(errorMessage)
                 }
             }
         }
 
+
         // Delete Confirmation Dialog
         tagToDelete?.let { tag ->
-            NoteeDialog(
-                enabled = showDeleteDialog,
+            NoteeDialog(enabled = showDeleteDialog,
                 onDismiss = {
                     showDeleteDialog = false
                     tagToDelete = null
@@ -281,8 +295,7 @@ fun TagManagementScreen(
                     onDeleteTag(tag)
                     showDeleteDialog = false
                     tagToDelete = null
-                }
-            )
+                })
         }
 
         // Auto-hide snackBar after delay
@@ -313,8 +326,7 @@ private fun TagListItem(
                     isNewTag -> newTagName
                     isEditing -> tag.name
                     else -> tag.name
-                },
-                selection = TextRange(
+                }, selection = TextRange(
                     when {
                         isNewTag -> newTagName.length
                         isEditing -> tag.name.length
@@ -333,32 +345,25 @@ private fun TagListItem(
     }
 
     AnimatedContent(
-        targetState = isEditing,
-        modifier = modifier,
-        transitionSpec = {
+        targetState = isEditing, modifier = modifier, transitionSpec = {
             fadeIn() togetherWith fadeOut()
         }, label = ""
     ) { editing ->
         Column {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(enabled = !editing) { onEditClick() }
-                    .background(
-                        color = if (editing)
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                        else
-                            Color.Transparent
-                    )
-                    .padding(horizontal = 8.dp),
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .clickable(enabled = !editing) { onEditClick() }
+                .background(
+                    color = if (editing) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    else Color.Transparent
+                )
+                .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+                horizontalArrangement = Arrangement.SpaceBetween) {
 
                 // Left Icon
                 IconButton(
-                    onClick = onDeleteClick,
-                    enabled = editing
+                    onClick = onDeleteClick, enabled = editing
                 ) {
                     Icon(
                         imageVector = when {
@@ -374,8 +379,7 @@ private fun TagListItem(
 
                 // Text Field / Label
                 Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.Center
+                    modifier = Modifier.weight(1f), contentAlignment = Alignment.Center
                 ) {
                     BasicTextField(
                         value = fieldValue,
@@ -412,23 +416,18 @@ private fun TagListItem(
                         },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Text,
-                            imeAction = ImeAction.Done
+                            keyboardType = KeyboardType.Text, imeAction = ImeAction.Done
                         ),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                onEditComplete(fieldValue.text)
-                            }
-                        )
+                        keyboardActions = KeyboardActions(onDone = {
+                            onEditComplete(fieldValue.text)
+                        })
                     )
                 }
 
 
                 // Right Icon
                 if (isNewTag || editing) {
-                    IconButton(
-                        onClick = { onEditComplete(fieldValue.text) }
-                    ) {
+                    IconButton(onClick = { onEditComplete(fieldValue.text) }) {
                         Icon(
                             Icons.Outlined.Check,
                             contentDescription = "Save",
@@ -471,15 +470,14 @@ fun TagManagementScreenPreview() {
         Tag(id = 4, name = "Family"),
         Tag(id = 3, name = "Health"),
         Tag(id = 2, name = "Books"),
-        Tag(id = 1, name = "Recipes")
+        Tag(id = 1, name = "Recipes"),
+        Tag(id = 0, name = "Home"),
     )
     LadyBugOSTheme {
-        TagManagementScreen(
-            tags = sampleTags,
+        TagManagementScreen(tags = sampleTags,
             onNavigateBack = {},
             onAddTag = {},
             onUpdateTag = {},
-            onDeleteTag = {}
-        )
+            onDeleteTag = {})
     }
 }

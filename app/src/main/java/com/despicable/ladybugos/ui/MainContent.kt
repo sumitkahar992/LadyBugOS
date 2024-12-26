@@ -53,6 +53,7 @@ fun MainContent(
                     it.hasRoute(TrashRoute::class) ||
                     it.hasRoute(ReminderRoute::class)
                     || it.hasRoute(SettingsPage::class)
+                    || it.hasRoute(DetailRoute::class)
         } == true
     }
 
