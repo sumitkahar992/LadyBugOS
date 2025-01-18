@@ -215,6 +215,7 @@ fun NoteDetailScreen(
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
+                .skipToLookaheadSize()
                 .sharedBounds(
                     rememberSharedContentState(
                         key = NoteSharedElementKey(
@@ -270,6 +271,7 @@ fun NoteDetailScreen(
             }
         ) { innerPadding ->
             EditNoteContent(
+                skipModifier = Modifier.skipToLookaheadSize(),
                 modifier = Modifier
                     .padding(innerPadding)
                     .sharedBounds(
@@ -419,6 +421,7 @@ fun NoteDetailScreen(
 @Composable
 fun EditNoteContent(
     modifier: Modifier = Modifier,
+    skipModifier: Modifier = Modifier,
     uiState: NoteUiState,
     onTitleChange: (TextFieldValue) -> Unit,
     onContentChange: (TextFieldValue) -> Unit,
@@ -451,6 +454,7 @@ fun EditNoteContent(
         // Title section
         item {
             NoteTitleSection(
+                modifier = skipModifier,
                 uiState = uiState,
                 onTitleChange = onTitleChange,
                 onOpenColorPicker = onOpenColorPicker,
@@ -475,7 +479,7 @@ fun EditNoteContent(
         // Content section
         item {
             NoteContentSection(
-                modifier = Modifier.focusRequester(contentFocusRequester),
+                modifier = skipModifier.focusRequester(contentFocusRequester),
                 uiState = uiState,
                 onContentChange = onContentChange,
                 enabled = enabled,
@@ -492,7 +496,7 @@ fun EditNoteContent(
                     isDone = isDone,
                     onClick = onClickReminderInfo,
                     isClickable = true,
-                    modifier = Modifier
+                    modifier = skipModifier
                         .padding(horizontal = 16.dp)
                         .animateItem(
                             fadeInSpec = null, fadeOutSpec = null

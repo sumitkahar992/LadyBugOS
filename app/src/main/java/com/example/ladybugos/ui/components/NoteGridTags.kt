@@ -295,6 +295,7 @@ fun NoteItemTag(
                         Modifier
                     }
                 )
+                .skipToLookaheadSize()
                 .sharedBounds(
                     sharedContentState = rememberSharedContentState(
                         key = NoteSharedElementKey(note.id, NoteSharedElementType.Bounds)
@@ -302,7 +303,7 @@ fun NoteItemTag(
                     animatedVisibilityScope = animatedVisibilityScope,
                     enter = EnterTransition.None,
                     exit = ExitTransition.None,
-                    resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
+                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
                     clipInOverlayDuringTransition = OverlayClip(
                         RoundedCornerShape(roundedCornerAnimation)
                     )
@@ -319,13 +320,14 @@ fun NoteItemTag(
             shadowElevation = if (isSelected) 2.dp else 1.dp
         ) {
             NoteContent(
+                skipModifier = Modifier.skipToLookaheadSize(),
                 modifier = Modifier
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(
                             key = NoteSharedElementKey(note.id, NoteSharedElementType.Content)
                         ),
                         animatedVisibilityScope = animatedVisibilityScope,
-                        resizeMode = SharedTransitionScope.ResizeMode.ScaleToBounds(),
+                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
                         clipInOverlayDuringTransition = OverlayClip(
                             RoundedCornerShape(roundedCornerAnimation)
                         ),
@@ -344,6 +346,7 @@ fun NoteItemTag(
 @Composable
 private fun NoteContent(
     modifier: Modifier = Modifier,
+    skipModifier: Modifier = Modifier,
     note: Note,
     tags: List<Tag>,
     gridLayout: GridLayout,
@@ -358,6 +361,7 @@ private fun NoteContent(
         // Title Section
         if (note.title.isNotBlank()) {
             Text(
+                modifier = skipModifier,
                 text = note.title,
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.SemiBold
@@ -380,12 +384,13 @@ private fun NoteContent(
                 color = MaterialTheme.colorScheme.onSurface,
                 overflow = TextOverflow.Ellipsis,
                 fontSize = contentSize,
-                modifier = Modifier.weight(1f, fill = false)
+                modifier = skipModifier.weight(1f, fill = false)
             )
         }
 
         // Bottom Section
         BottomSection(
+            modifier =skipModifier,
             reminderDate = note.reminderDate,
             isDone = note.isDone,
             tags = tags,
@@ -396,13 +401,14 @@ private fun NoteContent(
 
 @Composable
 private fun BottomSection(
+    modifier: Modifier = Modifier,
     reminderDate: Long?,
     isDone: Boolean,
     tags: List<Tag>,
     noteColor: Int
 ) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(top = 6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
