@@ -12,6 +12,9 @@ dependencies {
     implementation(projects.core.domain)
     implementation(projects.core.data)
 
+    //TEMP
+    implementation(projects.core.database)
+
     implementation(projects.widgets)
 
 

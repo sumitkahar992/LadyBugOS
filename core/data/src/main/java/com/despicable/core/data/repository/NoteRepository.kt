@@ -1,6 +1,6 @@
 package com.despicable.core.data.repository
 
-import com.despicable.core.database.model.ChecklistItem
+import com.despicable.core.database.model.ChecklistEntity
 import com.despicable.core.model.Note
 import com.despicable.core.model.NoteWithTags
 import com.despicable.core.model.Tag
@@ -33,13 +33,19 @@ interface NoteRepository {
     fun getUpcomingReminders(): Flow<List<NoteWithTags>>
     fun getCompletedReminders(): Flow<List<NoteWithTags>>
 
+
+    suspend fun updateNoteChecklist(noteId: Long, isChecklist: Boolean)
+
+
     // Checklist Operations
-    fun getChecklistItems(noteId: Long): Flow<List<ChecklistItem>>
-    suspend fun insertChecklistItems(items: List<ChecklistItem>)
-    suspend fun updateChecklistItem(item: ChecklistItem)
+/*
+    fun getChecklistItems(noteId: Long): Flow<List<ChecklistEntity>>
+    suspend fun insertChecklistItems(items: List<ChecklistEntity>)
+    suspend fun updateChecklistItem(item: ChecklistEntity)
     suspend fun deleteCheckedItems(noteId: Long)
-    suspend fun reorderChecklistItems(noteId: Long, items: List<ChecklistItem>)
-    suspend fun toggleNoteChecklist(note: Note, items: List<ChecklistItem>? = null)
+    suspend fun reorderChecklistItems(noteId: Long, items: List<ChecklistEntity>)
+    suspend fun toggleNoteChecklist(note: Note, items: List<ChecklistEntity>? = null)
+*/
 
     // Notification Operations
     suspend fun updateNoteStatus(noteId: Long, isDone: Boolean)

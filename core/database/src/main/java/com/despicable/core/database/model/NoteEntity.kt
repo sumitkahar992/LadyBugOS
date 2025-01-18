@@ -20,11 +20,7 @@ data class NoteEntity(
     var isDone: Boolean = false,
     var isChecklist: Boolean = false, // New field
 
-) {
-    fun matchesSearch(query: String): Boolean =
-        title.contains(query, ignoreCase = true) ||
-                content.contains(query, ignoreCase = true)
-}
+)
 
 
 /*

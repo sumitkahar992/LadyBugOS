@@ -5,7 +5,7 @@ import androidx.room.RoomDatabase
 import com.despicable.core.database.dao.NoteDao
 import com.despicable.core.database.dao.NoteTagCrossRefDao
 import com.despicable.core.database.dao.TagDao
-import com.despicable.core.database.model.ChecklistItem
+import com.despicable.core.database.model.ChecklistEntity
 import com.despicable.core.database.model.ChecklistItemDao
 import com.despicable.core.database.model.NoteEntity
 import com.despicable.core.database.model.NoteTagRefEntity
@@ -13,7 +13,7 @@ import com.despicable.core.database.model.TagEntity
 
 
 @Database(
-    entities = [NoteEntity::class, TagEntity::class, NoteTagRefEntity::class, ChecklistItem::class],
+    entities = [NoteEntity::class, TagEntity::class, NoteTagRefEntity::class, ChecklistEntity::class],
     version = 2
 )
 abstract class NoteDatabase : RoomDatabase() {

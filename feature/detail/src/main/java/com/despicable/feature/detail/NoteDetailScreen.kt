@@ -36,6 +36,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Draw
@@ -48,6 +49,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Subject
 import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Delete
@@ -91,6 +93,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -112,8 +115,10 @@ import com.despicable.core.designsystem.component.TagChip
 import com.despicable.core.designsystem.component.rememberContainerColor
 import com.despicable.core.designsystem.component.rememberTagColors
 import com.despicable.core.model.getRelativeTimeAgo
+import com.despicable.feature.detail.components.checklistContent
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import timber.log.Timber
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -270,7 +275,10 @@ fun NoteDetailScreen(
                     onLeftMenuClick = { showLeftBottomSheet = true },
                     onRightMenuClick = { showRightBottomSheet = true },
                     containerColor = containerColor,
-                    uiState = uiState
+                    uiState = uiState,
+                    onToggleChecklist = {
+                        viewModel.toggleChecklist()
+                    }
                 )
             },
             contentWindowInsets = WindowInsets.ime,
@@ -425,6 +433,7 @@ fun NoteDetailScreen(
 @Composable
 fun EditNoteContent(
     modifier: Modifier = Modifier,
+    viewModel: NoteDetailViewModel = koinViewModel(),
     skipModifier: Modifier = Modifier,
     uiState: NoteUiState,
     onTitleChange: (TextFieldValue) -> Unit,
@@ -440,6 +449,9 @@ fun EditNoteContent(
 //        LocalSharedTransitionScope.current
 //            ?: throw IllegalStateException("No scope found")
     val contentFocusRequester = remember { FocusRequester() }
+
+    val focusManager = LocalFocusManager.current
+    val focusRequester = remember { FocusRequester() }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -477,14 +489,38 @@ fun EditNoteContent(
         item { Spacer(modifier = Modifier.height(8.dp)) }
 
         // Content section
-        item {
-            NoteContentSection(
-                modifier = skipModifier.focusRequester(contentFocusRequester),
-                uiState = uiState,
-                onContentChange = onContentChange,
-                enabled = enabled,
-                onDisabledClick = onDisabledClick,
+
+        Timber.tag("DEBUG").d("[(uiState.isCheckList]-[${uiState.isCheckList}]")
+        if (uiState.isCheckList) {
+            checklistContent(
+                items = uiState.checklistItems.map { it.toUiState() },
+                onItemChecked = viewModel::toggleChecklistItem,
+                onItemContentChange = { position, content ->
+                    viewModel.updateChecklistItem(position, content.text)
+                },
+                onItemRemove = viewModel::removeChecklistItem,
+                onAddItem = { viewModel.addChecklistItem() },
+                modifier = Modifier.fillMaxWidth(),
+                focusManager = focusManager
             )
+        } else {
+
+            item {
+                NoteContentSection(
+                    modifier = skipModifier.focusRequester(contentFocusRequester),
+                    uiState = uiState,
+                    onContentChange = onContentChange,
+                    enabled = enabled,
+                    onDisabledClick = onDisabledClick,
+                )
+            }
+            /*        NoteContentSection(
+                        modifier = skipModifier.focusRequester(contentFocusRequester),
+                        uiState = uiState,
+                        onContentChange = onContentChange,
+                        enabled = enabled,
+                        onDisabledClick = onDisabledClick,
+                    )*/
         }
 
         // Reminder section
@@ -655,6 +691,7 @@ fun NoteContentSection(
             .fillMaxWidth()
             .padding(horizontal = 10.dp)  // Match title section padding
     ) {
+
         NoteTextField(
             value = uiState.contentFieldValue,
             onValueChange = onContentChange,
@@ -976,7 +1013,8 @@ private fun NoteDetailBottomBar(
     onLeftMenuClick: () -> Unit,
     onRightMenuClick: () -> Unit,
     containerColor: Color,
-    uiState: NoteUiState
+    uiState: NoteUiState,
+    onToggleChecklist: () -> Unit,
 ) {
     BottomAppBar(
         modifier = Modifier.height(68.dp),
@@ -998,22 +1036,36 @@ private fun NoteDetailBottomBar(
                         contentDescription = "Left menu",
                     )
                 }
-                Text(
-                    text = "Edited ${getRelativeTimeAgo(uiState.updateDate)}",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    ),
-                    fontSize = 12.sp
-                )
+
                 IconButton(
-                    onClick = onRightMenuClick,
+                    onClick = onToggleChecklist,
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "Right menu",
+                        imageVector = if (uiState.isCheckList)
+                            Icons.Default.Subject else Icons.Default.CheckBox,
+                        contentDescription = if (uiState.isCheckList)
+                            "Switch to note" else "Switch to checklist"
                     )
                 }
             }
+
+            Text(
+                text = "Edited ${getRelativeTimeAgo(uiState.updateDate)}",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                ),
+                fontSize = 12.sp
+            )
+            IconButton(
+                onClick = onRightMenuClick,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = "Right menu",
+                )
+            }
+
 
         }
     )

@@ -254,4 +254,10 @@ interface NoteDao {
     suspend fun insertCrossRefsWithIgnore(crossRefs: List<NoteTagRefEntity>)
 
 
+
+    @Query("UPDATE notes SET isChecklist = :isChecklist WHERE id = :noteId")
+    suspend fun updateNoteChecklist(noteId: Long, isChecklist: Boolean)
+
+
+
 }

@@ -9,7 +9,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.despicable.core.common.navigation.NoteAction
+import com.despicable.core.data.repository.ChecklistRepository
 import com.despicable.core.data.repository.NoteRepository
+import com.despicable.core.database.model.ChecklistEntity
 import com.despicable.core.designsystem.colorPalette
 import com.despicable.core.model.Note
 import com.despicable.core.model.NoteWithTags
@@ -38,12 +40,15 @@ class NoteDetailViewModel(
     private val repo: NoteRepository,
     private val widgetUpdater: WidgetUpdater,
     savedStateHandle: SavedStateHandle,
+    private val checklistRepo: ChecklistRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NoteUiState())
     val uiState: StateFlow<NoteUiState> = _uiState.asStateFlow()
 
     private val _noteUpdateTrigger = MutableSharedFlow<NoteUpdatePayload>()
+
+    private var nextChecklistItemId = 0L
 
 
     init {
@@ -66,7 +71,81 @@ class NoteDetailViewModel(
             repo.getNoteWithTagsById(id).catch { e -> Timber.e(e, "Error loading note") }
                 .firstOrNull()?.let { noteWithTags ->
                     updateUiState { it.fromNoteWithTags(noteWithTags).copy(isLoading = false) }
+
+                    // Start collecting checklist items immediately
+                    checklistRepo.getChecklistItemsFlow(id)
+                        .catch { e -> Timber.e(e, "Error loading checklist items") }
+                        .collect { items ->
+                            _uiState.update { it.copy(checklistItems = items) }
+                        }
+
                 }
+        }
+    }
+
+    fun updateChecklistItem(position: Int, newContent: String) {
+        viewModelScope.launch {
+            try {
+                val item = _uiState.value.checklistItems.getOrNull(position) ?: return@launch
+                checklistRepo.updateChecklistItem(item, newContent)
+            } catch (e: Exception) {
+                Timber.e(e, "Error updating checklist item")
+            }
+        }
+    }
+
+    fun toggleChecklist() {
+        viewModelScope.launch {
+            try {
+                val newChecklistState = !_uiState.value.isCheckList
+                _uiState.update { it.copy(isCheckList = newChecklistState) }
+                repo.updateNoteChecklist(_uiState.value.id, newChecklistState)
+            } catch (e: Exception) {
+                Timber.e(e, "Error toggling checklist status")
+                _uiState.update { it.copy(isCheckList = !it.isCheckList) }
+            }
+        }
+    }
+
+    fun addChecklistItem(content: String = "") {
+        viewModelScope.launch {
+            try {
+                checklistRepo.addChecklistItem(_uiState.value.id, content)
+            } catch (e: Exception) {
+                Timber.e(e, "Error adding checklist item")
+            }
+        }
+    }
+
+    fun toggleChecklistItem(position: Int) {
+        viewModelScope.launch {
+            val item = _uiState.value.checklistItems.getOrNull(position) ?: return@launch
+            try {
+                checklistRepo.toggleChecklistItem(item)
+            } catch (e: Exception) {
+                Timber.e(e, "Error toggling checklist item")
+            }
+        }
+    }
+
+    fun removeChecklistItem(position: Int) {
+        viewModelScope.launch {
+            val item = _uiState.value.checklistItems.getOrNull(position) ?: return@launch
+            try {
+                checklistRepo.deleteChecklistItem(item)
+            } catch (e: Exception) {
+                Timber.e(e, "Error removing checklist item")
+            }
+        }
+    }
+
+    fun reorderChecklistItems(fromPosition: Int, toPosition: Int) {
+        viewModelScope.launch {
+            try {
+                checklistRepo.reorderChecklistItems(_uiState.value.id, fromPosition, toPosition)
+            } catch (e: Exception) {
+                Timber.e(e, "Error reordering checklist items")
+            }
         }
     }
 
@@ -345,6 +424,8 @@ data class NoteUiState(
     val updateDate: String = "",
     val allTags: List<Tag> = emptyList(),
     val selectedTagIds: Set<Long> = emptySet(),
+    val isCheckList: Boolean = false,
+    val checklistItems: List<ChecklistEntity> = emptyList()
 ) {
     fun toNote() = Note(
         id = id,
@@ -358,6 +439,7 @@ data class NoteUiState(
         reminderDate = reminderDate,
         isDone = isDone,
         updateDate = updateDate,
+        isChecklist = isCheckList
     )
 
     fun isEmpty() = title.isBlank() && content.isBlank()
@@ -377,6 +459,7 @@ data class NoteUiState(
                 isDone = it.note.isDone,
                 updateDate = it.note.updateDate,
                 selectedTagIds = it.tags.map { tag -> tag.id }.toSet(),
+                isCheckList = it.note.isChecklist,
             )
         } ?: this
 
@@ -407,5 +490,29 @@ data class NoteUiState(
     )
 }
 
+
+data class ChecklistItemUiState(
+    val id: Long = 0L,
+    val noteId: Long = 0L,  // Add noteId field
+    val content: TextFieldValue = TextFieldValue(""),
+    val isChecked: Boolean = false,
+    val position: Int = 0
+) {
+    fun toEntity() = ChecklistEntity(
+        id = id,  // Map id to id
+        noteId = noteId,  // Map noteId to noteId
+        content = content.text,
+        isChecked = isChecked,
+        position = position
+    )
+}
+
+fun ChecklistEntity.toUiState() = ChecklistItemUiState(
+    id = id,  // Map id to id
+    noteId = noteId,  // Map noteId to noteId
+    content = TextFieldValue(content),
+    isChecked = isChecked,
+    position = position
+)
 
 
