@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.despicable.core.common.navigation.NoteAction
 import com.despicable.core.common.navigation.NoteActionType
-import com.despicable.core.designsystem.component.NoteScreenContent
 import com.despicable.core.designsystem.component.ReminderDialog
 import com.despicable.core.designsystem.component.SwipeToDismissContentSnack
 import com.despicable.core.designsystem.component.tagHeader

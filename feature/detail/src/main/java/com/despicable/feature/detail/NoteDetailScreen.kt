@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -36,6 +37,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.automirrored.filled.Subject
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
@@ -49,11 +51,11 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Subject
 import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteForever
+import androidx.compose.material.icons.outlined.NotificationAdd
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material3.BottomAppBar
@@ -94,6 +96,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -115,9 +118,13 @@ import com.despicable.core.designsystem.component.TagChip
 import com.despicable.core.designsystem.component.rememberContainerColor
 import com.despicable.core.designsystem.component.rememberTagColors
 import com.despicable.core.model.getRelativeTimeAgo
-import com.despicable.feature.detail.components.checklistContent
+import com.despicable.feature.detail.components.AddItemButton
+import com.despicable.feature.detail.components.ChecklistItem
+import com.despicable.feature.detail.components.ColorPickerDialog
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
 import timber.log.Timber
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
@@ -267,7 +274,8 @@ fun NoteDetailScreen(
                     onUnarchive = {
                         handleAction(NoteAction.Unarchive(noteId))
                     },
-                    onTogglePin = viewModel::togglePinStatus
+                    onTogglePin = viewModel::togglePinStatus,
+                    onAddReminder = { showReminderDialog = true }
                 )
             },
             bottomBar = {
@@ -277,7 +285,7 @@ fun NoteDetailScreen(
                     containerColor = containerColor,
                     uiState = uiState,
                     onToggleChecklist = {
-                        viewModel.toggleChecklist()
+                        viewModel.onEvent(CheckListEvent.ToggleChecklist)
                     }
                 )
             },
@@ -430,6 +438,7 @@ fun NoteDetailScreen(
     }
 }
 
+
 @Composable
 fun EditNoteContent(
     modifier: Modifier = Modifier,
@@ -450,21 +459,44 @@ fun EditNoteContent(
 //            ?: throw IllegalStateException("No scope found")
     val contentFocusRequester = remember { FocusRequester() }
 
+    val list = uiState.checklistItems
+    val lazyListState = rememberLazyListState()
+
+    /*  val reorderableState = rememberReorderableLazyListState(lazyListState) { from, to ->
+          Timber.tag("DEBUG").d("reorderableState: from=${from.index}, to=${to.index}")
+          viewModel.onEvent(CheckListEvent.ReorderChecklistItems(from.index, to.index))
+      }*/
+
+    // Modify the reorderable state to account for header offset
+    val reorderableState = rememberReorderableLazyListState(
+        lazyListState = lazyListState,
+        onMove = { from, to ->
+            // Only allow reordering if we're not touching the header (index 0)
+            if (from.index > 3 && to.index > 3) {
+                // Adjust indices to account for header
+                val fromIndex = from.index - 4
+                val toIndex = to.index - 4
+                viewModel.onEvent(CheckListEvent.ReorderChecklistItems(fromIndex, toIndex))
+            }
+        }
+    )
+
+    val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    val focusRequester = remember { FocusRequester() }
+
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        state = rememberLazyListState(),
+        state = lazyListState,
         contentPadding = PaddingValues(horizontal = 6.dp),
         verticalArrangement = Arrangement.spacedBy(0.dp) // Default spacing between items
     ) {
-        item { content() }
+        item("Label") { content() }
 
-        item { Spacer(modifier = Modifier.height(6.dp)) } // Reduced from 16.dp
+        item("Spacer") { Spacer(modifier = Modifier.height(6.dp)) } // Reduced from 16.dp
 
         // Title section
-        item {
+        item("Title") {
             NoteTitleSection(
                 modifier = skipModifier,
                 uiState = uiState,
@@ -486,26 +518,85 @@ fun EditNoteContent(
             )
         }
 
-        item { Spacer(modifier = Modifier.height(8.dp)) }
+        item("Spacer2") { Spacer(modifier = Modifier.height(8.dp)) }
 
         // Content section
 
         Timber.tag("DEBUG").d("[(uiState.isCheckList]-[${uiState.isCheckList}]")
+
+
         if (uiState.isCheckList) {
-            checklistContent(
-                items = uiState.checklistItems.map { it.toUiState() },
-                onItemChecked = viewModel::toggleChecklistItem,
-                onItemContentChange = { position, content ->
-                    viewModel.updateChecklistItem(position, content.text)
-                },
-                onItemRemove = viewModel::removeChecklistItem,
-                onAddItem = { viewModel.addChecklistItem() },
-                modifier = Modifier.fillMaxWidth(),
-                focusManager = focusManager
-            )
-        } else {
+
+            itemsIndexed(
+                items = list,
+                key = { _, item -> item.id }
+            ) { index, item ->
+
+                val shouldFocus = index == uiState.focusedItemPosition
+                val itemFocusRequester = remember(item.id) { FocusRequester() }
+
+
+                ReorderableItem(
+                    state = reorderableState,
+                    key = item.id
+                ) { isDragging ->
+
+                    ChecklistItem(
+                        dragModifier = Modifier
+                            .draggableHandle(
+                                onDragStarted = {
+                                    focusManager.clearFocus()
+                                    viewModel.onEvent(CheckListEvent.UpdateFocusedPosition(-1))
+                                },
+                                onDragStopped = {}
+                            ),
+                        item = item,
+                        onCheckedChange = {
+                            viewModel.onEvent(CheckListEvent.ChecklistItemChecked(item))
+                        },
+                        onContentChange = { content ->
+                            viewModel.onEvent(
+                                CheckListEvent.UpdateChecklistItemContent(
+                                    item,
+                                    content
+                                )
+                            )
+                        },
+                        onDelete = {
+                            viewModel.onEvent(CheckListEvent.RemoveChecklistItem(index))
+                        },
+                        onNext = {
+                            viewModel.onEvent(CheckListEvent.AddChecklistItemAt(index + 1))
+                        },
+                        focusRequester = itemFocusRequester,
+                        shouldFocus = shouldFocus,
+                        isDragging = isDragging,
+                        onFocusChange = { focused ->
+                            if (focused) {
+                                keyboardController?.show()
+                            }
+                        }
+                    )
+                }
+
+                LaunchedEffect(list.isEmpty()) {
+                    if (list.isEmpty()) {
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
+                    }
+                }
+            }
 
             item {
+                AddItemButton(
+                    onAddClick = {
+                        viewModel.onEvent(CheckListEvent.AddChecklistItemAt(list.size))
+                    }
+                )
+            }
+
+        } else {
+            item("Content") {
                 NoteContentSection(
                     modifier = skipModifier.focusRequester(contentFocusRequester),
                     uiState = uiState,
@@ -514,18 +605,12 @@ fun EditNoteContent(
                     onDisabledClick = onDisabledClick,
                 )
             }
-            /*        NoteContentSection(
-                        modifier = skipModifier.focusRequester(contentFocusRequester),
-                        uiState = uiState,
-                        onContentChange = onContentChange,
-                        enabled = enabled,
-                        onDisabledClick = onDisabledClick,
-                    )*/
         }
+
 
         // Reminder section
         uiState.reminderDate?.let { date ->
-            item {
+            item("Reminder") {
                 Spacer(modifier = Modifier.height(8.dp))
                 ReminderInfo(
                     reminderDate = date,
@@ -541,7 +626,7 @@ fun EditNoteContent(
             }
         }
 
-        item { Spacer(modifier = Modifier.height(20.dp)) }
+        item("Spacer3") { Spacer(modifier = Modifier.height(20.dp)) }
     }
 }
 
@@ -863,13 +948,14 @@ fun EditNoteTopAppBar(
     isArchived: Boolean,
     isTrashed: Boolean,
     onBack: () -> Unit,
+    onAddReminder: () -> Unit,
     onDelete: () -> Unit,
     onArchive: () -> Unit,
     onUnarchive: () -> Unit,
     onTogglePin: () -> Unit
 ) {
     CenterAlignedTopAppBar(
-        title = { /* Empty title */ },
+        title = {},
         colors = TopAppBarDefaults.topAppBarColors(containerColor = containerColor),
         navigationIcon = {
             IconButton(onClick = onBack) {
@@ -881,7 +967,16 @@ fun EditNoteTopAppBar(
         },
         actions = {
             if (!isTrashed) {
-                // Pin action
+
+                // Add Reminder action
+                IconButton(onClick = onAddReminder) {
+                    Icon(
+                        imageVector = Icons.Outlined.NotificationAdd,
+                        contentDescription = "Add reminder"
+                    )
+                }
+
+                // Pin / Unpin action
                 IconButton(onClick = onTogglePin) {
                     Icon(
                         imageVector = if (isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
@@ -889,7 +984,7 @@ fun EditNoteTopAppBar(
                     )
                 }
 
-                // Archive/Unarchive action based on current state
+                // Archive / Unarchive action
                 IconButton(
                     onClick = if (isArchived) onUnarchive else onArchive
                 ) {
@@ -1043,7 +1138,7 @@ private fun NoteDetailBottomBar(
                 ) {
                     Icon(
                         imageVector = if (uiState.isCheckList)
-                            Icons.Default.Subject else Icons.Default.CheckBox,
+                            Icons.AutoMirrored.Filled.Subject else Icons.Default.CheckBox,
                         contentDescription = if (uiState.isCheckList)
                             "Switch to note" else "Switch to checklist"
                     )

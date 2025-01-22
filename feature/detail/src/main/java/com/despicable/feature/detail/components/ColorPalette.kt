@@ -1,4 +1,4 @@
-package com.despicable.feature.detail
+package com.despicable.feature.detail.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

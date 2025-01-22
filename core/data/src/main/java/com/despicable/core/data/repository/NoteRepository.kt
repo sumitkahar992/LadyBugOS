@@ -1,6 +1,6 @@
 package com.despicable.core.data.repository
 
-import com.despicable.core.database.model.ChecklistEntity
+import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
 import com.despicable.core.model.NoteWithTags
 import com.despicable.core.model.Tag
@@ -37,15 +37,15 @@ interface NoteRepository {
     suspend fun updateNoteChecklist(noteId: Long, isChecklist: Boolean)
 
 
-    // Checklist Operations
-/*
-    fun getChecklistItems(noteId: Long): Flow<List<ChecklistEntity>>
-    suspend fun insertChecklistItems(items: List<ChecklistEntity>)
-    suspend fun updateChecklistItem(item: ChecklistEntity)
-    suspend fun deleteCheckedItems(noteId: Long)
-    suspend fun reorderChecklistItems(noteId: Long, items: List<ChecklistEntity>)
-    suspend fun toggleNoteChecklist(note: Note, items: List<ChecklistEntity>? = null)
-*/
+    // Checklist operations
+    suspend fun insertChecklistItem(item: Checklist): Long
+    fun getChecklistItemsByNoteId(noteId: Long): Flow<List<Checklist>>
+    suspend fun updateChecklistItem(item: Checklist)
+    suspend fun deleteChecklistItemsByNoteId(noteId: Long)
+    suspend fun deleteChecklistItem(itemId: Long)
+
+    suspend fun updateAllChecklistItems(items: List<Checklist>)
+
 
     // Notification Operations
     suspend fun updateNoteStatus(noteId: Long, isDone: Boolean)

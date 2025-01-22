@@ -59,4 +59,7 @@ dependencies {
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    implementation(libs.reorderable)
+
+
 }

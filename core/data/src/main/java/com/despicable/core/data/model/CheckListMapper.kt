@@ -1,5 +1,6 @@
 package com.despicable.core.data.model
 
+
 import com.despicable.core.database.model.ChecklistEntity
 import com.despicable.core.model.Checklist
 
@@ -26,3 +27,6 @@ fun List<ChecklistEntity>.toDomainList(): List<Checklist> =
 
 fun List<Checklist>.toEntityList(): List<ChecklistEntity> =
     map { it.toEntity() }
+
+
+

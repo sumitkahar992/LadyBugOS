@@ -1,15 +1,17 @@
 package com.despicable.core.database.model
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import androidx.room.withTransaction
+import com.despicable.core.database.NoteDatabase
 import kotlinx.coroutines.flow.Flow
 
 
@@ -38,55 +40,57 @@ data class ChecklistEntity(
 
 @Dao
 interface ChecklistItemDao {
-    /*    @Query("SELECT * FROM checklist_items WHERE noteId = :noteId ORDER BY position")
-        fun getChecklistItems(noteId: Long): Flow<List<ChecklistEntity>>
 
-        @Insert
-        suspend fun insertChecklistItem(item: ChecklistEntity): Long
 
-        @Insert
-        suspend fun insertChecklistItems(items: List<ChecklistEntity>)
-
-        @Update
-        suspend fun updateChecklistItem(item: ChecklistEntity)
-
-        @Delete
-        suspend fun deleteChecklistItem(item: ChecklistEntity)
-
-        @Query("DELETE FROM checklist_items WHERE noteId = :noteId AND isChecked = 1")
-        suspend fun deleteCheckedItems(noteId: Long)
-
-        @Query("UPDATE checklist_items SET position = position - 1 WHERE noteId = :noteId AND position > :deletedPosition")
-        suspend fun reorderAfterDelete(noteId: Long, deletedPosition: Int)
-
-        @Query("SELECT MAX(position) FROM checklist_items WHERE noteId = :noteId")
-        suspend fun getMaxPosition(noteId: Long): Int?*/
-
-    //
-    @Query("SELECT * FROM checklist_items WHERE noteId = :noteId ORDER BY position")
-    fun getChecklistItemsFlow(noteId: Long): Flow<List<ChecklistEntity>>
-
+    // Insert a single checklist item
     @Insert
     suspend fun insertChecklistItem(item: ChecklistEntity): Long
 
+    // Insert multiple checklist items at once
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertChecklistItems(items: List<ChecklistEntity>)
+
+
+    // Retrieve checklist items for a specific note, ordered by position
+    @Query("SELECT * FROM checklist_items WHERE noteId = :noteId ORDER BY position ASC")
+    fun getChecklistItemsByNoteId(noteId: Long): Flow<List<ChecklistEntity>>
+
+    // Update a single checklist item
     @Update
     suspend fun updateChecklistItem(item: ChecklistEntity)
 
-    @Delete
-    suspend fun deleteChecklistItem(item: ChecklistEntity)
+    // Update multiple checklist items
+    @Update
+    suspend fun updateChecklistItems(items: List<ChecklistEntity>)
 
+
+    // Delete all checklist items associated with a specific note
     @Query("DELETE FROM checklist_items WHERE noteId = :noteId")
-    suspend fun deleteAllChecklistItems(noteId: Long)
+    suspend fun deleteChecklistItemsByNoteId(noteId: Long)
+
+    // Delete a single checklist item by its ID
+    @Query("DELETE FROM checklist_items WHERE id = :itemId")
+    suspend fun deleteChecklistItem(itemId: Long)
+
 
     @Transaction
-    @Query("UPDATE checklist_items SET position = position + 1 WHERE noteId = :noteId AND position >= :startPosition")
-    suspend fun shiftItemsDown(noteId: Long, startPosition: Int)
+    suspend fun updateChecklistItems2( items: List<ChecklistEntity>) {
+            items.forEach { item ->
+                updateChecklistItem(item)
+            }
 
-    @Query("SELECT MAX(position) FROM checklist_items WHERE noteId = :noteId")
-    suspend fun getMaxPosition(noteId: Long): Int?
+    }
 
-    @Query("UPDATE checklist_items SET position = :newPosition WHERE id = :itemId")
-    suspend fun updateItemPosition(itemId: Long, newPosition: Int)
+    // Replace all checklist items for a specific note (delete old and insert new)
+    @Transaction
+    suspend fun replaceChecklistItemsForNote(
+        noteId: Long,
+        items: List<ChecklistEntity>
+    ) {
+        deleteChecklistItemsByNoteId(noteId)
+        insertChecklistItems(items.map { it.copy(noteId = noteId) })
+    }
+
 }
 
 

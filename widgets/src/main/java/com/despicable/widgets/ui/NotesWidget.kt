@@ -14,6 +14,7 @@ import androidx.glance.Button
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
+import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
@@ -25,6 +26,7 @@ import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.lazy.LazyColumn
+import androidx.glance.appwidget.lazy.items
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
 import androidx.glance.color.ColorProvider
@@ -32,19 +34,24 @@ import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.Row
 import androidx.glance.layout.Spacer
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
+import androidx.glance.layout.size
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
+import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
 import com.despicable.core.designsystem.darken
 import com.despicable.core.model.getRelativeTimeAgo
 import com.despicable.widgets.R
 import com.despicable.widgets.data.ConfigWidgetActivity
+import com.despicable.widgets.model.WidgetKeys
+import kotlinx.serialization.json.Json
 
 class NoteWidget : GlanceAppWidget() {
     override var stateDefinition = PreferencesGlanceStateDefinition
@@ -68,13 +75,18 @@ fun NoteWidgetContent(
     context: Context,
     widgetId: Int
 ) {
-    val noteId = prefs[com.despicable.widgets.model.WidgetKeys.Prefs.noteId]?.toLongOrNull()
-    val noteHeader = prefs[com.despicable.widgets.model.WidgetKeys.Prefs.noteHeader]
-    val noteBody = prefs[com.despicable.widgets.model.WidgetKeys.Prefs.noteBody]
-    val updatedAt = prefs[com.despicable.widgets.model.WidgetKeys.Prefs.noteLastUpdate]
+    val noteId = prefs[WidgetKeys.Prefs.noteId]?.toLongOrNull()
+    val noteHeader = prefs[WidgetKeys.Prefs.noteHeader]
+    val noteBody = prefs[WidgetKeys.Prefs.noteBody]
+    val updatedAt = prefs[WidgetKeys.Prefs.noteLastUpdate]
     val noteColor =
-        prefs[com.despicable.widgets.model.WidgetKeys.Prefs.noteColor]?.let { Color(it) } // Retrieve note color
-    val isDeleted = prefs[com.despicable.widgets.model.WidgetKeys.Prefs.isDeleted] ?: false
+        prefs[WidgetKeys.Prefs.noteColor]?.let { Color(it) } // Retrieve note color
+    val isDeleted = prefs[WidgetKeys.Prefs.isDeleted] ?: false
+
+    val isChecklist = prefs[WidgetKeys.Prefs.isChecklist] ?: false
+    val checklistItems = prefs[WidgetKeys.Prefs.checklistItems]?.let {
+        Json.decodeFromString<List<ChecklistItem>>(it)
+    } ?: emptyList()
 
     // Background color based on system theme
     val backgroundColor = ColorProvider(
@@ -105,74 +117,148 @@ fun NoteWidgetContent(
 
     ) {
         if (!isDeleted && noteId != null && noteHeader != null) {
-            SelectedNote(
-                noteHeader = noteHeader,
-                noteBody = "$noteBody",
-                updatedAt = "$updatedAt",
-                noteId = noteId,
-                widgetId = widgetId
-            )
+            if (isChecklist) {
+                ChecklistNote(
+                    noteHeader = noteHeader,
+                    checklistItems = checklistItems,
+                    updatedAt = "$updatedAt",
+                    noteId = noteId,
+                    widgetId = widgetId
+                )
+            } else {
+                SelectedNote(
+                    noteHeader = noteHeader,
+                    noteBody = "$noteBody",
+                    updatedAt = "$updatedAt",
+                    noteId = noteId,
+                    widgetId = widgetId
+                )
+            }
         } else {
             ZeroState(widgetId) // Show ZeroState if note details are missing
         }
     }
 }
 
-/*@Composable
-fun SelectedNote(
-    noteId: String,
+data class ChecklistItem(
+    val id: String,
+    val text: String,
+    val isChecked: Boolean
+)
+
+@Composable
+fun ChecklistNote(
     noteHeader: String,
-    noteBody: String,
+    checklistItems: List<ChecklistItem>,
     updatedAt: String,
+    noteId: Long,
+    widgetId: Int
+) {
+    val formattedUpdateAt = getRelativeTimeAgo(updatedAt)
+
+    Box(
+        modifier = GlanceModifier.fillMaxSize()
+    ) {
+        LazyColumn(
+            modifier = GlanceModifier.fillMaxSize()
+        ) {
+            item {
+                Text(
+                    modifier = GlanceModifier
+                        .clickable(actionStartActivity(AndroidDestinations.homeIntent(noteId)))
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    text = noteHeader,
+                    style = TextStyle(
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 18.sp,
+                        color = ColorProvider(
+                            day = Color(0xFF3E3E3E),
+                            night = Color(0xFFF6F6F6)
+                        )
+                    )
+                )
+            }
+
+            items(checklistItems) { item ->
+                ChecklistItemRow(
+                    item = item,
+                    noteId = noteId,
+                    widgetId = widgetId
+                )
+            }
+
+            item {
+                Text(
+                    modifier = GlanceModifier
+                        .clickable(actionStartActivity(AndroidDestinations.homeIntent(noteId)))
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    text = "Edited: $formattedUpdateAt",
+                    style = TextStyle(
+                        fontSize = 11.sp,
+                        color = ColorProvider(
+                            day = Color.DarkGray,
+                            night = Color.LightGray
+                        )
+                    )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun ChecklistItemRow(
+    item: ChecklistItem,
+    noteId: Long,
     widgetId: Int
 ) {
 
-//    val formattedUpdateAt = formatUpdateDate(updatedAt)
-    val formattedUpdateAt = getRelativeTimeAgo(updatedAt)
-
-
-    Column(
+    Row(
         modifier = GlanceModifier
-            .fillMaxSize()
-            .clickable(actionOpenNote(noteId, widgetId))
-
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = noteHeader,
-            style = TextStyle(
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = ColorProvider(
-                    day = Color(0xFF3E3E3E),
-                    night = Color(0xFFF6F6F6)
-                )
-            )
+        // Checkbox
+        Image(
+            modifier = GlanceModifier
+                .size(20.dp),
+            /*       .clickable(
+                       actionStartActivity(
+                           AndroidDestinations.toggleChecklistItem(
+                               noteId = noteId,
+                               itemId = item.id,
+                               widgetId = widgetId
+                           )
+                       )
+                   ),*/
+            provider = ImageProvider(
+                if (item.isChecked) R.drawable.check_box
+                else R.drawable.uncheck_box
+            ),
+            contentDescription = if (item.isChecked) "Checked" else "Unchecked"
         )
-        Spacer(modifier = GlanceModifier.height(8.dp))
+
+        // Item text
         Text(
-            text = noteBody,
-            maxLines = 3,
+            modifier = GlanceModifier
+                .padding(start = 8.dp)
+                .defaultWeight(),
+            text = item.text,
             style = TextStyle(
                 fontSize = 14.sp,
                 color = ColorProvider(
-                    day = Color(0xFF3E3E3E),
-                    night = Color(0xFFF6F6F6)
-                )
-            )
-        )
-        Spacer(modifier = GlanceModifier.height(8.dp))
-        Text(
-            text = "Edited: $formattedUpdateAt",
-            style = TextStyle(
-                fontSize = 11.sp,
-                color = ColorProvider(
-                    day = Color.DarkGray,
-                    night = Color.LightGray
-                )
+                    day = if (item.isChecked) Color.Gray else Color(0xFF3E3E3E),
+                    night = if (item.isChecked) Color.Gray else Color(0xFFF6F6F6)
+                ),
+                textDecoration = if (item.isChecked) TextDecoration.LineThrough else null
             )
         )
     }
-}*/
+}
+
 
 @Composable
 fun SelectedNote(
@@ -301,6 +387,63 @@ fun ZeroState(widgetId: Int) {
     }
 }
 
+/*@Composable
+fun SelectedNote(
+    noteId: String,
+    noteHeader: String,
+    noteBody: String,
+    updatedAt: String,
+    widgetId: Int
+) {
+
+//    val formattedUpdateAt = formatUpdateDate(updatedAt)
+    val formattedUpdateAt = getRelativeTimeAgo(updatedAt)
+
+
+    Column(
+        modifier = GlanceModifier
+            .fillMaxSize()
+            .clickable(actionOpenNote(noteId, widgetId))
+
+    ) {
+        Text(
+            text = noteHeader,
+            style = TextStyle(
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = ColorProvider(
+                    day = Color(0xFF3E3E3E),
+                    night = Color(0xFFF6F6F6)
+                )
+            )
+        )
+        Spacer(modifier = GlanceModifier.height(8.dp))
+        Text(
+            text = noteBody,
+            maxLines = 3,
+            style = TextStyle(
+                fontSize = 14.sp,
+                color = ColorProvider(
+                    day = Color(0xFF3E3E3E),
+                    night = Color(0xFFF6F6F6)
+                )
+            )
+        )
+        Spacer(modifier = GlanceModifier.height(8.dp))
+        Text(
+            text = "Edited: $formattedUpdateAt",
+            style = TextStyle(
+                fontSize = 11.sp,
+                color = ColorProvider(
+                    day = Color.DarkGray,
+                    night = Color.LightGray
+                )
+            )
+        )
+    }
+}*/
+
+
 
 object AndroidDestinations {
 
@@ -323,6 +466,15 @@ object AndroidDestinations {
 
     /*   Main activity's deep link  */
     private const val HOME_DEEP_LINK = "app://com.despicable.ladybugos"
+
+//    fun toggleChecklistItem(noteId: Long, itemId: String, widgetId: Int): Intent {
+//        return Intent(context, YourWidgetUpdateService::class.java).apply {
+//            action = ACTION_TOGGLE_CHECKLIST_ITEM
+//            putExtra(EXTRA_NOTE_ID, noteId)
+//            putExtra(EXTRA_ITEM_ID, itemId)
+//            putExtra(EXTRA_WIDGET_ID, widgetId)
+//        }
+//    }
 }
 
 

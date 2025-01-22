@@ -1,435 +1,281 @@
 package com.despicable.feature.detail.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DragIndicator
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.despicable.feature.detail.ChecklistItemUiState
+import com.despicable.core.model.Checklist
 
 
-fun LazyListScope.checklistContent(
-    items: List<ChecklistItemUiState>,
-    onItemChecked: (Int) -> Unit,
-    onItemContentChange: (Int, TextFieldValue) -> Unit,
-    onItemRemove: (Int) -> Unit,
-    onAddItem: () -> Unit,
-    modifier: Modifier = Modifier,
-    focusManager: FocusManager
+@Composable
+fun ChecklistItem(
+    dragModifier: Modifier = Modifier,
+    item: Checklist,
+    onCheckedChange: (Boolean) -> Unit,
+    onContentChange: (String) -> Unit,
+    onDelete: () -> Unit,
+    onNext: () -> Unit,
+    focusRequester: FocusRequester,
+    shouldFocus: Boolean,
+    onFocusChange: (Boolean) -> Unit,
+    isDragging: Boolean
 ) {
-
-    items(
-        items = items,
-        key = { it.id }
-    ) { item ->
-        val itemFocusRequester = remember { FocusRequester() }
-
-        ChecklistItem(
-            item = item,
-            onCheckedChange = { onItemChecked(item.position) },
-            onContentChange = { onItemContentChange(item.position, it) },
-            onRemove = { onItemRemove(item.position) },
-            onNext = {
-                if (item.position == items.lastIndex) {
-                    onAddItem()
-                    focusManager.moveFocus(FocusDirection.Down)
-                } else {
-                    focusManager.moveFocus(FocusDirection.Down)
-                }
-            },
-            focusRequester = itemFocusRequester,
-            modifier = Modifier.fillMaxWidth()
+    var textFieldValue by remember(item.id, item.content) {
+        mutableStateOf(
+            TextFieldValue(
+                text = item.content,
+                selection = TextRange(item.content.length)
+            )
         )
     }
 
-    item {
-        AddItem(
-            onClick = onAddItem,
+    var isTextFieldFocused by remember { mutableStateOf(false) }
+
+
+    val elevation by animateDpAsState(
+        targetValue = if (isDragging) 8.dp else 0.dp,
+        label = "elevation",
+    )
+
+
+    LaunchedEffect(shouldFocus) {
+        if (shouldFocus) {
+            focusRequester.requestFocus()
+        }
+    }
+
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(elevation),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        ),
+        border = if (isDragging) {
+            BorderStroke(0.1.dp, MaterialTheme.colorScheme.onSurface)
+        } else null
+    ) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            DragHandle(dragModifier)
+
+            ChecklistCheckbox(
+                isChecked = item.isChecked,
+                onCheckedChange = onCheckedChange
+            )
+
+            ChecklistTextField(
+                value = textFieldValue,
+                isChecked = item.isChecked,
+                focusRequester = focusRequester,
+                onFocusChange = { isFocused ->
+                    onFocusChange(isFocused)
+                    isTextFieldFocused = isFocused
+                },
+                onValueChange = { newValue ->
+                    textFieldValue = newValue
+                    onContentChange(newValue.text)
+                },
+                onNext = onNext
+            )
+
+
+            AnimatedVisibility(
+                visible = isTextFieldFocused,
+                enter = fadeIn() + expandHorizontally(),
+                exit = fadeOut() + shrinkHorizontally()
+            ) {
+                DeleteButton(onClick = onDelete)
+            }
+        }
+    }
+}
+
+
+@Composable
+fun AddItemButton(
+    onAddClick: () -> Unit
+) {
+    TextButton(
+        onClick = onAddClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 33.dp),
+        colors = ButtonDefaults.textButtonColors(
+            contentColor = MaterialTheme.colorScheme.primary
+        )
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = "Add list item",
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "List item",
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun DragHandle(dragModifier: Modifier) {
+    IconButton(
+        modifier = dragModifier.size(30.dp),
+        onClick = {}
+    ) {
+        Icon(
+            imageVector = Icons.Default.DragIndicator,
+            contentDescription = "Reorder",
         )
     }
 }
 
 @Composable
-private fun ChecklistItem(
-    item: ChecklistItemUiState,
-    focusRequester: FocusRequester,
-    onCheckedChange: () -> Unit,
-    onContentChange: (TextFieldValue) -> Unit,
-    onRemove: () -> Unit,
-    onNext: () -> Unit,
-    modifier: Modifier = Modifier
+private fun ChecklistCheckbox(
+    isChecked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
 ) {
-    var showDelete by remember { mutableStateOf(false) }
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 2.dp)
-            .pointerInput(Unit) {
-                detectTapGestures(
-                    onLongPress = { showDelete = true }
-                )
-            },
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(
-            checked = item.isChecked,
-            onCheckedChange = { onCheckedChange() },
-            modifier = Modifier.padding(8.dp),
-            colors = CheckboxDefaults.colors(
-                checkedColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
-            )
+    Checkbox(
+        checked = isChecked,
+        onCheckedChange = { onCheckedChange(it) },
+        modifier = Modifier.padding(end = 4.dp),
+        colors = CheckboxDefaults.colors(
+            checkedColor = MaterialTheme.colorScheme.primary,
+            uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    )
+}
 
+
+@Composable
+private fun RowScope.ChecklistTextField(
+    value: TextFieldValue,
+    isChecked: Boolean,
+    focusRequester: FocusRequester,
+    onFocusChange: (Boolean) -> Unit,
+    onValueChange: (TextFieldValue) -> Unit,
+    onNext: () -> Unit
+) {
+    Box(modifier = Modifier.weight(1f)) {
         BasicTextField(
-            value = item.content,
-            onValueChange = onContentChange,
+            value = value,
+            onValueChange = onValueChange,
             modifier = Modifier
-                .weight(1f)
-                .padding(vertical = 8.dp)
-                .focusRequester(focusRequester),
+                .fillMaxWidth()
+                .focusRequester(focusRequester)
+                .onFocusChanged { focusState ->
+                    onFocusChange(focusState.isFocused)
+                },
             textStyle = MaterialTheme.typography.bodyLarge.copy(
-                color = if (item.isChecked)
-                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                else
-                    MaterialTheme.colorScheme.onSurface,
-                textDecoration = if (item.isChecked)
-                    TextDecoration.LineThrough
-                else
-                    TextDecoration.None
+                color = MaterialTheme.colorScheme.onSurface,
+                textDecoration = if (isChecked) TextDecoration.LineThrough else null
             ),
             keyboardOptions = KeyboardOptions(
                 imeAction = ImeAction.Next,
                 capitalization = KeyboardCapitalization.Sentences
             ),
             keyboardActions = KeyboardActions(onNext = { onNext() }),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
-        )
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            decorationBox = { innerTextField ->
 
-        AnimatedVisibility(
-            visible = showDelete,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            IconButton(
-                onClick = onRemove,
-                modifier = Modifier.size(40.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Remove",
-                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                )
+                innerTextField()
+                /*    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (value.text.isEmpty()) {
+                            Text(
+                                text = "List item",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            )
+                        }
+                        innerTextField()
+                    }*/
             }
-        }
+        )
     }
 }
 
+
 @Composable
-private fun AddItem(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+private fun DeleteButton(
+    onClick: () -> Unit
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.size(48.dp)
     ) {
         Icon(
-            imageVector = Icons.Default.Add,
-            contentDescription = "Add item",
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-            modifier = Modifier.size(20.dp)
-        )
-
-        Text(
-            text = "List item",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-            modifier = Modifier.padding(start = 16.dp)
+            imageVector = Icons.Default.Close,
+            contentDescription = "Delete item",
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
+
 }
-/*fun LazyListScope.checklistContent(
-    items: List<ChecklistItemUiState>,
-    onItemChecked: (Int) -> Unit,
-    onItemContentChange: (Int, TextFieldValue) -> Unit,
-    onItemRemove: (Int) -> Unit,
-    onAddItem: () -> Unit,
-    onReorder: (Int, Int) -> Unit,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier,
-    focusRequester: FocusRequester,
-    focusManager: FocusManager
-) {
-    // Keep track of focus state
-
-
-    items(
-        items = items,
-        key = { it.id }
-    ) { item ->
-        val itemFocusRequester = remember { FocusRequester() }
-
-        ChecklistItem(
-            item = item,
-            onCheckedChange = { onItemChecked(item.position) },
-            onContentChange = { onItemContentChange(item.position, it) },
-            onRemove = { onItemRemove(item.position) },
-            onNext = {
-                // Move focus to next item or add button
-                if (item.position < items.lastIndex) {
-                    focusManager.moveFocus(FocusDirection.Down)
-                } else {
-                    focusRequester.requestFocus()
-                }
-            },
-            focusRequester = itemFocusRequester,
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-
-    item(key = "add_button") {
-        AddChecklistItemButton(
-            onClick = {
-                onAddItem()
-                // Focus the newly added item
-                focusManager.moveFocus(FocusDirection.Up)
-            },
-            focusRequester = focusRequester,
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-fun ChecklistItem(
-    item: ChecklistItemUiState,
-    onCheckedChange: () -> Unit,
-    onContentChange: (TextFieldValue) -> Unit,
-    onRemove: () -> Unit,
-    onNext: () -> Unit,
-    focusRequester: FocusRequester,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(
-            checked = item.isChecked,
-            onCheckedChange = { onCheckedChange() },
-            enabled = enabled
-        )
-
-        BasicTextField(
-            value = item.content,
-            onValueChange = onContentChange,
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 8.dp)
-                .focusRequester(focusRequester),
-            enabled = enabled,
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Next
-            ),
-            keyboardActions = KeyboardActions(
-                onNext = { onNext() }
-            ),
-            textStyle = MaterialTheme.typography.bodyLarge.copy(
-                textDecoration = if (item.isChecked) TextDecoration.LineThrough else TextDecoration.None
-            ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
-        )
-
-        IconButton(
-            onClick = onRemove,
-            enabled = enabled
-        ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Remove item"
-            )
-        }
-    }
-}
-
-@Composable
-fun AddChecklistItemButton(
-    onClick: () -> Unit,
-    focusRequester: FocusRequester,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(16.dp)
-            .focusRequester(focusRequester),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.Add,
-            contentDescription = "Add checklist item",
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "Add item",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
-}*/
-/*
-fun LazyListScope.checklistContent(
-    items: List<ChecklistItemUiState>,
-    onItemChecked: (Int) -> Unit,
-    onItemContentChange: (Int, TextFieldValue) -> Unit,
-    onItemRemove: (Int) -> Unit,
-    onAddItem: () -> Unit,
-    onReorder: (Int, Int) -> Unit,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier
-) {
-    items(
-        items = items,
-        key = { it.id }  // Use the unique ID as the key
-    ) { item ->
-        ChecklistItem(
-            item = item,
-            onCheckedChange = { onItemChecked(item.position) },
-            onContentChange = { onItemContentChange(item.position, it) },
-            onRemove = { onItemRemove(item.position) },
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-
-    item(key = "add_button") {  // Add a unique key for the add button
-        AddChecklistItemButton(
-            onClick = onAddItem,
-            enabled = enabled,
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
-fun ChecklistItem(
-    item: ChecklistItemUiState,
-    onCheckedChange: () -> Unit,
-    onContentChange: (TextFieldValue) -> Unit,
-    onRemove: () -> Unit,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Checkbox(
-            checked = item.isChecked,
-            onCheckedChange = { onCheckedChange() },
-            enabled = enabled
-        )
-
-        BasicTextField(
-            value = item.content,
-            onValueChange = onContentChange,
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 8.dp),
-            enabled = enabled,
-            textStyle = MaterialTheme.typography.bodyLarge.copy(
-                textDecoration = if (item.isChecked) TextDecoration.LineThrough else TextDecoration.None
-            ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary)
-        )
-
-        IconButton(
-            onClick = onRemove,
-            enabled = enabled
-        ) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Remove item",
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
-        }
-    }
-}
-
-@Composable
-fun AddChecklistItemButton(
-    onClick: () -> Unit,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .clickable(enabled = enabled, onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = Icons.Default.Add,
-            contentDescription = "Add checklist item",
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "Add item",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.primary
-        )
-    }
-}
-*/
 

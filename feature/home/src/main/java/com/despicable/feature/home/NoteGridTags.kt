@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -26,12 +27,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridScope
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckBox
+import androidx.compose.material.icons.rounded.CheckBoxOutlineBlank
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -39,6 +45,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.geometry.Offset
@@ -55,24 +62,23 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.times
 import com.despicable.core.common.navigation.LocalNavAnimatedVisibilityScope
 import com.despicable.core.common.navigation.LocalSharedTransitionScope
 import com.despicable.core.common.navigation.NoteSharedElementKey
 import com.despicable.core.common.navigation.NoteSharedElementType
+import com.despicable.core.model.Checklist
 import com.despicable.core.designsystem.component.ReminderInfo
 import com.despicable.core.designsystem.component.rememberContainerColor
 import com.despicable.core.designsystem.component.rememberTagColors
 import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.model.Note
-import com.despicable.core.model.NoteWithTags
 import com.despicable.core.model.Tag
 
 
 @Composable
 fun NoteGridTags(
     modifier: Modifier = Modifier,
-    notes: List<NoteWithTags>,
+    notes: List<NoteWithTagsAndChecklist>,
     selectedNotes: Set<Note>,
     onNoteClick: (Note) -> Unit,
     onNoteLongPress: (Note) -> Unit,
@@ -179,13 +185,12 @@ fun SectionHeader(text: String) {
 @Composable
 fun NoteItemTag(
     modifier: Modifier = Modifier,
-    noteWithTags: NoteWithTags,
+    noteWithTags: NoteWithTagsAndChecklist,
     gridLayout: GridLayout,
     isSelected: Boolean,
     onClick: () -> Unit,
     onLongPress: () -> Unit,
 ) {
-    // Hoist static values and calculations outside composition
     val note = noteWithTags.note
     val tags = noteWithTags.tags
     val hapticFeedback = LocalHapticFeedback.current
@@ -199,7 +204,6 @@ fun NoteItemTag(
         }
     }
 
-    // Cache animation specs
     val borderAnimationSpec = remember {
         spring<Color>(
             dampingRatio = Spring.DampingRatioNoBouncy,
@@ -208,21 +212,20 @@ fun NoteItemTag(
         )
     }
 
-
-    // Optimize animations by using remember for target values
     val borderColor by animateColorAsState(
         targetValue = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
         label = "borderColor",
         animationSpec = borderAnimationSpec
     )
 
-    // Cache colors - Move MaterialTheme.colorScheme access outside remember
     val surfaceColor = rememberContainerColor(note.lightColor)
     val outlineVariant = MaterialTheme.colorScheme.outlineVariant
 
-    val borderStroke =
-        if (note.lightColor == 0) BorderStroke(0.7.dp, outlineVariant)
-        else BorderStroke(0.dp, Color.Transparent)
+    val borderStroke = if (note.lightColor == 0) {
+        BorderStroke(0.7.dp, outlineVariant)
+    } else {
+        BorderStroke(0.dp, Color.Transparent)
+    }
 
     val border = if (isSelected) {
         BorderStroke(2.dp, borderColor)
@@ -230,8 +233,6 @@ fun NoteItemTag(
         borderStroke
     }
 
-
-    // Get transition scopes
     val sharedTransitionScope = LocalSharedTransitionScope.current
         ?: throw IllegalStateException("No Scope found")
     val animatedVisibilityScope = LocalNavAnimatedVisibilityScope.current
@@ -244,22 +245,10 @@ fun NoteItemTag(
         if (it == EnterExitState.Visible) 12.dp else 0.dp
     }
 
-    // Calculate height directly in composition since it uses Composable functions
-    val height = calculateNoteHeight(
-        note = note,
-        hasReminder = note.reminderDate != null,
-        hasTags = tags.isNotEmpty(),
-        gridLayout = gridLayout
-    )
-
-
-
-
     with(sharedTransitionScope) {
         Surface(
             modifier = modifier
                 .fillMaxWidth()
-                .height(height)
                 .padding(4.dp)
                 .skipToLookaheadSize()
                 .sharedBounds(
@@ -284,31 +273,31 @@ fun NoteItemTag(
             border = border,
             color = surfaceColor,
             shape = RoundedCornerShape(roundedCornerAnimation),
-            shadowElevation = if (isSelected) 2.dp else 0.dp
-        ) {
+            shadowElevation = if (isSelected) 2.dp else 0.dp,
+
+            ) {
             NoteContent(
                 skipModifier = Modifier.skipToLookaheadSize(),
-                modifier = Modifier
-                    .sharedBounds(
-                        sharedContentState = rememberSharedContentState(
-                            key = NoteSharedElementKey(note.id, NoteSharedElementType.Content)
-                        ),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                        clipInOverlayDuringTransition = OverlayClip(
-                            RoundedCornerShape(roundedCornerAnimation)
-                        ),
+                modifier = Modifier.sharedBounds(
+                    sharedContentState = rememberSharedContentState(
+                        key = NoteSharedElementKey(note.id, NoteSharedElementType.Content)
                     ),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                    clipInOverlayDuringTransition = OverlayClip(
+                        RoundedCornerShape(roundedCornerAnimation)
+                    ),
+                ),
                 note = note,
                 tags = tags,
+                checkList = noteWithTags.checklistItems,
                 gridLayout = gridLayout,
                 titleSize = titleSize,
-                contentSize = contentSize,
+                contentSize = contentSize
             )
         }
     }
 }
-
 
 @Composable
 private fun NoteContent(
@@ -316,14 +305,15 @@ private fun NoteContent(
     skipModifier: Modifier = Modifier,
     note: Note,
     tags: List<Tag>,
+    checkList: List<Checklist>,
     gridLayout: GridLayout,
     titleSize: TextUnit,
     contentSize: TextUnit,
 ) {
     Column(
         modifier = modifier
-            .padding(12.dp)
             .fillMaxWidth()
+            .padding(vertical = 8.dp, horizontal = 10.dp)
     ) {
         // Title Section
         if (note.title.isNotBlank()) {
@@ -338,11 +328,20 @@ private fun NoteContent(
                 overflow = TextOverflow.Ellipsis,
                 fontSize = titleSize
             )
-            Spacer(modifier = Modifier.height(4.dp))
         }
 
-        // Content Section
-        if (note.content.isNotBlank()) {
+        Spacer(modifier = Modifier.height(8.dp))
+
+
+        // Content Section with max lines based on grid
+        if (note.isChecklist) {
+            ChecklistContent(
+                modifier = skipModifier,
+                list = checkList,
+                contentSize = contentSize,
+                gridLayout = gridLayout
+            )
+        } else if (note.content.isNotBlank()) {
             Text(
                 text = note.content,
                 style = MaterialTheme.typography.bodyMedium.copy(
@@ -350,8 +349,13 @@ private fun NoteContent(
                 ),
                 color = MaterialTheme.colorScheme.onSurface,
                 overflow = TextOverflow.Ellipsis,
+                maxLines = when (gridLayout) {
+                    GridLayout.OneColumn -> 8
+                    GridLayout.TwoColumns -> 16
+                    GridLayout.ThreeColumns -> 12
+                },
                 fontSize = contentSize,
-                modifier = skipModifier.weight(1f, fill = false)
+                modifier = skipModifier,
             )
         }
 
@@ -364,7 +368,71 @@ private fun NoteContent(
             noteColor = note.lightColor
         )
     }
+
 }
+
+
+@Composable
+private fun ChecklistContent(
+    modifier: Modifier,
+    list: List<Checklist>,
+    contentSize: TextUnit,
+    gridLayout: GridLayout
+) {
+    val maxItems = when (gridLayout) {
+        GridLayout.OneColumn -> 3
+        GridLayout.TwoColumns -> 16
+        GridLayout.ThreeColumns -> 5
+    }
+
+    Column(
+        modifier = modifier.fillMaxWidth()
+    ) {
+        list.take(maxItems).forEach { item ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = if (item.isChecked) {
+                        Icons.Rounded.CheckBox
+                    } else {
+                        Icons.Rounded.CheckBoxOutlineBlank
+                    },
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+//                    tint = MaterialTheme.colorScheme.onSurface,
+                    tint = if (item.isChecked) {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    }
+                )
+                Text(
+                    text = item.content,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontSize = contentSize,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+//                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface.copy(
+                        alpha = if (item.isChecked) 0.6f else 1f
+                    ),
+                )
+            }
+        }
+
+        if (list.size > maxItems) {
+            Text(
+                text = " + ${list.size - maxItems} more items",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
 
 @Composable
 private fun BottomSection(
@@ -457,88 +525,6 @@ private fun TagChip(
     }
     */
 
-
-
-
-
-
-// Helper class to manage note dimensions
-private object NoteDimensions {
-    val MIN_HEIGHT = 70.dp
-    val MAX_HEIGHT = 420.dp
-
-    // Height steps for different content lengths
-    val contentHeightRanges = listOf(
-        30 to 100.dp,
-        40 to 150.dp,
-        80 to 170.dp,
-        120 to 190.dp,
-        170 to 220.dp,
-        240 to 260.dp,
-        480 to 280.dp,
-        555 to 330.dp,
-        666 to 380.dp
-    )
-}
-
-@Composable
-fun calculateNoteHeight(
-    note: Note,
-    hasReminder: Boolean,
-    hasTags: Boolean,
-    gridLayout: GridLayout
-): Dp {
-    return remember(note, hasReminder, hasTags, gridLayout) {
-        when (gridLayout) {
-            GridLayout.ThreeColumns -> calculateCompactHeight(note, hasReminder, hasTags)
-            else -> calculateExpandedHeight(note, hasReminder, hasTags)
-        }
-    }
-}
-
-private fun calculateExpandedHeight(
-    note: Note,
-    hasReminder: Boolean,
-    hasTags: Boolean
-): Dp {
-    val baseHeight = when {
-        note.title.isEmpty() && note.content.isEmpty() -> NoteDimensions.MIN_HEIGHT
-        note.content.isEmpty() -> (note.title.length / 40f * 45.dp + 75.dp).coerceIn(75.dp, 120.dp)
-        note.title.isEmpty() -> (note.content.length / 80f * 65.dp + 75.dp).coerceIn(75.dp, 140.dp)
-        else -> {
-            val range = NoteDimensions.contentHeightRanges.find { (length, _) ->
-                note.content.length < length
-            } ?: (Int.MAX_VALUE to NoteDimensions.MAX_HEIGHT)
-            range.second
-        }
-    }
-
-    // Add extra height for reminder and tags
-    return baseHeight +
-            (if (hasReminder) 40.dp else 0.dp) +
-            (if (hasTags) 32.dp else 0.dp)
-}
-
-private fun calculateCompactHeight(
-    note: Note,
-    hasReminder: Boolean,
-    hasTags: Boolean
-): Dp {
-    val baseHeight = when {
-        note.title.isEmpty() && note.content.isEmpty() -> NoteDimensions.MIN_HEIGHT
-        note.content.isEmpty() -> (note.title.length / 20f * 20.dp + 100.dp).coerceIn(
-            100.dp,
-            140.dp
-        )
-
-        note.title.isEmpty() -> (note.content.length / 40f * 50.dp + 80.dp).coerceIn(80.dp, 180.dp)
-        else -> (note.content.length / 30f * 40.dp + 120.dp).coerceIn(120.dp, 260.dp)
-    }
-
-    return baseHeight +
-            (if (hasReminder) 32.dp else 0.dp) +
-            (if (hasTags) 28.dp else 0.dp)
-}
 
 @Keep
 const val SearchBarHeight = 64

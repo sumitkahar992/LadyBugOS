@@ -41,7 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.despicable.core.common.navigation.NoteActionType
 import com.despicable.core.designsystem.component.CollapsedSearchView
 import com.despicable.core.designsystem.component.ExpandedSearchView
-import com.despicable.core.designsystem.component.NoteScreenContent
+import com.despicable.feature.home.NoteScreenContent
 import com.despicable.core.designsystem.component.ReminderDialog
 import com.despicable.core.designsystem.component.ScreenType
 import com.despicable.core.designsystem.component.SelectionTopBar

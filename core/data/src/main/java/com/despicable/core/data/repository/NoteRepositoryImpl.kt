@@ -1,16 +1,18 @@
 package com.despicable.core.data.repository
 
 import com.despicable.core.data.model.toDomain
+import com.despicable.core.data.model.toDomainList
 import com.despicable.core.data.model.toDomainOrNull
 import com.despicable.core.data.model.toEntity
+import com.despicable.core.data.model.toEntityList
 import com.despicable.core.data.model.toNoteDomainList
 import com.despicable.core.data.model.toNoteEntityList
 import com.despicable.core.data.model.toNoteTagsDomainList
 import com.despicable.core.data.model.toTagDomainList
 import com.despicable.core.database.dao.NoteDao
 import com.despicable.core.database.dao.TagDao
-import com.despicable.core.database.model.ChecklistEntity
 import com.despicable.core.database.model.ChecklistItemDao
+import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
 import com.despicable.core.model.NoteWithTags
 import com.despicable.core.model.Tag
@@ -24,7 +26,7 @@ import javax.inject.Inject
 class NoteRepositoryImpl @Inject constructor(
     private val noteDao: NoteDao,
     private val tagDao: TagDao,
-    private val checklistItemDao: ChecklistItemDao,
+    private val checklistDao: ChecklistItemDao,
     private val reminderScheduler: ReminderScheduler
 ) : NoteRepository {
 
@@ -45,7 +47,10 @@ class NoteRepositoryImpl @Inject constructor(
             noteDao.insertNoteWithTags(note.toEntity(), tagIds)
         }
 
-    override suspend fun updateNoteWithTags(note: Note, tagIds: List<Long>) =
+    override suspend fun updateNoteWithTags(
+        note: Note,
+        tagIds: List<Long>,
+    ) =
         withContext(Dispatchers.IO) {
             noteDao.updateNoteWithTags(note.toEntity(), tagIds)
         }
@@ -122,37 +127,57 @@ class NoteRepositoryImpl @Inject constructor(
             noteDao.updateNoteChecklist(noteId, isChecklist)
         }
 
+    // Checklist operations
+    override suspend fun insertChecklistItem(item: Checklist): Long =
+        checklistDao.insertChecklistItem(item.toEntity())
+
+    override fun getChecklistItemsByNoteId(noteId: Long): Flow<List<Checklist>> =
+        checklistDao.getChecklistItemsByNoteId(noteId).map { it.toDomainList() }
+
+    override suspend fun updateChecklistItem(item: Checklist) =
+        checklistDao.updateChecklistItem(item.toEntity())
+
+    override suspend fun deleteChecklistItemsByNoteId(noteId: Long) =
+        checklistDao.deleteChecklistItemsByNoteId(noteId)
+
+    override suspend fun deleteChecklistItem(itemId: Long) =
+        checklistDao.deleteChecklistItem(itemId)
+
+    override suspend fun updateAllChecklistItems(items: List<Checklist>) {
+        checklistDao.updateChecklistItems(items.toEntityList())
+    }
+
     // Checklist Operations
-/*    override fun getChecklistItems(noteId: Long) =
-        checklistItemDao.getChecklistItems(noteId)
+    /*    override fun getChecklistItems(noteId: Long) =
+            checklistItemDao.getChecklistItems(noteId)
 
-    override suspend fun insertChecklistItems(items: List<ChecklistEntity>) =
-        withContext(Dispatchers.IO) {
-            checklistItemDao.insertChecklistItems(items)
-        }
-
-    override suspend fun updateChecklistItem(item: ChecklistEntity) =
-        withContext(Dispatchers.IO) {
-            checklistItemDao.updateChecklistItem(item)
-        }
-
-    override suspend fun deleteCheckedItems(noteId: Long) =
-        withContext(Dispatchers.IO) {
-            checklistItemDao.deleteCheckedItems(noteId)
-        }
-
-    override suspend fun reorderChecklistItems(noteId: Long, items: List<ChecklistEntity>) =
-        withContext(Dispatchers.IO) {
-            items.forEachIndexed { index, item ->
-                checklistItemDao.updateChecklistItem(item.copy(position = index))
+        override suspend fun insertChecklistItems(items: List<ChecklistEntity>) =
+            withContext(Dispatchers.IO) {
+                checklistItemDao.insertChecklistItems(items)
             }
-        }
 
-    override suspend fun toggleNoteChecklist(note: Note, items: List<ChecklistEntity>?): Unit =
-        withContext(Dispatchers.IO) {
-            noteDao.updateNote(note.toEntity().copy(isChecklist = !note.isChecklist))
-            items?.let { checklistItemDao.insertChecklistItems(it) }
-        }*/
+        override suspend fun updateChecklistItem(item: ChecklistEntity) =
+            withContext(Dispatchers.IO) {
+                checklistItemDao.updateChecklistItem(item)
+            }
+
+        override suspend fun deleteCheckedItems(noteId: Long) =
+            withContext(Dispatchers.IO) {
+                checklistItemDao.deleteCheckedItems(noteId)
+            }
+
+        override suspend fun reorderChecklistItems(noteId: Long, items: List<ChecklistEntity>) =
+            withContext(Dispatchers.IO) {
+                items.forEachIndexed { index, item ->
+                    checklistItemDao.updateChecklistItem(item.copy(position = index))
+                }
+            }
+
+        override suspend fun toggleNoteChecklist(note: Note, items: List<ChecklistEntity>?): Unit =
+            withContext(Dispatchers.IO) {
+                noteDao.updateNote(note.toEntity().copy(isChecklist = !note.isChecklist))
+                items?.let { checklistItemDao.insertChecklistItems(it) }
+            }*/
 
     override suspend fun updateNoteStatus(noteId: Long, isDone: Boolean) {
         noteDao.updateNoteDoneStatus(noteId, isDone)

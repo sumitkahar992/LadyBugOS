@@ -29,6 +29,8 @@ data class NoteWithTags(
 )
 
 
+
+
 fun getRelativeTimeAgo(updateDateString: String): String {
     val inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     val timeFormatter = DateTimeFormatter.ofPattern("hh:mm a")

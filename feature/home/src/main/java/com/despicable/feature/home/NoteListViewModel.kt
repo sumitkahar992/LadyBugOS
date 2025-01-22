@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.despicable.core.common.navigation.NoteAction
 import com.despicable.core.data.repository.NoteRepository
 import com.despicable.core.data.sample.LoadSampleDataUseCase
+import com.despicable.core.model.Checklist
 import com.despicable.core.datastore.SettingsRepo
 import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.designsystem.theme.Theme
@@ -16,11 +17,15 @@ import com.despicable.core.model.NoteWithTags
 import com.despicable.core.model.Tag
 import com.despicable.widgets.data.WidgetUpdater
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -31,11 +36,18 @@ import timber.log.Timber
 @Keep
 data class NoteListUiState(
     val isNotesInitialized: Boolean = false,
-    val notes: List<NoteWithTags> = emptyList(),
+    val notes: List<NoteWithTagsAndChecklist> = emptyList(),
     val tagState: TagState = TagState(),
     val searchQuery: String = "",
     val gridLayout: GridLayout = GridLayout.TwoColumns,
     val lastModifiedNotes: List<Note>? = null
+)
+
+// New data class to combine note, tags, and checklist items
+data class NoteWithTagsAndChecklist(
+    val note: Note,
+    val tags: List<Tag>,
+    val checklistItems: List<Checklist> = emptyList()
 )
 
 @Keep
@@ -71,7 +83,7 @@ class NoteListViewModel(
     init {
         initializeNotes()
         viewModelScope.launch {
-//            loadSampleDataUseCase()
+            loadSampleDataUseCase()
         }
     }
 
@@ -97,16 +109,40 @@ class NoteListViewModel(
                     selectedTagId = _uiState.value.tagState.selectedTagId
                 )
 
-                _uiState.update { current ->
-                    current.copy(
-                        isNotesInitialized = true,
-                        notes = filteredNotes,
-                        gridLayout = gridLayout,
-                        tagState = current.tagState.copy(
-                            availableTags = tags,
-                            activeTagIds = activeTagIds
+                // Transform to NoteWithTagsAndChecklist
+                coroutineScope {
+                    val notesWithChecklist = filteredNotes.map { noteWithTags ->
+                        async {
+                            val checklistItems = if (noteWithTags.note.isChecklist) {
+                                try {
+                                    repo.getChecklistItemsByNoteId(noteWithTags.note.id).first()
+                                } catch (e: Exception) {
+                                    Timber.e(e, "Error loading checklist items")
+                                    emptyList()
+                                }
+                            } else {
+                                emptyList()
+                            }
+                            NoteWithTagsAndChecklist(
+                                note = noteWithTags.note,
+                                tags = noteWithTags.tags,
+                                checklistItems = checklistItems
+                            )
+                        }
+                    }.awaitAll()
+
+
+                    _uiState.update { current ->
+                        current.copy(
+                            isNotesInitialized = true,
+                            notes = notesWithChecklist,
+                            gridLayout = gridLayout,
+                            tagState = current.tagState.copy(
+                                availableTags = tags,
+                                activeTagIds = activeTagIds
+                            )
                         )
-                    )
+                    }
                 }
             }.collect()
         }

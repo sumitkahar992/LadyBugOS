@@ -10,6 +10,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.withTransaction
 import com.despicable.core.database.NoteDatabase
+import com.despicable.core.database.model.ChecklistEntity
 import com.despicable.core.database.model.NoteEntity
 import com.despicable.core.database.model.NoteTagRefEntity
 import com.despicable.core.database.model.NoteWithTagsEntity
@@ -45,6 +46,39 @@ interface NoteDao {
             insertNoteTagCrossRef(NoteTagRefEntity(note.id, tagId))
         }
     }
+
+    // CheckLists
+    @Transaction
+    suspend fun updateNoteWithTagsAndChecklist(
+        note: NoteEntity,
+        tagIds: List<Long>,
+        checklistItems: List<ChecklistEntity>
+    ) {
+        // Update the note
+        updateNote(note)
+
+        // Update tags
+        deleteAllTagsForNote(note.id)
+        tagIds.forEach { tagId ->
+            insertNoteTagCrossRef(NoteTagRefEntity(note.id, tagId))
+        }
+
+        // Update checklist items
+        deleteAllChecklistItemsForNote(note.id)
+        checklistItems.forEach { checklistItem ->
+            insertChecklistItem(checklistItem.copy(noteId = note.id))
+        }
+    }
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertChecklistItem(checklistItem: ChecklistEntity)
+
+    @Update
+    suspend fun updateChecklistItem(checklistItem: ChecklistEntity)
+
+    @Query("DELETE FROM checklist_items WHERE noteId = :noteId")
+    suspend fun deleteAllChecklistItemsForNote(noteId: Long)
+    //
 
     @Update
     suspend fun updateNotes(notes: List<NoteEntity>)
@@ -254,10 +288,8 @@ interface NoteDao {
     suspend fun insertCrossRefsWithIgnore(crossRefs: List<NoteTagRefEntity>)
 
 
-
     @Query("UPDATE notes SET isChecklist = :isChecklist WHERE id = :noteId")
     suspend fun updateNoteChecklist(noteId: Long, isChecklist: Boolean)
-
 
 
 }

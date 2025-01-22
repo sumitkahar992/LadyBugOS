@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.despicable.core.common.navigation.NoteActionType
-import com.despicable.core.designsystem.component.NoteScreenContent
+import com.despicable.feature.home.NoteScreenContent
 import com.despicable.core.designsystem.component.ReminderDialog
 import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.model.Note
@@ -36,6 +36,7 @@ import com.despicable.feature.home.HandleNoteActions
 import com.despicable.feature.home.NoteItemTag
 import com.despicable.feature.home.NoteListViewModel
 import com.despicable.feature.home.NoteSnackBarHandler
+import com.despicable.feature.home.NoteWithTagsAndChecklist
 import com.despicable.feature.home.R
 import com.despicable.feature.home.SectionHeader
 import com.despicable.feature.home.SwipeableSnackBarHost
@@ -211,8 +212,8 @@ fun ReminderScreen(
 @Composable
 fun NoteGridTagsReminder(
     modifier: Modifier = Modifier,
-    upcomingList: List<NoteWithTags>,
-    completedList: List<NoteWithTags>,
+    upcomingList: List<NoteWithTagsAndChecklist>,
+    completedList: List<NoteWithTagsAndChecklist>,
     selectedNotes: Set<Note>,
     onNoteClick: (Note) -> Unit,
     onNoteLongPress: (Note) -> Unit,

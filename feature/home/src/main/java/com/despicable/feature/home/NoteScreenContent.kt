@@ -1,4 +1,4 @@
-package com.despicable.core.designsystem.component
+package com.despicable.feature.home
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.PaddingValues
@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.despicable.core.designsystem.R
+import com.despicable.core.designsystem.component.EmptyStateContent
 import com.despicable.core.model.NoteWithTags
 
 /*@Composable
@@ -53,7 +54,7 @@ fun NoteScreenContent(
 fun NoteScreenContent(
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues,
-    notes: List<NoteWithTags>,
+    notes: List<NoteWithTagsAndChecklist>,
     isInitialized: Boolean,
     searchQuery: String,
     emptyIcon: Int,
@@ -99,7 +100,7 @@ enum class NoteScreenState {
 
 // Helper function to determine the screen state
 fun getNoteScreenState(
-    notes: List<NoteWithTags>,
+    notes: List<NoteWithTagsAndChecklist>,
     isInitialized: Boolean,
     searchQuery: String,
 ): NoteScreenState {

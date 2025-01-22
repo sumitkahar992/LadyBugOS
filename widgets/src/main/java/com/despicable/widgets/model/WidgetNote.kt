@@ -33,6 +33,8 @@ object WidgetKeys {
         val tempNoteId =
             stringPreferencesKey("temp_note_id")  // Make sure this is stringPreferencesKey, not booleanPreferencesKey as shown in the example
 
+         val isChecklist = booleanPreferencesKey("is_checklist")
+         val checklistItems = stringPreferencesKey("checklist_items")
     }
 }
 

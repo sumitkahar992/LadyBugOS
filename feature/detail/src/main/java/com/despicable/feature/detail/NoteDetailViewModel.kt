@@ -9,10 +9,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.despicable.core.common.navigation.NoteAction
-import com.despicable.core.data.repository.ChecklistRepository
 import com.despicable.core.data.repository.NoteRepository
-import com.despicable.core.database.model.ChecklistEntity
 import com.despicable.core.designsystem.colorPalette
+import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
 import com.despicable.core.model.NoteWithTags
 import com.despicable.core.model.Tag
@@ -31,6 +30,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -40,15 +40,12 @@ class NoteDetailViewModel(
     private val repo: NoteRepository,
     private val widgetUpdater: WidgetUpdater,
     savedStateHandle: SavedStateHandle,
-    private val checklistRepo: ChecklistRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NoteUiState())
     val uiState: StateFlow<NoteUiState> = _uiState.asStateFlow()
 
     private val _noteUpdateTrigger = MutableSharedFlow<NoteUpdatePayload>()
-
-    private var nextChecklistItemId = 0L
 
 
     init {
@@ -73,7 +70,7 @@ class NoteDetailViewModel(
                     updateUiState { it.fromNoteWithTags(noteWithTags).copy(isLoading = false) }
 
                     // Start collecting checklist items immediately
-                    checklistRepo.getChecklistItemsFlow(id)
+                    repo.getChecklistItemsByNoteId(id)
                         .catch { e -> Timber.e(e, "Error loading checklist items") }
                         .collect { items ->
                             _uiState.update { it.copy(checklistItems = items) }
@@ -83,69 +80,233 @@ class NoteDetailViewModel(
         }
     }
 
-    fun updateChecklistItem(position: Int, newContent: String) {
-        viewModelScope.launch {
-            try {
-                val item = _uiState.value.checklistItems.getOrNull(position) ?: return@launch
-                checklistRepo.updateChecklistItem(item, newContent)
-            } catch (e: Exception) {
-                Timber.e(e, "Error updating checklist item")
+
+    fun onEvent(event: CheckListEvent) {
+        when (event) {
+
+            CheckListEvent.ToggleChecklist -> toggleChecklist()
+            is CheckListEvent.RemoveChecklistItem -> removeChecklistItem(event.index)
+            is CheckListEvent.ChecklistItemChecked -> toggleChecklistItem(event.item)
+            is CheckListEvent.ReorderChecklistItems -> reorderChecklistItems(
+                event.fromPosition,
+                event.toPosition
+            )
+
+            is CheckListEvent.AddChecklistItemAt -> addChecklistItemAt(event.position)
+            is CheckListEvent.UpdateChecklistItemContent -> updateChecklistItemContent(
+                event.item,
+                event.content
+            )
+
+            is CheckListEvent.UpdateFocusedPosition -> {
+                _uiState.update { it.copy(focusedItemPosition = event.position) }
             }
         }
     }
 
-    fun toggleChecklist() {
+
+    private fun reorderChecklistItems(fromIndex: Int, toIndex: Int) {
         viewModelScope.launch {
-            try {
-                val newChecklistState = !_uiState.value.isCheckList
-                _uiState.update { it.copy(isCheckList = newChecklistState) }
-                repo.updateNoteChecklist(_uiState.value.id, newChecklistState)
-            } catch (e: Exception) {
-                Timber.e(e, "Error toggling checklist status")
-                _uiState.update { it.copy(isCheckList = !it.isCheckList) }
+            val currentItems = uiState.value.checklistItems.toMutableList()
+
+            // Perform the move operation
+            val item = currentItems.removeAt(fromIndex)
+            currentItems.add(toIndex, item)
+
+            // Calculate new focus position more efficiently
+            val newFocusPosition = when (val currentFocus = uiState.value.focusedItemPosition) {
+                fromIndex -> toIndex
+                in minOf(fromIndex, toIndex)..maxOf(fromIndex, toIndex) -> {
+                    if (fromIndex < toIndex) currentFocus - 1 else currentFocus + 1
+                }
+
+                else -> currentFocus
+            }
+
+            // Update UI state
+            updateUiStateAndTriggerSave { state ->
+                state.copy(
+                    checklistItems = currentItems,
+                    focusedItemPosition = newFocusPosition
+                )
+            }
+
+
+            // Update database in background without creating new coroutine
+            withContext(Dispatchers.IO) {
+                // Batch update items with new positions
+                currentItems.mapIndexed { index, item ->
+                    item.copy(position = index)
+                }.let { updatedItems ->
+                    repo.updateAllChecklistItems(updatedItems)
+                }
             }
         }
     }
 
-    fun addChecklistItem(content: String = "") {
+    private fun toggleChecklistItem(item: Checklist) {
         viewModelScope.launch {
-            try {
-                checklistRepo.addChecklistItem(_uiState.value.id, content)
-            } catch (e: Exception) {
-                Timber.e(e, "Error adding checklist item")
+            val updatedItem = item.copy(isChecked = !item.isChecked)
+            repo.updateChecklistItem(updatedItem)
+
+
+            updateUiStateAndTriggerSave { state ->
+                val updatedItems = state.checklistItems.map {
+                    if (it.id == item.id) updatedItem else it
+                }
+                state.copy(
+                    checklistItems = updatedItems,
+                )
             }
         }
     }
 
-    fun toggleChecklistItem(position: Int) {
+    private fun addChecklistItemAt(position: Int) {
         viewModelScope.launch {
-            val item = _uiState.value.checklistItems.getOrNull(position) ?: return@launch
-            try {
-                checklistRepo.toggleChecklistItem(item)
-            } catch (e: Exception) {
-                Timber.e(e, "Error toggling checklist item")
+            val currentState = _uiState.value
+
+            val noteId = currentState.id
+
+            // Create new item
+            val newItem = Checklist(
+                noteId = noteId,
+                content = "",
+                position = position
+            )
+
+            // Update positions of existing items
+            val updatedItems = currentState.checklistItems.toMutableList()
+            updatedItems.forEachIndexed { index, item ->
+                if (index >= position) {
+                    val updatedItem = item.copy(position = index + 1)
+                    repo.updateChecklistItem(updatedItem)
+                }
+            }
+
+            // Insert new item
+            val insertedId = repo.insertChecklistItem(newItem)
+            val insertedItem = newItem.copy(id = insertedId)
+
+            updatedItems.add(position, insertedItem)
+
+            updateUiStateAndTriggerSave { state ->
+                state.copy(
+                    id = noteId,
+                    checklistItems = updatedItems,
+                    focusedItemPosition = position
+                )
             }
         }
     }
 
-    fun removeChecklistItem(position: Int) {
+    private fun updateChecklistItemContent(item: Checklist, content: String) {
         viewModelScope.launch {
-            val item = _uiState.value.checklistItems.getOrNull(position) ?: return@launch
-            try {
-                checklistRepo.deleteChecklistItem(item)
-            } catch (e: Exception) {
-                Timber.e(e, "Error removing checklist item")
+            val updatedItem = item.copy(content = content)
+            repo.updateChecklistItem(updatedItem)
+
+
+            updateUiStateAndTriggerSave { state ->
+                val updatedItems = state.checklistItems.map {
+                    if (it.id == item.id) updatedItem else it
+                }
+                state.copy(
+                    checklistItems = updatedItems,
+                )
             }
         }
     }
 
-    fun reorderChecklistItems(fromPosition: Int, toPosition: Int) {
+
+    private fun toggleChecklist() {
         viewModelScope.launch {
-            try {
-                checklistRepo.reorderChecklistItems(_uiState.value.id, fromPosition, toPosition)
-            } catch (e: Exception) {
-                Timber.e(e, "Error reordering checklist items")
+            val currentState = _uiState.value
+            val isChecklist = !currentState.isCheckList
+
+            if (isChecklist) {
+                // Save note first if new
+                val noteId = currentState.id
+
+                // Clear existing items first
+                repo.deleteChecklistItemsByNoteId(noteId)
+
+                // Convert non-empty content lines to checklist items
+                val checklistItems = currentState.content
+                    .split("\n")
+                    .filter { it.isNotBlank() }
+                    .mapIndexed { index, line ->
+                        Checklist(
+                            noteId = noteId,
+                            content = line.trim(),
+                            position = index
+                        )
+                    }
+
+                // Insert new items
+                val insertedItems = checklistItems.map { item ->
+                    val id = repo.insertChecklistItem(item)
+                    item.copy(id = id)
+                }
+
+                _uiState.update {
+                    it.copy(
+                        id = noteId,
+                        isCheckList = true,
+                        checklistItems = insertedItems,
+                        content = ""
+                    )
+                }
+            } else {
+                // Convert checklist items to content
+                val content = currentState.checklistItems
+                    .sortedBy { it.position }
+                    .joinToString("\n") { it.content }
+
+                // Clear checklist items
+                repo.deleteChecklistItemsByNoteId(currentState.id)
+
+                _uiState.update {
+                    it.copy(
+                        isCheckList = false,
+                        checklistItems = emptyList(),
+                        content = content
+                    )
+                }
             }
+
+            // Update note state
+            repo.updateNoteWithTags(_uiState.value.toNote(), emptyList())
+        }
+    }
+
+    private fun removeChecklistItem(index: Int) {
+        viewModelScope.launch {
+            val currentState = _uiState.value
+            if (index >= currentState.checklistItems.size) {
+                return@launch
+            }
+
+            val itemToRemove = currentState.checklistItems[index]
+            repo.deleteChecklistItem(itemToRemove.id)
+
+            // Calculate next focus position
+            val nextFocusPosition = when {
+                index < currentState.checklistItems.size - 1 -> index // Focus next item
+                currentState.checklistItems.size > 1 -> index - 1 // Focus previous item
+                else -> -1 // No items left, clear focus
+            }
+
+            // Update UI immediately with new list and focus position
+            updateUiStateAndTriggerSave { state ->
+                state.copy(
+                    checklistItems = currentState.checklistItems.filterIndexed { i, _ -> i != index },
+                    focusedItemPosition = nextFocusPosition
+                )
+            }
+
+            /*  // Update positions in background
+              _uiState.value.checklistItems.forEachIndexed { i, item ->
+                  repo.updateChecklistItem(item.copy(position = i))
+              }*/
         }
     }
 
@@ -219,7 +380,8 @@ class NoteDetailViewModel(
                     _noteUpdateTrigger.emit(
                         NoteUpdatePayload(
                             note = currentState.toNote(),
-                            tagIds = currentState.selectedTagIds.toList()
+                            tagIds = currentState.selectedTagIds.toList(),
+                            checklistItems = currentState.checklistItems
                         )
                     )
                     widgetUpdater.updateSingleWidget(currentState.toNote())
@@ -360,7 +522,7 @@ class NoteDetailViewModel(
     private fun Set<Long>.toggle(id: Long) = if (contains(id)) minus(id) else plus(id)
 
     private data class NoteUpdatePayload(
-        val note: Note, val tagIds: List<Long>
+        val note: Note, val tagIds: List<Long>, val checklistItems: List<Checklist> = emptyList()
     )
 
     fun deleteNoteForever(onComplete: () -> Unit) {
@@ -425,7 +587,8 @@ data class NoteUiState(
     val allTags: List<Tag> = emptyList(),
     val selectedTagIds: Set<Long> = emptySet(),
     val isCheckList: Boolean = false,
-    val checklistItems: List<ChecklistEntity> = emptyList()
+    val checklistItems: List<Checklist> = emptyList(),
+    val focusedItemPosition: Int = -1,
 ) {
     fun toNote() = Note(
         id = id,
@@ -439,7 +602,7 @@ data class NoteUiState(
         reminderDate = reminderDate,
         isDone = isDone,
         updateDate = updateDate,
-        isChecklist = isCheckList
+        isChecklist = isCheckList,
     )
 
     fun isEmpty() = title.isBlank() && content.isBlank()
@@ -460,6 +623,8 @@ data class NoteUiState(
                 updateDate = it.note.updateDate,
                 selectedTagIds = it.tags.map { tag -> tag.id }.toSet(),
                 isCheckList = it.note.isChecklist,
+                checklistItems = checklistItems,
+                focusedItemPosition = focusedItemPosition
             )
         } ?: this
 
@@ -491,28 +656,16 @@ data class NoteUiState(
 }
 
 
-data class ChecklistItemUiState(
-    val id: Long = 0L,
-    val noteId: Long = 0L,  // Add noteId field
-    val content: TextFieldValue = TextFieldValue(""),
-    val isChecked: Boolean = false,
-    val position: Int = 0
-) {
-    fun toEntity() = ChecklistEntity(
-        id = id,  // Map id to id
-        noteId = noteId,  // Map noteId to noteId
-        content = content.text,
-        isChecked = isChecked,
-        position = position
-    )
-}
+sealed interface CheckListEvent {
+    data object ToggleChecklist : CheckListEvent
+    data class ReorderChecklistItems(val fromPosition: Int, val toPosition: Int) : CheckListEvent
+    data class AddChecklistItemAt(val position: Int) : CheckListEvent
+    data class RemoveChecklistItem(val index: Int) : CheckListEvent
+    data class UpdateChecklistItemContent(val item: Checklist, val content: String) :
+        CheckListEvent
 
-fun ChecklistEntity.toUiState() = ChecklistItemUiState(
-    id = id,  // Map id to id
-    noteId = noteId,  // Map noteId to noteId
-    content = TextFieldValue(content),
-    isChecked = isChecked,
-    position = position
-)
+    data class ChecklistItemChecked(val item: Checklist) : CheckListEvent
+    data class UpdateFocusedPosition(val position: Int) : CheckListEvent
+}
 
 
