@@ -13,8 +13,15 @@ interface NoteRepository {
     fun getNoteById(id: Long): Flow<Note?>
     fun getAllNotesWithTags(): Flow<List<NoteWithTags>>
     fun getNoteWithTagsById(id: Long): Flow<NoteWithTags?>
-    suspend fun insertNoteWithTags(note: Note, tagIds: List<Long>): Long
-    suspend fun updateNoteWithTags(note: Note, tagIds: List<Long>)
+    suspend fun insertNoteWithTagsChecklist(
+        note: Note,
+        tagIds: List<Long>,
+        checklistItems: List<Checklist>
+    ): Long
+    suspend fun updateNoteWithTagsChecklist(
+        note: Note, tagIds: List<Long>, checklistItems: List<Checklist>
+    )
+
     suspend fun updateNotes(notes: List<Note>)
     suspend fun deleteNote(note: Note)
     suspend fun emptyTrash()

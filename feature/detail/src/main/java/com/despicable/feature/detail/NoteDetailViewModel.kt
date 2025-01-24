@@ -165,8 +165,23 @@ class NoteDetailViewModel(
         viewModelScope.launch {
             val currentState = _uiState.value
 
-            val noteId = currentState.id
+//            val noteId = currentState.id
 
+            // Ensure the note is saved first if it's a new note
+            val noteId = if (currentState.id == 0L) {
+                // Save the note first if it hasn't been saved
+                val savedNoteId =
+                    repo.insertNoteWithTagsChecklist(
+                        currentState.toNote(),
+                        emptyList(),
+                        currentState.checklistItems
+                    )
+                savedNoteId
+            } else {
+                currentState.id
+            }
+
+            Timber.tag("DEBUG").d("=--noteId--==[$noteId]")
             // Create new item
             val newItem = Checklist(
                 noteId = noteId,
@@ -217,42 +232,110 @@ class NoteDetailViewModel(
     }
 
 
+    /*
+        private fun toggleChecklist() {
+            viewModelScope.launch {
+                val currentState = _uiState.value
+                val isChecklist = !currentState.isCheckList
+
+                if (isChecklist) {
+                    // Save note first if new
+                    val noteId = currentState.id
+
+                    // Clear existing items first
+                    repo.deleteChecklistItemsByNoteId(noteId)
+
+                    // Convert non-empty content lines to checklist items
+                    val checklistItems = currentState.content
+                        .split("\n")
+                        .filter { it.isNotBlank() }
+                        .mapIndexed { index, line ->
+                            Checklist(
+                                noteId = noteId,
+                                content = line.trim(),
+                                position = index
+                            )
+                        }
+
+                    // Insert new items
+                    val insertedItems = checklistItems.map { item ->
+                        val id = repo.insertChecklistItem(item)
+                        item.copy(id = id)
+                    }
+
+                    _uiState.update {
+                        it.copy(
+                            id = noteId,
+                            isCheckList = true,
+                            checklistItems = insertedItems,
+                            content = ""
+                        )
+                    }
+                } else {
+                    // Convert checklist items to content
+                    val content = currentState.checklistItems
+                        .sortedBy { it.position }
+                        .joinToString("\n") { it.content }
+
+                    // Clear checklist items
+                    repo.deleteChecklistItemsByNoteId(currentState.id)
+
+                    _uiState.update {
+                        it.copy(
+                            isCheckList = false,
+                            checklistItems = emptyList(),
+                            content = content
+                        )
+                    }
+                }
+
+                // Update note state
+                repo.updateNoteWithTagsChecklist(_uiState.value.toNote(), emptyList(), _uiState.value.checklistItems)
+            }
+        }
+    */
+
+
     private fun toggleChecklist() {
         viewModelScope.launch {
-            val currentState = _uiState.value
+            val currentState = uiState.value
             val isChecklist = !currentState.isCheckList
 
             if (isChecklist) {
                 // Save note first if new
                 val noteId = currentState.id
+                val existingItems = currentState.checklistItems
 
-                // Clear existing items first
-                repo.deleteChecklistItemsByNoteId(noteId)
-
-                // Convert non-empty content lines to checklist items
-                val checklistItems = currentState.content
-                    .split("\n")
-                    .filter { it.isNotBlank() }
-                    .mapIndexed { index, line ->
-                        Checklist(
-                            noteId = noteId,
-                            content = line.trim(),
-                            position = index
-                        )
-                    }
-
-                // Insert new items
-                val insertedItems = checklistItems.map { item ->
-                    val id = repo.insertChecklistItem(item)
-                    item.copy(id = id)
+                // Use existing items if present, otherwise convert content
+                val checklistItems = existingItems.ifEmpty {
+                    currentState.content
+                        .split("\n")
+                        .filter { it.isNotBlank() }
+                        .mapIndexed { index, line ->
+                            Checklist(
+                                noteId = noteId,
+                                content = line.trim(),
+                                position = index
+                            )
+                        }
                 }
 
-                _uiState.update {
-                    it.copy(
+                // Insert items if needed
+                val insertedItems = if (checklistItems.isEmpty()) {
+                    listOf(Checklist(noteId = noteId, content = "", position = 0))
+                } else {
+                    checklistItems.map { item ->
+                        val id = if (item.id == 0L) repo.insertChecklistItem(item) else item.id
+                        item.copy(id = id)
+                    }
+                }
+
+                updateUiStateAndTriggerSave { state ->
+                    state.copy(
                         id = noteId,
                         isCheckList = true,
                         checklistItems = insertedItems,
-                        content = ""
+                        content = if (insertedItems.isNotEmpty()) "" else currentState.content
                     )
                 }
             } else {
@@ -261,22 +344,17 @@ class NoteDetailViewModel(
                     .sortedBy { it.position }
                     .joinToString("\n") { it.content }
 
-                // Clear checklist items
-                repo.deleteChecklistItemsByNoteId(currentState.id)
-
-                _uiState.update {
-                    it.copy(
+                updateUiStateAndTriggerSave { state ->
+                    state.copy(
                         isCheckList = false,
                         checklistItems = emptyList(),
                         content = content
                     )
                 }
             }
-
-            // Update note state
-            repo.updateNoteWithTags(_uiState.value.toNote(), emptyList())
         }
     }
+
 
     private fun removeChecklistItem(index: Int) {
         viewModelScope.launch {
@@ -302,11 +380,6 @@ class NoteDetailViewModel(
                     focusedItemPosition = nextFocusPosition
                 )
             }
-
-            /*  // Update positions in background
-              _uiState.value.checklistItems.forEachIndexed { i, item ->
-                  repo.updateChecklistItem(item.copy(position = i))
-              }*/
         }
     }
 
@@ -334,7 +407,11 @@ class NoteDetailViewModel(
                     Timber.e(e, "Error in note update flow")
                 }.collect { payload ->
                     try {
-                        repo.updateNoteWithTags(payload.note, payload.tagIds)
+                        repo.updateNoteWithTagsChecklist(
+                            payload.note,
+                            payload.tagIds,
+                            payload.checklistItems
+                        )
                     } catch (e: Exception) {
                         Timber.e(e, "Error updating note")
                     }
@@ -369,9 +446,10 @@ class NoteDetailViewModel(
             try {
                 // If it's a new note (id = 0), insert it first
                 if (currentState.id == 0L) {
-                    val noteId = repo.insertNoteWithTags(
+                    val noteId = repo.insertNoteWithTagsChecklist(
                         currentState.toNote(),
-                        currentState.selectedTagIds.toList()
+                        currentState.selectedTagIds.toList(),
+                        currentState.checklistItems
                     )
                     // Update the UI state with the new ID
                     updateUiState { it.copy(id = noteId) }
@@ -433,22 +511,32 @@ class NoteDetailViewModel(
     fun saveNote(onComplete: () -> Unit, onSkip: () -> Unit) {
         viewModelScope.launch {
             val currentNote = _uiState.value.toNote()
+            Timber.tag("DEBUG").d("currentNote.content- [${currentNote.content}]")
+            Timber.tag("DEBUG").d("currentNote.title- [${currentNote.title}]")
             if (currentNote.title.isBlank() && currentNote.content.isBlank()) {
                 onSkip()
+                Timber.tag("DEBUG").d("[ onSkip() ]")
             } else {
                 saveOrUpdateNote(currentNote)
                 onComplete()
+                Timber.tag("DEBUG").d("[ onComplete()() ]")
             }
         }
     }
 
     private suspend fun saveOrUpdateNote(note: Note) {
         if (note.id == 0L) {
-            repo.insertNoteWithTags(note, _uiState.value.selectedTagIds.toList())
+            repo.insertNoteWithTagsChecklist(
+                note,
+                _uiState.value.selectedTagIds.toList(),
+                _uiState.value.checklistItems
+            )
         } else {
             _noteUpdateTrigger.emit(
                 NoteUpdatePayload(
-                    note = note, tagIds = _uiState.value.selectedTagIds.toList()
+                    note = note,
+                    tagIds = _uiState.value.selectedTagIds.toList(),
+                    checklistItems = _uiState.value.checklistItems
                 )
             )
             widgetUpdater.updateSingleWidget(note)
@@ -605,7 +693,7 @@ data class NoteUiState(
         isChecklist = isCheckList,
     )
 
-    fun isEmpty() = title.isBlank() && content.isBlank()
+    fun isEmpty() = title.isBlank() && content.isBlank() && checklistItems.isEmpty()
 
     fun fromNoteWithTags(noteWithTags: NoteWithTags?) =
         noteWithTags?.let {

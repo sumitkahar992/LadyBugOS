@@ -83,7 +83,7 @@ class NoteListViewModel(
     init {
         initializeNotes()
         viewModelScope.launch {
-            loadSampleDataUseCase()
+//            loadSampleDataUseCase()
         }
     }
 

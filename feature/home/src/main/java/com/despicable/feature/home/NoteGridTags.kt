@@ -313,7 +313,7 @@ private fun NoteContent(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 10.dp)
+            .padding(10.dp)
     ) {
         // Title Section
         if (note.title.isNotBlank()) {
@@ -351,7 +351,7 @@ private fun NoteContent(
                 overflow = TextOverflow.Ellipsis,
                 maxLines = when (gridLayout) {
                     GridLayout.OneColumn -> 8
-                    GridLayout.TwoColumns -> 16
+                    GridLayout.TwoColumns -> 14
                     GridLayout.ThreeColumns -> 12
                 },
                 fontSize = contentSize,
@@ -381,7 +381,7 @@ private fun ChecklistContent(
 ) {
     val maxItems = when (gridLayout) {
         GridLayout.OneColumn -> 3
-        GridLayout.TwoColumns -> 16
+        GridLayout.TwoColumns -> 14
         GridLayout.ThreeColumns -> 5
     }
 

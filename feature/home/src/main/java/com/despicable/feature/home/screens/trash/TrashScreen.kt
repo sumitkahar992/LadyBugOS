@@ -121,7 +121,7 @@ fun TrashScreen(
                 } else {
                     NoteGridTags(
                         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-                        notes = emptyList(),
+                        notes = trashedNotes,
                         selectedNotes = selectedNotes,
                         onNoteClick = ::handleNoteClick,
                         onNoteLongPress = ::toggleSelection,

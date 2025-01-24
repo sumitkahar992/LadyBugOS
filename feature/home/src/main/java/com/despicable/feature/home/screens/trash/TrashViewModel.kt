@@ -6,14 +6,20 @@ import com.despicable.core.data.repository.NoteRepository
 import com.despicable.core.datastore.SettingsRepo
 import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.model.Note
+import com.despicable.feature.home.NoteWithTagsAndChecklist
 import com.despicable.widgets.data.WidgetUpdater
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class TrashViewModel(
     private val repo: NoteRepository,
@@ -29,9 +35,65 @@ class TrashViewModel(
     val lastRestoredNotes: StateFlow<List<Note>?> =
         _lastRestoredNotes.asStateFlow()
 
+    /*    val trashedNotes = repo.getAllNotesWithTags()
+            .map { notes -> notes.filter { it.note.isTrashed } }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyList())
+
+             val trashedNotes = repo.getAllNotesWithTags()
+            .map { notes ->
+                notes.filter { it.note.isTrashed }
+                    .map { noteWithTags ->
+                        val checklistItems = if (noteWithTags.note.isChecklist) {
+                            try {
+                                repo.getChecklistItemsByNoteId(noteWithTags.note.id).first()
+                            } catch (e: Exception) {
+                                Timber.e(e, "Error loading checklist items for trashed note")
+                                emptyList()
+                            }
+                        } else {
+                            emptyList()
+                        }
+                        NoteWithTagsAndChecklist(
+                            note = noteWithTags.note,
+                            tags = noteWithTags.tags,
+                            checklistItems = checklistItems
+                        )
+                    }
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyList())
+            */
+
     val trashedNotes = repo.getAllNotesWithTags()
-        .map { notes -> notes.filter { it.note.isTrashed } }
+        .mapLatest { allNotes ->
+            coroutineScope {
+                allNotes
+                    .filter { it.note.isTrashed }
+                    .map { noteWithTags ->
+                        async {
+                            val checklistItems = runCatching {
+                                if (noteWithTags.note.isChecklist) {
+                                    repo.getChecklistItemsByNoteId(noteWithTags.note.id).first()
+                                } else emptyList()
+                            }.getOrElse {
+                                Timber.e(
+                                    it,
+                                    "Error loading checklist items for trashed note ${noteWithTags.note.id}"
+                                )
+                                emptyList()
+                            }
+
+                            NoteWithTagsAndChecklist(
+                                note = noteWithTags.note,
+                                tags = noteWithTags.tags,
+                                checklistItems = checklistItems
+                            )
+                        }
+                    }
+                    .awaitAll()
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyList())
+
 
     fun deleteNotesPermanently(notes: List<Note>) {
         viewModelScope.launch {

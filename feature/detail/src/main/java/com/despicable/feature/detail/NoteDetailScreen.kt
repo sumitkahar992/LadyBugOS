@@ -14,15 +14,20 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -37,8 +42,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.automirrored.filled.Label
-import androidx.compose.material.icons.automirrored.filled.Subject
-import androidx.compose.material.icons.filled.CheckBox
+import androidx.compose.material.icons.automirrored.outlined.Segment
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Draw
@@ -46,20 +50,20 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.KeyboardVoice
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.CheckBox
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.NotificationAdd
+import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.BottomAppBarDefaults
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -86,6 +90,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -96,6 +101,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
@@ -147,6 +153,9 @@ fun NoteDetailScreen(
     val noteId = uiState.id
     val scope = rememberCoroutineScope()
     var showDeleteDialog by remember { mutableStateOf(false) }
+//    val keyboardController = LocalSoftwareKeyboardController.current
+//    val focusManager = LocalFocusManager.current
+
 
     val disableInTrash = !uiState.isTrashed
 
@@ -205,6 +214,13 @@ fun NoteDetailScreen(
             handleTrashRestore()
         }
     }
+
+//    BackHandler(true) {
+//        focusManager.clearFocus()
+//        keyboardController?.hide()
+//        Timber.tag("DEBUG").d("[]BackHandler[]")
+//        onBack()
+//    }
 
 
     DisposableEffect(Unit) {
@@ -280,66 +296,72 @@ fun NoteDetailScreen(
             },
             bottomBar = {
                 NoteDetailBottomBar(
+//                    modifier = Modifier.imePadding(),
                     onLeftMenuClick = { showLeftBottomSheet = true },
                     onRightMenuClick = { showRightBottomSheet = true },
                     containerColor = containerColor,
-                    uiState = uiState,
-                    onToggleChecklist = {
-                        viewModel.onEvent(CheckListEvent.ToggleChecklist)
-                    }
+                    uiState = uiState
                 )
             },
             contentWindowInsets = WindowInsets.ime,
         ) { innerPadding ->
-            EditNoteContent(
-                skipModifier = Modifier.skipToLookaheadSize(),
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .sharedBounds(
-                        sharedContentState = rememberSharedContentState(
-                            key = NoteSharedElementKey(
-                                uiState.id,
-                                NoteSharedElementType.Content
-                            )
-                        ),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                        clipInOverlayDuringTransition = OverlayClip(
-                            RoundedCornerShape(roundedCornerAnim)
-                        ),
-                    ),
-                uiState = uiState,
-                onTitleChange = viewModel::updateNoteTitle,
-                onContentChange = viewModel::updateNoteContent,
-                onOpenColorPicker = { isColorPickerDialogVisible = true },
-                onClickReminderInfo = { showReminderDialog = true },
-                isDone = uiState.isDone,
-                onDisabledClick = handleTrashRestore,
-                enabled = !uiState.isTrashed,
-                content = {
-                    // Calculate colors based on theme and noteColor
-                    val tagColors = rememberTagColors(uiState.lightColor)
 
-                    LazyRow(
-                        modifier = Modifier
-                            .wrapContentSize(unbounded = true)
-                            .width(LocalConfiguration.current.screenWidthDp.dp),
-                        contentPadding = PaddingValues(16.dp, 0.dp, 10.dp, 0.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        items(uiState.allTags) { tag ->
-                            TagChip(
-                                tag = tag,
-                                enabled = disableInTrash,
-                                isSelected = uiState.selectedTagIds.contains(tag.id),
-                                onClick = { viewModel.toggleTag(tag.id) },
-                                containerColor = tagColors.backgroundColor,
-                                labelColor = tagColors.contentColor
-                            )
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .horizontalWindowInsetsPadding()
+                    .padding(innerPadding)
+            ) {
+                EditNoteContent(
+                    skipModifier = Modifier.skipToLookaheadSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .sharedBounds(
+                            sharedContentState = rememberSharedContentState(
+                                key = NoteSharedElementKey(
+                                    uiState.id,
+                                    NoteSharedElementType.Content
+                                )
+                            ),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            clipInOverlayDuringTransition = OverlayClip(
+                                RoundedCornerShape(roundedCornerAnim)
+                            ),
+                        ),
+                    uiState = uiState,
+                    onTitleChange = viewModel::updateNoteTitle,
+                    onContentChange = viewModel::updateNoteContent,
+                    onOpenColorPicker = { isColorPickerDialogVisible = true },
+                    onClickReminderInfo = { showReminderDialog = true },
+                    isDone = uiState.isDone,
+                    onDisabledClick = handleTrashRestore,
+                    enabled = !uiState.isTrashed,
+                    content = {
+                        // Calculate colors based on theme and noteColor
+                        val tagColors = rememberTagColors(uiState.lightColor)
+
+                        LazyRow(
+                            modifier = Modifier
+                                .wrapContentSize(unbounded = true)
+                                .width(LocalConfiguration.current.screenWidthDp.dp),
+                            contentPadding = PaddingValues(16.dp, 0.dp, 10.dp, 0.dp),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            items(uiState.allTags) { tag ->
+                                TagChip(
+                                    tag = tag,
+                                    enabled = disableInTrash,
+                                    isSelected = uiState.selectedTagIds.contains(tag.id),
+                                    onClick = { viewModel.toggleTag(tag.id) },
+                                    containerColor = tagColors.backgroundColor,
+                                    labelColor = tagColors.contentColor
+                                )
+                            }
                         }
                     }
-                }
-            )
+                )
 
+            }
         }
 
         // Delete confirmation dialog
@@ -432,10 +454,30 @@ fun NoteDetailScreen(
                     })
                 },
                 onDeleteForever = { showDeleteDialog = true },
-                containerColor = containerColor
+                containerColor = containerColor,
+                isChecklist = uiState.isCheckList,
+                onToggleChecklist = {
+                    viewModel.onEvent(CheckListEvent.ToggleChecklist)
+                    showRightBottomSheet = false
+                }
             )
         }
     }
+}
+
+fun Modifier.horizontalWindowInsetsPadding() = composed {
+    val layoutDirection = LocalLayoutDirection.current
+    this
+        .padding(
+            start = WindowInsets.safeDrawing
+                .asPaddingValues()
+                .calculateLeftPadding(layoutDirection)
+        )
+        .padding(
+            end = WindowInsets.safeDrawing
+                .asPaddingValues()
+                .calculateRightPadding(layoutDirection)
+        )
 }
 
 
@@ -506,7 +548,23 @@ fun EditNoteContent(
                 onDisabledClick = onDisabledClick,
                 keyboardActions = KeyboardActions(
                     onNext = {
-                        contentFocusRequester.requestFocus()
+                        when {
+                            uiState.isCheckList && list.isEmpty() -> {
+                                // When checklist is empty, add first item and focus it
+                                viewModel.onEvent(CheckListEvent.AddChecklistItemAt(0))
+                            }
+
+                            uiState.isCheckList -> {
+                                // Focus first item if checklist exists
+                                viewModel.onEvent(CheckListEvent.UpdateFocusedPosition(0))
+                            }
+
+                            else -> {
+                                // Normal content focus for non-checklist
+                                contentFocusRequester.requestFocus()
+                            }
+                        }
+
                         // Move cursor to end of content
                         onContentChange(
                             uiState.contentFieldValue.copy(
@@ -618,7 +676,7 @@ fun EditNoteContent(
                     onClick = onClickReminderInfo,
                     isClickable = true,
                     modifier = skipModifier
-                        .padding(horizontal = 16.dp)
+                        .padding(horizontal = 8.dp)
                         .animateItem(
                             fadeInSpec = null, fadeOutSpec = null
                         ),
@@ -756,7 +814,7 @@ fun NoteTitleSection(
             onClick = onOpenColorPicker,
         ) {
             Icon(
-                imageVector = Icons.Default.Palette,
+                imageVector = Icons.Outlined.Palette,
                 contentDescription = "Open color picker"
             )
         }
@@ -968,19 +1026,19 @@ fun EditNoteTopAppBar(
         actions = {
             if (!isTrashed) {
 
-                // Add Reminder action
-                IconButton(onClick = onAddReminder) {
-                    Icon(
-                        imageVector = Icons.Outlined.NotificationAdd,
-                        contentDescription = "Add reminder"
-                    )
-                }
-
                 // Pin / Unpin action
                 IconButton(onClick = onTogglePin) {
                     Icon(
                         imageVector = if (isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
                         contentDescription = if (isPinned) "Unpin note" else "Pin note"
+                    )
+                }
+
+                // Add Reminder action
+                IconButton(onClick = onAddReminder) {
+                    Icon(
+                        imageVector = Icons.Outlined.NotificationAdd,
+                        contentDescription = "Add reminder"
                     )
                 }
 
@@ -1105,18 +1163,23 @@ fun EditNoteTopAppBar(
 
 @Composable
 private fun NoteDetailBottomBar(
+//    modifier: Modifier = Modifier,
     onLeftMenuClick: () -> Unit,
     onRightMenuClick: () -> Unit,
     containerColor: Color,
     uiState: NoteUiState,
-    onToggleChecklist: () -> Unit,
 ) {
+    val barHeight = 54.dp
+
     BottomAppBar(
-        modifier = Modifier.height(68.dp),
+        modifier = Modifier
+            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))
+            .horizontalWindowInsetsPadding()
+            .height(barHeight),
         contentPadding = PaddingValues(5.dp),
         containerColor = containerColor,
         tonalElevation = 0.dp,
-        windowInsets = BottomAppBarDefaults.windowInsets.union(WindowInsets.ime),
+//        windowInsets = BottomAppBarDefaults.windowInsets.union(WindowInsets.ime),
         actions = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1132,35 +1195,24 @@ private fun NoteDetailBottomBar(
                     )
                 }
 
+
+
+                Text(
+                    text = "Edited ${getRelativeTimeAgo(uiState.updateDate)}",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    ),
+                    fontSize = 12.sp
+                )
                 IconButton(
-                    onClick = onToggleChecklist,
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    onClick = onRightMenuClick,
                 ) {
                     Icon(
-                        imageVector = if (uiState.isCheckList)
-                            Icons.AutoMirrored.Filled.Subject else Icons.Default.CheckBox,
-                        contentDescription = if (uiState.isCheckList)
-                            "Switch to note" else "Switch to checklist"
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Right menu",
                     )
                 }
             }
-
-            Text(
-                text = "Edited ${getRelativeTimeAgo(uiState.updateDate)}",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                ),
-                fontSize = 12.sp
-            )
-            IconButton(
-                onClick = onRightMenuClick,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Right menu",
-                )
-            }
-
 
         }
     )
@@ -1216,8 +1268,16 @@ private fun RightBottomSheetContent(
     isTrashed: Boolean,
     onRestore: () -> Unit,
     onDeleteForever: () -> Unit,
+    isChecklist: Boolean,
+    onToggleChecklist: () -> Unit,
     containerColor: Color = MaterialTheme.colorScheme.surface,
 ) {
+    val (icon, text) = if (isChecklist) {
+        Icons.AutoMirrored.Outlined.Segment to "Content"
+    } else {
+        Icons.Outlined.CheckBox to "Checkboxes"
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1255,6 +1315,11 @@ private fun RightBottomSheetContent(
                 icon = Icons.Default.KeyboardVoice,
                 text = "Recording",
                 onClick = { /* Handle recording */ }
+            )
+            BottomSheetItem(
+                icon = icon,
+                text = text,
+                onClick = onToggleChecklist
             )
         }
     }

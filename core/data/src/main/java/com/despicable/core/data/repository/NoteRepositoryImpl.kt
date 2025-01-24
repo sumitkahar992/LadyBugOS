@@ -42,17 +42,26 @@ class NoteRepositoryImpl @Inject constructor(
     override fun getNoteWithTagsById(id: Long): Flow<NoteWithTags?> =
         noteDao.getNoteWithTagsById(id).map { it.toDomainOrNull() }
 
-    override suspend fun insertNoteWithTags(note: Note, tagIds: List<Long>): Long =
-        withContext(Dispatchers.IO) {
-            noteDao.insertNoteWithTags(note.toEntity(), tagIds)
-        }
-
-    override suspend fun updateNoteWithTags(
+    override suspend fun insertNoteWithTagsChecklist(
         note: Note,
         tagIds: List<Long>,
+        checklistItems: List<Checklist>
+    ): Long =
+        withContext(Dispatchers.IO) {
+            noteDao.insertNoteWithTags(note.toEntity(), tagIds, checklistItems.toEntityList())
+        }
+
+    override suspend fun updateNoteWithTagsChecklist(
+        note: Note,
+        tagIds: List<Long>,
+        checklistItems: List<Checklist>
     ) =
         withContext(Dispatchers.IO) {
-            noteDao.updateNoteWithTags(note.toEntity(), tagIds)
+            noteDao.updateNoteWithTagsAndChecklist(
+                note.toEntity(),
+                tagIds,
+                checklistItems.toEntityList()
+            )
         }
 
     override suspend fun updateNotes(notes: List<Note>) =

@@ -32,7 +32,7 @@ class LoadSampleDataUseCase(
                     .map { it.copy(lightColor = colorPalette.random().toArgb()) }
                 sampleNotes.forEach { note ->
                     val randomTags = sampleTags.shuffled().take(Random.nextInt(1, 4))
-                    repo.insertNoteWithTags(note.toDomain(), randomTags.map { it.id })
+                    repo.insertNoteWithTagsChecklist(note.toDomain(), randomTags.map { it.id }, emptyList())
                 }
             }
         }

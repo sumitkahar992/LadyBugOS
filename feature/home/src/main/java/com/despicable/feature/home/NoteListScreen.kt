@@ -30,6 +30,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -69,6 +70,9 @@ fun NoteListScreen(
     var showLayoutDialog by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     val theme = LocalThemeProvider.theme
+//    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
 
     var isSearchMode by rememberSaveable { mutableStateOf(false) }
 
@@ -107,6 +111,8 @@ fun NoteListScreen(
         if (selectedNotes.isNotEmpty()) {
             toggleSelection(note)
         } else {
+            keyboardController?.hide() // Dismiss keyboard UI
+//            focusManager.clearFocus() // Clear any active text field focus
             navigateToDetail(note.id)
         }
     }

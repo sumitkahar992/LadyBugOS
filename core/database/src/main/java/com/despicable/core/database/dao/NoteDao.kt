@@ -30,11 +30,28 @@ interface NoteDao {
     suspend fun updateNote(note: NoteEntity)
 
     @Transaction // Add this for nested operations
-    suspend fun insertNoteWithTags(note: NoteEntity, tagIds: List<Long>): Long {
+    suspend fun insertNoteWithTags(
+        note: NoteEntity,
+        tagIds: List<Long>,
+        checklistItems: List<ChecklistEntity>
+    ): Long {
         val noteId = insertNote(note)
+
+        // Insert tags
         tagIds.forEach { tagId ->
             insertNoteTagCrossRef(NoteTagRefEntity(noteId, tagId))
         }
+
+        // Insert checklist items with correct note ID
+        checklistItems.forEachIndexed { index, item ->
+            insertChecklistItem(
+                item.copy(
+                    noteId = noteId,
+                    position = index
+                )
+            )
+        }
+
         return noteId
     }
 
@@ -54,7 +71,6 @@ interface NoteDao {
         tagIds: List<Long>,
         checklistItems: List<ChecklistEntity>
     ) {
-        // Update the note
         updateNote(note)
 
         // Update tags
@@ -65,8 +81,13 @@ interface NoteDao {
 
         // Update checklist items
         deleteAllChecklistItemsForNote(note.id)
-        checklistItems.forEach { checklistItem ->
-            insertChecklistItem(checklistItem.copy(noteId = note.id))
+        checklistItems.forEachIndexed { index, item ->
+            insertChecklistItem(
+                item.copy(
+                    noteId = note.id,
+                    position = index
+                )
+            )
         }
     }
 
