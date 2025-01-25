@@ -15,7 +15,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.despicable.core.common.navigation.DisablePredictiveBack
 import com.despicable.feature.backup.navigation.BackupRoute
 import com.despicable.feature.detail.navigation.DetailRoute
-import com.despicable.feature.home.navigation.HomeRoute
 import com.despicable.feature.home.screens.navigation.ArchiveRoute
 import com.despicable.feature.home.screens.navigation.LabelRoute
 import com.despicable.feature.home.screens.navigation.ReminderRoute
@@ -53,7 +52,7 @@ fun MainContent(
                     it.hasRoute(TrashRoute::class) ||
                     it.hasRoute(ReminderRoute::class)
                     || it.hasRoute(SettingsPage::class)
-                    || it.hasRoute(DetailRoute::class)
+//                    || it.hasRoute(DetailRoute::class)
         } == true
     }
 
@@ -67,7 +66,7 @@ fun MainContent(
                 }
 
                 isDrawerScreen -> {
-                    navController.popBackStack(HomeRoute(), false)
+                    navController.popBackStack()
                 }
             }
         }

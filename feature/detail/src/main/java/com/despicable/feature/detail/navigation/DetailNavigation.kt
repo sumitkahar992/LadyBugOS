@@ -22,8 +22,8 @@ fun NavGraphBuilder.detailScreen(
     onBack: () -> Unit,
     onDelete: (id: Long) -> Unit,
     onArchive: (id: Long) -> Unit,
-    onUnArchive: (id: Long) -> Unit
-) {
+    onUnArchive: (id: Long) -> Unit,
+    ) {
     sharedElementComposable<DetailRoute> {
         NoteDetailScreen(
             onBack = onBack,

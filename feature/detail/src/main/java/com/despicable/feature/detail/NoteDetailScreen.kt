@@ -1,5 +1,6 @@
 package com.despicable.feature.detail
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -141,7 +142,7 @@ fun NoteDetailScreen(
     onDelete: (Long) -> Unit,
     onArchive: (Long) -> Unit,
     onUnArchive: (Long) -> Unit,
-) {
+    ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     var isColorPickerDialogVisible by remember { mutableStateOf(false) }
@@ -215,14 +216,13 @@ fun NoteDetailScreen(
         }
     }
 
-//    BackHandler(true) {
-//        focusManager.clearFocus()
-//        keyboardController?.hide()
-//        Timber.tag("DEBUG").d("[]BackHandler[]")
-//        onBack()
-//    }
+    BackHandler {
+        Timber.tag("DEBUG").d("[]BackHandler[]")
+        onBack()
+    }
 
 
+    // Note Detail screen
     DisposableEffect(Unit) {
         onDispose {
             viewModel.deleteNoteIfEmpty()
