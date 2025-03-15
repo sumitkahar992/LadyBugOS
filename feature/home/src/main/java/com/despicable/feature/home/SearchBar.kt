@@ -47,6 +47,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -74,6 +75,7 @@ import timber.log.Timber
 
 @Composable
 fun SearchBarWithActions(
+    modifier: Modifier = Modifier,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     onMenuClick: () -> Unit,
@@ -88,7 +90,6 @@ fun SearchBarWithActions(
     onArchiveNotes: (List<Note>) -> Unit,
     onDeleteNotes: (List<Note>) -> Unit,
     onSetReminder: () -> Unit,
-    modifier: Modifier = Modifier,
     screenType: ScreenType = ScreenType.List
 ) {
     val isFocused = rememberSaveable { mutableStateOf(isSearchMode) }
@@ -267,10 +268,8 @@ private fun MenuButton(
         Button(
             modifier = Modifier.fillMaxHeight(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp),
             ),
-            shape = RoundedCornerShape(12.dp),
             onClick = {
                 isFocused.value = false
                 onBackClick()
@@ -289,10 +288,8 @@ private fun MenuButton(
             modifier = Modifier
                 .fillMaxHeight(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp),
             ),
-            shape = RoundedCornerShape(12.dp),
             onClick = onMenuClick,
             elevation = null,
             contentPadding = PaddingValues(horizontal = 10.dp),
@@ -352,13 +349,11 @@ private fun LayoutButton(
                 modifier = Modifier
                     .fillMaxHeight(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp),
                 ),
                 shape = RoundedCornerShape(12.dp),
                 onClick = onLayoutClick,
                 elevation = null,
-//            contentPadding = PaddingValues(horizontal = 10.dp),
             ) {
                 Icon(
                     imageVector = Icons.Outlined.TableRows,
@@ -387,7 +382,7 @@ fun SearchBar(
         label = "topPadding"
     )
     val cornerRadius by animateDpAsState(
-        if (isFocused.value) 0.dp else 15.dp,
+        if (isFocused.value) 0.dp else 28.dp,
         label = "cornerRadius"
     )
     val focusRequester = remember { FocusRequester() }
@@ -406,7 +401,7 @@ fun SearchBar(
             ) { focusRequester.requestFocus() }
             .clip(RoundedCornerShape(cornerRadius))
             .background(
-                color = MaterialTheme.colorScheme.surfaceVariant,
+                color = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp),
                 shape = RoundedCornerShape(cornerRadius)
             )
             .fillMaxHeight()

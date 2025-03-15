@@ -43,6 +43,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -168,7 +169,7 @@ fun SelectionTopBar(
     ) {
         TopAppBar(
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp)
             ),
             modifier = modifier,
             title = { Text("${selectedNotes.size} selected") },
@@ -246,6 +247,7 @@ private fun PinUnpinIcon(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CollapsedSearchView(
+    modifier: Modifier = Modifier,
     title: String = "",
     onMenuClick: () -> Unit,
     onSearchClick: () -> Unit = {},
@@ -253,7 +255,6 @@ fun CollapsedSearchView(
     onGridLayoutClick: () -> Unit = {},
     screenType: ScreenType,
     onEmptyTrash: () -> Unit = {},
-    modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior? = null,
 ) {
     val focusRequester = remember { FocusRequester() }
@@ -271,9 +272,7 @@ fun CollapsedSearchView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
-                colors = TopAppBarDefaults.topAppBarColors(
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
+//                colors = TopAppBarDefaults.topAppBarColors(scrolledContainerColor = MaterialTheme.colorScheme.surfaceVariant),
                 title = { Text(title, Modifier.padding(start = 16.dp)) },
                 navigationIcon = {
                     IconButton(onClick = onMenuClick) {
@@ -352,9 +351,7 @@ fun CollapsedSearchView(
             var showMoreMenu by remember { mutableStateOf(false) }
 
             TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
+//                colors = TopAppBarDefaults.topAppBarColors(scrolledContainerColor = MaterialTheme.colorScheme.surfaceVariant),
                 title = { Text("Trash", Modifier.padding(start = 16.dp)) },
                 navigationIcon = {
                     IconButton(onClick = onMenuClick) {

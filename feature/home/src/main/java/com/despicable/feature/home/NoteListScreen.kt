@@ -1,18 +1,26 @@
 package com.despicable.feature.home
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -30,6 +38,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -134,41 +143,54 @@ fun NoteListScreen(
     // Handle snackBar
     NoteSnackBarHandler(snackBarMessage, snackBarHostState)
 
+
     Scaffold(
         snackbarHost = { SwipeableSnackBarHost(snackBarHostState) },
         modifier = modifier
             .fillMaxSize()
             .scrollConnectionToProvideVisibility(isSearchBarVisible),
-        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0), // Reset window insets
+//        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
         floatingActionButton = { NoteFAB(navigateToDetail) },
     ) { padding ->
-        NoteScreenContent(
-            modifier = modifier,
-            paddingValues = padding,
-            notes = notes,
-            isInitialized = uiState.isNotesInitialized,
-            searchQuery = uiState.searchQuery,
-            emptyIcon = R.drawable.notes,
-            emptyTitle = "Notes you add appear here"
-        ) {
-            NoteGridTags(
+
+        Box(Modifier.fillMaxSize()) {
+
+            NoteScreenContent(
                 modifier = modifier,
+                paddingValues = padding,
                 notes = notes,
-                selectedNotes = selectedNotes,
-                onNoteClick = ::handleNoteClick,
-                onNoteLongPress = ::toggleSelection,
-                gridContent = {
-                    tagHeader(
-                        tags = uiState.tagState.availableTags,
-                        activeTagIds = uiState.tagState.activeTagIds,
-                        selectedTagId = uiState.tagState.selectedTagId,
-                        onTagClick = { tagId -> viewModel.toggleTag(tagId) },
-                    )
-                },
-                gridLayout = uiState.gridLayout,
+                isInitialized = uiState.isNotesInitialized,
+                searchQuery = uiState.searchQuery,
+                emptyIcon = R.drawable.notes,
+                emptyTitle = "Notes you add appear here"
+            ) {
+                NoteGridTags(
+                    modifier = modifier,
+                    notes = notes,
+                    selectedNotes = selectedNotes,
+                    onNoteClick = ::handleNoteClick,
+                    onNoteLongPress = ::toggleSelection,
+                    gridContent = {
+                        tagHeader(
+                            tags = uiState.tagState.availableTags,
+                            activeTagIds = uiState.tagState.activeTagIds,
+                            selectedTagId = uiState.tagState.selectedTagId,
+                            onTagClick = { tagId -> viewModel.toggleTag(tagId) },
+                        )
+                    },
+                    gridLayout = uiState.gridLayout,
+                )
+            }
+            // Status bar background (MUST COME AFTER CONTENT TO LAYER CORRECTLY)
+            Spacer(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .windowInsetsTopHeight(WindowInsets.systemBars)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
             )
-        }
-        /*
+
+            /*
                 NoteListSearchUI(
                     onMenuClick = onMenuClick,
                     searchQuery = uiState.searchQuery,
@@ -207,39 +229,40 @@ fun NoteListScreen(
                     scrollBehavior = scrollBehavior
                 )*/
 
-        SearchBarWithActions(
-            searchQuery = uiState.searchQuery,
-            onSearchQueryChange = viewModel::updateSearchQuery,
-            onMenuClick = onMenuClick,
-            onLayoutClick = { showLayoutDialog = true },
-            isSearchMode = isSearchMode || uiState.searchQuery.isNotEmpty(),
-            onBackClick = {
-                isSearchMode = false  // Reset search mode
-                viewModel.updateSearchQuery("")  // Clear search query
-            },
-            isVisible = isSearchBarVisible.value,
-            selectedNotes = selectedNotes,
-            onClearSelection = { selectedNotes = emptySet() },
-            onPinNotes = { handlePinNotes() },
-            onUnPinNotes = { handlePinNotes() },
-            onArchiveNotes = { selectedNotes ->
-                handleAction(
-                    action = { viewModel.archiveNotes(selectedNotes.toList()) },
-                    message = "${selectedNotes.size} notes archived and unpinned",
-                    restoreAction = { viewModel.undoLastOperation() }
-                )
-            },
-            onDeleteNotes = { selectedNotes ->
-                handleAction(
-                    action = { viewModel.trashNotes(selectedNotes.toList()) },
-                    message = "${selectedNotes.size} notes moved to trash and unpinned",
-                    restoreAction = { viewModel.undoLastOperation() }
-                )
-            },
-            onSetReminder = {
-                showReminderDialog = true
-            },
-        )
+            SearchBarWithActions(
+                searchQuery = uiState.searchQuery,
+                onSearchQueryChange = viewModel::updateSearchQuery,
+                onMenuClick = onMenuClick,
+                onLayoutClick = { showLayoutDialog = true },
+                isSearchMode = isSearchMode || uiState.searchQuery.isNotEmpty(),
+                onBackClick = {
+                    isSearchMode = false  // Reset search mode
+                    viewModel.updateSearchQuery("")  // Clear search query
+                },
+                isVisible = isSearchBarVisible.value,
+                selectedNotes = selectedNotes,
+                onClearSelection = { selectedNotes = emptySet() },
+                onPinNotes = { handlePinNotes() },
+                onUnPinNotes = { handlePinNotes() },
+                onArchiveNotes = { selectedNotes ->
+                    handleAction(
+                        action = { viewModel.archiveNotes(selectedNotes.toList()) },
+                        message = "${selectedNotes.size} notes archived and unpinned",
+                        restoreAction = { viewModel.undoLastOperation() }
+                    )
+                },
+                onDeleteNotes = { selectedNotes ->
+                    handleAction(
+                        action = { viewModel.trashNotes(selectedNotes.toList()) },
+                        message = "${selectedNotes.size} notes moved to trash and unpinned",
+                        restoreAction = { viewModel.undoLastOperation() }
+                    )
+                },
+                onSetReminder = {
+                    showReminderDialog = true
+                },
+            )
+        }
     }
 
     val initialDate = selectedNotes.firstOrNull()?.reminderDate

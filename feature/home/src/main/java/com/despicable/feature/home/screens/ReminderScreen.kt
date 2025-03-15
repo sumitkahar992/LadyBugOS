@@ -239,7 +239,7 @@ fun NoteGridTagsReminder(
     }
     val spacing = when (gridLayout) {
         GridLayout.OneColumn -> 4.dp
-        GridLayout.TwoColumns -> 2.dp
+        GridLayout.TwoColumns -> 0.dp
         GridLayout.ThreeColumns -> 1.dp
     }
 

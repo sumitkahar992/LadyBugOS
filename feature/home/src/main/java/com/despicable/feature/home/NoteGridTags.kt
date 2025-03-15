@@ -103,7 +103,7 @@ fun NoteGridTags(
     }
     val spacing = when (gridLayout) {
         GridLayout.OneColumn -> 4.dp
-        GridLayout.TwoColumns -> 2.dp
+        GridLayout.TwoColumns -> 0.dp
         GridLayout.ThreeColumns -> 1.dp
     }
 
@@ -313,7 +313,7 @@ private fun NoteContent(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(10.dp)
+            .padding(14.dp)
     ) {
         // Title Section
         if (note.title.isNotBlank()) {
