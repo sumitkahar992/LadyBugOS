@@ -1,8 +1,12 @@
 package com.despicable.feature.home.screens.trash
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,10 +33,10 @@ import com.despicable.core.designsystem.component.EmptyStateContent
 import com.despicable.core.designsystem.component.NoteeDialog
 import com.despicable.core.designsystem.component.ScreenType
 import com.despicable.core.designsystem.component.SelectionTopBar
+import com.despicable.core.model.Note
 import com.despicable.feature.home.NoteGridTags
 import com.despicable.feature.home.R
 import com.despicable.feature.home.SwipeableSnackBarHost
-import com.despicable.core.model.Note
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,6 +98,7 @@ fun TrashScreen(
         modifier = Modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
         topBar = {
             TopBarTrash(
                 onClearSelection = { selectedNotes = emptySet() },
