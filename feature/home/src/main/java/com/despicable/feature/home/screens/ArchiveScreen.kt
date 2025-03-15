@@ -10,9 +10,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -41,17 +45,17 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.despicable.core.common.navigation.NoteActionType
 import com.despicable.core.designsystem.component.CollapsedSearchView
 import com.despicable.core.designsystem.component.ExpandedSearchView
-import com.despicable.feature.home.NoteScreenContent
 import com.despicable.core.designsystem.component.ReminderDialog
 import com.despicable.core.designsystem.component.ScreenType
 import com.despicable.core.designsystem.component.SelectionTopBar
+import com.despicable.core.model.Note
 import com.despicable.feature.home.HandleNoteActions
 import com.despicable.feature.home.NoteGridTags
 import com.despicable.feature.home.NoteListViewModel
+import com.despicable.feature.home.NoteScreenContent
 import com.despicable.feature.home.NoteSnackBarHandler
 import com.despicable.feature.home.R
 import com.despicable.feature.home.SwipeableSnackBarHost
-import com.despicable.core.model.Note
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -138,6 +142,7 @@ fun ArchivedScreen(
         modifier = modifier
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
         topBar = {
             AnimatedTopBar(
                 title = "Archive",
@@ -183,7 +188,7 @@ fun ArchivedScreen(
             emptyTitle = "No archived notes available"
         ) {
             NoteGridTags(
-                modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+                modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
                 notes = archivedNotes,
                 selectedNotes = selectedNotes,
                 onNoteClick = ::handleNoteClick,
