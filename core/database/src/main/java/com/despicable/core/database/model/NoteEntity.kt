@@ -1,27 +1,59 @@
 package com.despicable.core.database.model
 
+import androidx.room.Embedded
 import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.Junction
 import androidx.room.PrimaryKey
+import androidx.room.Relation
 import kotlinx.serialization.Serializable
 
 @Serializable
-@Entity(tableName = "notes")
+@Entity(
+    tableName = "notes",
+    indices = [
+        Index("updateDate"),           // For sorting
+        Index("reminderDate"),         // For reminders
+        Index(value = ["isPinned", "isArchived", "isTrashed"]) // Composite index For filtering
+    ]
+)
 data class NoteEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String = "",
     val content: String = "",
-    val updateDate: String = "",
+    val updateDate: Long = 0, // Explicitly updated
     val lightColor: Int = 0,
-    var isPinned: Boolean = false,
+    val isPinned: Boolean = false,
     val pinnedDate: Long? = null,
-    var isArchived: Boolean = false,
-    var isTrashed: Boolean = false,
-    var reminderDate: Long? = null,
-    var isDone: Boolean = false,
-    var isChecklist: Boolean = false, // New field
-
+    val isArchived: Boolean = false,
+    val isTrashed: Boolean = false,
+    val reminderDate: Long? = null,
+    val isDone: Boolean = false,
+    val isChecklist: Boolean = false,
 )
 
+
+// Add this combined relationship class for complete note data
+data class NoteComplete(
+    @Embedded val note: NoteEntity,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "noteId"
+    )
+    val checklistItems: List<ChecklistEntity>,
+
+    @Relation(
+        entity = TagEntity::class,
+        parentColumn = "id",
+        entityColumn = "id",
+        associateBy = Junction(
+            value = NoteTagRefEntity::class,
+            parentColumn = "noteId",
+            entityColumn = "tagId"
+        )
+    )
+    val tags: List<TagEntity>
+)
 
 
 /*

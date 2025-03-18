@@ -142,7 +142,7 @@ fun NoteDetailScreen(
     onDelete: (Long) -> Unit,
     onArchive: (Long) -> Unit,
     onUnArchive: (Long) -> Unit,
-    ) {
+) {
     val uiState by viewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     var isColorPickerDialogVisible by remember { mutableStateOf(false) }
@@ -353,8 +353,8 @@ fun NoteDetailScreen(
                                     enabled = disableInTrash,
                                     isSelected = uiState.selectedTagIds.contains(tag.id),
                                     onClick = { viewModel.toggleTag(tag.id) },
-                                    containerColor = tagColors.backgroundColor,
-                                    labelColor = tagColors.contentColor
+                                    containerColor = tagColors.surfaceColor,
+                                    labelColor = tagColors.onSurfaceColor
                                 )
                             }
                         }
@@ -600,7 +600,7 @@ fun EditNoteContent(
                 ) { isDragging ->
 
                     ChecklistItem(
-                        dragModifier = Modifier
+                        modifier = Modifier
                             .draggableHandle(
                                 onDragStarted = {
                                     focusManager.clearFocus()
@@ -675,6 +675,7 @@ fun EditNoteContent(
                     isDone = isDone,
                     onClick = onClickReminderInfo,
                     isClickable = true,
+                    noteColor = uiState.lightColor,
                     modifier = skipModifier
                         .padding(horizontal = 8.dp)
                         .animateItem(
@@ -785,11 +786,11 @@ fun NoteTextField(
 
 @Composable
 fun NoteTitleSection(
+    modifier: Modifier = Modifier,
     uiState: NoteUiState,
     onTitleChange: (TextFieldValue) -> Unit,
     onOpenColorPicker: () -> Unit,
     enabled: Boolean = true,
-    modifier: Modifier = Modifier,
     onDisabledClick: () -> Unit,
     keyboardActions: KeyboardActions
 ) {
@@ -823,10 +824,10 @@ fun NoteTitleSection(
 
 @Composable
 fun NoteContentSection(
+    modifier: Modifier = Modifier,
     uiState: NoteUiState,
     onContentChange: (TextFieldValue) -> Unit,
     enabled: Boolean = true,
-    modifier: Modifier = Modifier,
     onDisabledClick: () -> Unit,
 ) {
     Box(

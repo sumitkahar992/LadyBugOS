@@ -29,10 +29,21 @@ class LoadSampleDataUseCase(
                 }
 
                 val sampleNotes = getSampleNotes()
-                    .map { it.copy(lightColor = colorPalette.random().toArgb()) }
+                    .map {
+                        it.copy(
+                            lightColor = colorPalette.random().toArgb(),
+                            updateDate = generateRandomDate()
+                            // Replace string dates with timestamps
+
+                        )
+                    }
                 sampleNotes.forEach { note ->
                     val randomTags = sampleTags.shuffled().take(Random.nextInt(1, 4))
-                    repo.insertNoteWithTagsChecklist(note.toDomain(), randomTags.map { it.id }, emptyList())
+                    repo.insertNoteWithTagsChecklist(
+                        note.toDomain(),
+                        randomTags.map { it.id },
+                        emptyList()
+                    )
                 }
             }
         }
@@ -62,6 +73,15 @@ class LoadSampleDataUseCase(
         return Json.decodeFromString<List<NoteEntity>>(json)
     }
 }
+
+// Replace string date generation with timestamp generation
+fun generateRandomDate(): Long {
+    val currentTime = System.currentTimeMillis()
+    val oneDay = 24 * 60 * 60 * 1000L
+    val randomDaysAgo = Random.nextInt(0, 365) // Between now and a year ago
+    return currentTime - (randomDaysAgo * oneDay)
+}
+
 
 interface AssetLoader {
     suspend fun loadTextAsset(fileName: String): String

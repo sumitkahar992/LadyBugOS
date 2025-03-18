@@ -69,22 +69,24 @@ object NoteMapper {
         id = id.toString(),
         title = title,
         content = content,
-        lastUpdate = updateDate,
+        lastUpdate = updateDate.toString(),
         reminderDate = reminderDate?.let { timestamp ->
             LocalDateTime.ofInstant(
                 Instant.ofEpochMilli(timestamp),
                 ZoneId.systemDefault()
             ).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
         } ?: "",
-        color = lightColor
+        color = lightColor,
+        isChecklist = isChecklist
     )
 
     fun WidgetNote.toDomainNote(): Note = Note(
         id = id.toLongOrNull() ?: 0L,
         title = title,
         content = content,
-        updateDate = lastUpdate,
+        updateDate = lastUpdate.toLong(),
         lightColor = color,
+        isChecklist = isChecklist,
         reminderDate = if (reminderDate.isNotEmpty()) {
             try {
                 LocalDateTime.parse(

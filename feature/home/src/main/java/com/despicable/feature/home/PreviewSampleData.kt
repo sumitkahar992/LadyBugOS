@@ -4,7 +4,7 @@ import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
 import com.despicable.core.model.Tag
 
-val sampleTags = listOf(
+/*val sampleTags = listOf(
     Tag(1, "Work"),
     Tag(2, "Personal"),
     Tag(3, "Shopping"),
@@ -137,7 +137,7 @@ val sampleChecklists = listOf(
         Checklist(31, noteId = 4, "Head First Design Patterns", true, 6),
         Checklist(32, noteId = 4, "Clean Architecture", false, 7)
     )
-)
+)*/
 
 /*
 @Preview

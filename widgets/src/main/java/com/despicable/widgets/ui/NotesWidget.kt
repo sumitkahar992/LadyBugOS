@@ -50,8 +50,10 @@ import com.despicable.core.designsystem.darken
 import com.despicable.core.model.getRelativeTimeAgo
 import com.despicable.widgets.R
 import com.despicable.widgets.data.ConfigWidgetActivity
+import com.despicable.widgets.model.WidgetChecklistItem
 import com.despicable.widgets.model.WidgetKeys
 import kotlinx.serialization.json.Json
+import timber.log.Timber
 
 class NoteWidget : GlanceAppWidget() {
     override var stateDefinition = PreferencesGlanceStateDefinition
@@ -85,7 +87,21 @@ fun NoteWidgetContent(
 
     val isChecklist = prefs[WidgetKeys.Prefs.isChecklist] ?: false
     val checklistItems = prefs[WidgetKeys.Prefs.checklistItems]?.let {
-        Json.decodeFromString<List<ChecklistItem>>(it)
+        try {
+            // First try to decode as WidgetChecklistItem and convert to ChecklistItem
+            val widgetItems = Json.decodeFromString<List<WidgetChecklistItem>>(it)
+            widgetItems.map { item ->
+                ChecklistItem(
+                    id = item.id,
+                    content = item.content,
+                    isChecked = item.isChecked,
+                    position = item.position
+                )
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to decode checklist items: $it")
+            emptyList()
+        }
     } ?: emptyList()
 
     // Background color based on system theme
@@ -107,6 +123,13 @@ fun NoteWidgetContent(
         GlanceModifier
             .background(ImageProvider(R.drawable.rounded_corner))
     }
+
+
+    Timber.tag("DEBUG").d("[ WIDGEET ] isCheckList = $isChecklist")
+    Timber.tag("DEBUG").d("[ WIDGEET ] checklistItems = $checklistItems")
+
+
+
 
     Box(
         modifier = GlanceModifier
@@ -140,11 +163,14 @@ fun NoteWidgetContent(
     }
 }
 
+// Update the ChecklistItem class to match WidgetChecklistItem structure
 data class ChecklistItem(
-    val id: String,
-    val text: String,
-    val isChecked: Boolean
+    val id: Long,  // Changed from String to Long to match WidgetChecklistItem
+    val content: String,  // Changed from text to content to match WidgetChecklistItem
+    val isChecked: Boolean,
+    val position: Int  // Added position field to match WidgetChecklistItem
 )
+
 
 @Composable
 fun ChecklistNote(
@@ -154,7 +180,7 @@ fun ChecklistNote(
     noteId: Long,
     widgetId: Int
 ) {
-    val formattedUpdateAt = getRelativeTimeAgo(updatedAt)
+    val formattedUpdateAt = getRelativeTimeAgo(updatedAt.toLong())
 
     Box(
         modifier = GlanceModifier.fillMaxSize()
@@ -246,7 +272,7 @@ fun ChecklistItemRow(
             modifier = GlanceModifier
                 .padding(start = 8.dp)
                 .defaultWeight(),
-            text = item.text,
+            text = item.content,
             style = TextStyle(
                 fontSize = 14.sp,
                 color = ColorProvider(
@@ -268,7 +294,7 @@ fun SelectedNote(
     noteId: Long,
     widgetId: Int
 ) {
-    val formattedUpdateAt = getRelativeTimeAgo(updatedAt)
+    val formattedUpdateAt = getRelativeTimeAgo(updatedAt.toLong())
 
     Box(
         modifier = GlanceModifier

@@ -25,13 +25,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.despicable.core.designsystem.theme.LocalThemeProvider
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -44,24 +42,15 @@ fun ReminderInfo(
     isDone: Boolean,
     onClick: () -> Unit = {},
     isClickable: Boolean = false,
+    noteColor: Int = 0
 ) {
 
     val formattedDate = remember(reminderDate) {
         formatReminderDate(reminderDate)
     }
 
-    val darkTheme = LocalThemeProvider.isDarkTheme
-    val surfaceColor = if (darkTheme) {
-        Color.White.copy(alpha = 0.15f) // Semi-transparent white for dark theme
-    } else {
-        Color.White.copy(alpha = 0.85f) // More opaque white for light theme
-    }
-
-    val contentColor = if (darkTheme) {
-        Color.White.copy(alpha = 0.87f)
-    } else {
-        Color.Black.copy(alpha = 0.87f)
-    }
+    // Calculate colors based on theme and noteColor
+    val colors = rememberTagColors(noteColor)
 
 
     val interactionSource = remember { MutableInteractionSource() }
@@ -72,7 +61,8 @@ fun ReminderInfo(
 
     // Animation for flash effect
     val animatedColor by animateColorAsState(
-        targetValue = if (isPressed) surfaceColor.copy(alpha = 0.5f) else surfaceColor,
+        targetValue = if (isPressed) colors.surfaceColor.copy(alpha = 0.5f)
+        else colors.surfaceColor,
         animationSpec = tween(
             durationMillis = if (isPressed) 50 else 200,
             easing = FastOutSlowInEasing
@@ -83,7 +73,7 @@ fun ReminderInfo(
     Row(verticalAlignment = Alignment.CenterVertically) {
         Surface(
             color = animatedColor,
-            contentColor = contentColor,
+            contentColor = colors.onSurfaceColor,
             shape = RoundedCornerShape(6.dp),
             modifier = modifier
                 .height(27.dp)

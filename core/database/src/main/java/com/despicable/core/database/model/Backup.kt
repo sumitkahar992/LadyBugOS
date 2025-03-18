@@ -7,6 +7,7 @@ data class BackupData(
     val notes: List<NoteEntity>,
     val tags: List<TagEntity>,
     val noteTagCrossRefs: List<NoteTagRefEntity>,
+    val checklistItems: List<ChecklistEntity>? = null
 )
 
 sealed class BackupResults {

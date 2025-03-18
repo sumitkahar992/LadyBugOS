@@ -5,6 +5,7 @@ import androidx.annotation.Keep
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.despicable.core.model.Checklist
 import kotlinx.serialization.Serializable
 
 @Keep
@@ -16,8 +17,18 @@ data class WidgetNote(
     val lastUpdate: String,
     val reminderDate: String,
     val color: Int,
+    val isChecklist: Boolean = false,
+    val checklistItems: List<WidgetChecklistItem> = emptyList()
 )
 
+@Keep
+@Serializable
+data class WidgetChecklistItem(
+    val id: Long,
+    val content: String,
+    val isChecked: Boolean,
+    val position: Int
+)
 
 object WidgetKeys {
     object Prefs {

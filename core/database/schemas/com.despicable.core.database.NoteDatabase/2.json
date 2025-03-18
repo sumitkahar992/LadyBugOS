@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "0d06b2d805d81a7da70ad22c5e6b078d",
+    "identityHash": "4facd042d77a8ef1325932595babd8e6",
     "entities": [
       {
         "tableName": "notes",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `content` TEXT NOT NULL, `updateDate` TEXT NOT NULL, `lightColor` INTEGER NOT NULL, `isPinned` INTEGER NOT NULL, `pinnedDate` INTEGER, `isArchived` INTEGER NOT NULL, `isTrashed` INTEGER NOT NULL, `reminderDate` INTEGER, `isDone` INTEGER NOT NULL, `isChecklist` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `content` TEXT NOT NULL, `updateDate` INTEGER NOT NULL, `lightColor` INTEGER NOT NULL, `isPinned` INTEGER NOT NULL, `pinnedDate` INTEGER, `isArchived` INTEGER NOT NULL, `isTrashed` INTEGER NOT NULL, `reminderDate` INTEGER, `isDone` INTEGER NOT NULL, `isChecklist` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -29,7 +29,7 @@
           {
             "fieldPath": "updateDate",
             "columnName": "updateDate",
-            "affinity": "TEXT",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -87,7 +87,37 @@
             "id"
           ]
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "index_notes_updateDate",
+            "unique": false,
+            "columnNames": [
+              "updateDate"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_updateDate` ON `${TABLE_NAME}` (`updateDate`)"
+          },
+          {
+            "name": "index_notes_reminderDate",
+            "unique": false,
+            "columnNames": [
+              "reminderDate"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_reminderDate` ON `${TABLE_NAME}` (`reminderDate`)"
+          },
+          {
+            "name": "index_notes_isPinned_isArchived_isTrashed",
+            "unique": false,
+            "columnNames": [
+              "isPinned",
+              "isArchived",
+              "isTrashed"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notes_isPinned_isArchived_isTrashed` ON `${TABLE_NAME}` (`isPinned`, `isArchived`, `isTrashed`)"
+          }
+        ],
         "foreignKeys": []
       },
       {
@@ -113,12 +143,22 @@
             "id"
           ]
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "index_tags_name",
+            "unique": true,
+            "columnNames": [
+              "name"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_tags_name` ON `${TABLE_NAME}` (`name`)"
+          }
+        ],
         "foreignKeys": []
       },
       {
         "tableName": "note_tag_cross_ref",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`noteId` INTEGER NOT NULL, `tagId` INTEGER NOT NULL, PRIMARY KEY(`noteId`, `tagId`), FOREIGN KEY(`noteId`) REFERENCES `notes`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION , FOREIGN KEY(`tagId`) REFERENCES `tags`(`id`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`noteId` INTEGER NOT NULL, `tagId` INTEGER NOT NULL, PRIMARY KEY(`noteId`, `tagId`), FOREIGN KEY(`noteId`) REFERENCES `notes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`tagId`) REFERENCES `tags`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "noteId",
@@ -163,7 +203,7 @@
         "foreignKeys": [
           {
             "table": "notes",
-            "onDelete": "NO ACTION",
+            "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
               "noteId"
@@ -174,7 +214,7 @@
           },
           {
             "table": "tags",
-            "onDelete": "NO ACTION",
+            "onDelete": "CASCADE",
             "onUpdate": "NO ACTION",
             "columns": [
               "tagId"
@@ -228,13 +268,14 @@
         },
         "indices": [
           {
-            "name": "index_checklist_items_noteId",
+            "name": "index_checklist_items_noteId_position",
             "unique": false,
             "columnNames": [
-              "noteId"
+              "noteId",
+              "position"
             ],
             "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_checklist_items_noteId` ON `${TABLE_NAME}` (`noteId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_checklist_items_noteId_position` ON `${TABLE_NAME}` (`noteId`, `position`)"
           }
         ],
         "foreignKeys": [
@@ -255,7 +296,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0d06b2d805d81a7da70ad22c5e6b078d')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4facd042d77a8ef1325932595babd8e6')"
     ]
   }
 }

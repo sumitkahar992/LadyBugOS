@@ -424,7 +424,6 @@ class NoteDetailViewModel(
             it.copy(
                 title = newValue.text,
                 titleSelection = newValue.selection,
-                updateDate = NoteUiState.getCurrentFormattedDate()
             )
         }
     }
@@ -434,7 +433,6 @@ class NoteDetailViewModel(
             it.copy(
                 content = newValue.text,
                 contentSelection = newValue.selection,
-                updateDate = NoteUiState.getCurrentFormattedDate()
             )
         }
     }
@@ -671,7 +669,7 @@ data class NoteUiState(
     val isTrashed: Boolean = false,
     val reminderDate: Long? = null,
     val isDone: Boolean = false,
-    val updateDate: String = "",
+    val updateDate: Long = System.currentTimeMillis(),
     val allTags: List<Tag> = emptyList(),
     val selectedTagIds: Set<Long> = emptySet(),
     val isCheckList: Boolean = false,
@@ -727,6 +725,7 @@ data class NoteUiState(
         get() = toTextFieldValue(content, contentSelection)
 
     companion object {
+
         fun getCurrentFormattedDate(): String =
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
 
@@ -737,7 +736,6 @@ data class NoteUiState(
     fun initializeNewNote() = copy(
         // lightColor = generateRandomColor(),
         lightColor = 0, // Default color (0 means use theme color)
-        updateDate = getCurrentFormattedDate(),
         pinnedDate = System.currentTimeMillis(),
         isLoading = false
     )

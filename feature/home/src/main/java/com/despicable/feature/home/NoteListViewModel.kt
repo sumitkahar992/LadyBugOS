@@ -8,10 +8,10 @@ import androidx.lifecycle.viewModelScope
 import com.despicable.core.common.navigation.NoteAction
 import com.despicable.core.data.repository.NoteRepository
 import com.despicable.core.data.sample.LoadSampleDataUseCase
-import com.despicable.core.model.Checklist
 import com.despicable.core.datastore.SettingsRepo
 import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.designsystem.theme.Theme
+import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
 import com.despicable.core.model.NoteWithTags
 import com.despicable.core.model.Tag
@@ -22,12 +22,14 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -80,6 +82,44 @@ class NoteListViewModel(
     private val _snackBarMessage = MutableStateFlow<SnackBarMessage?>(null)
     val snackBarMessage = _snackBarMessage.asStateFlow()
 
+    // Add these properties for reminder screens
+    val upcomingReminders = repo.getUpcomingRemindersWithTagsAndChecklist()
+        .map { noteCompleteList ->
+            noteCompleteList.map { noteComplete ->
+                NoteWithTagsAndChecklist(
+                    note = noteComplete.note,
+                    tags = noteComplete.tags,
+                    checklistItems = noteComplete.checklistItems
+                )
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyList())
+
+    val completedReminders = repo.getCompletedRemindersWithTagsAndChecklist()
+        .map { noteCompleteList ->
+            noteCompleteList.map { noteComplete ->
+                NoteWithTagsAndChecklist(
+                    note = noteComplete.note,
+                    tags = noteComplete.tags,
+                    checklistItems = noteComplete.checklistItems
+                )
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyList())
+
+    val archivedNotes = repo.getArchivedNotesWithTagsAndChecklist()
+        .map { noteCompleteList ->
+            noteCompleteList.map { noteComplete ->
+                NoteWithTagsAndChecklist(
+                    note = noteComplete.note,
+                    tags = noteComplete.tags,
+                    checklistItems = noteComplete.checklistItems
+                )
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyList())
+
+
     init {
         initializeNotes()
         viewModelScope.launch {
@@ -109,28 +149,36 @@ class NoteListViewModel(
                     selectedTagId = _uiState.value.tagState.selectedTagId
                 )
 
-                // Transform to NoteWithTagsAndChecklist
-                coroutineScope {
-                    val notesWithChecklist = filteredNotes.map { noteWithTags ->
-                        async {
-                            val checklistItems = if (noteWithTags.note.isChecklist) {
-                                try {
-                                    repo.getChecklistItemsByNoteId(noteWithTags.note.id).first()
-                                } catch (e: Exception) {
-                                    Timber.e(e, "Error loading checklist items")
-                                    emptyList()
-                                }
-                            } else {
-                                emptyList()
-                            }
-                            NoteWithTagsAndChecklist(
-                                note = noteWithTags.note,
-                                tags = noteWithTags.tags,
-                                checklistItems = checklistItems
-                            )
-                        }
-                    }.awaitAll()
+                // Inside initializeNotes() method, replace the current coroutineScope block with this:
 
+// Transform to NoteWithTagsAndChecklist
+                coroutineScope {
+                    // Process notes in batches of 20 for better performance
+                    val notesWithChecklist = filteredNotes
+                        .chunked(20) // Split the list into chunks of 20 notes
+                        .flatMap { chunk ->
+                            // Process each chunk in parallel
+                            chunk.map { noteWithTags ->
+                                async {
+                                    val checklistItems = if (noteWithTags.note.isChecklist) {
+                                        try {
+                                            repo.getChecklistItemsByNoteId(noteWithTags.note.id)
+                                                .first()
+                                        } catch (e: Exception) {
+                                            Timber.e(e, "Error loading checklist items")
+                                            emptyList()
+                                        }
+                                    } else {
+                                        emptyList()
+                                    }
+                                    NoteWithTagsAndChecklist(
+                                        note = noteWithTags.note,
+                                        tags = noteWithTags.tags,
+                                        checklistItems = checklistItems
+                                    )
+                                }
+                            }.awaitAll() // Wait for all notes in this chunk to complete
+                        }
 
                     _uiState.update { current ->
                         current.copy(
@@ -144,6 +192,44 @@ class NoteListViewModel(
                         )
                     }
                 }
+                /*
+                                // Transform to NoteWithTagsAndChecklist
+                                coroutineScope {
+                                    val notesWithChecklist = filteredNotes.map { noteWithTags ->
+                                        async {
+                                            val checklistItems = if (noteWithTags.note.isChecklist) {
+                                                try {
+                                                    repo.getChecklistItemsByNoteId(noteWithTags.note.id).first()
+                                                } catch (e: Exception) {
+                                                    Timber.e(e, "Error loading checklist items")
+                                                    emptyList()
+                                                }
+                                            } else {
+                                                emptyList()
+                                            }
+                                            NoteWithTagsAndChecklist(
+                                                note = noteWithTags.note,
+                                                tags = noteWithTags.tags,
+                                                checklistItems = checklistItems
+                                            )
+                                        }
+                                    }.awaitAll()
+
+
+                                    _uiState.update { current ->
+                                        current.copy(
+                                            isNotesInitialized = true,
+                                            notes = notesWithChecklist,
+                                            gridLayout = gridLayout,
+                                            tagState = current.tagState.copy(
+                                                availableTags = tags,
+                                                activeTagIds = activeTagIds
+                                            )
+                                        )
+                                    }
+                                }
+                                */
+
             }.collect()
         }
     }

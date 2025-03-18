@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 
 
 // First, let's implement the missing NoteTagCrossRefDao
+
 @Dao
 interface NoteTagCrossRefDao {
     @Query("SELECT * FROM note_tag_cross_ref")

@@ -73,7 +73,9 @@ fun ArchivedScreen(
     clearNoteAction: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val archivedNotes = uiState.notes.filter { it.note.isArchived && !it.note.isTrashed }
+//    val archivedNotes = uiState.notes.filter { it.note.isArchived && !it.note.isTrashed }
+    val archivedNotes by viewModel.archivedNotes.collectAsStateWithLifecycle(emptyList())
+
     val snackbarMessage by viewModel.snackBarMessage.collectAsStateWithLifecycle()
 
     val isSearchBarVisible = rememberSaveable { mutableStateOf(false) }

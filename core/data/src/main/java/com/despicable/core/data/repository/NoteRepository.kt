@@ -2,6 +2,7 @@ package com.despicable.core.data.repository
 
 import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
+import com.despicable.core.model.NoteComplete
 import com.despicable.core.model.NoteWithTags
 import com.despicable.core.model.Tag
 import kotlinx.coroutines.flow.Flow
@@ -56,6 +57,20 @@ interface NoteRepository {
 
     // Notification Operations
     suspend fun updateNoteStatus(noteId: Long, isDone: Boolean)
+
+    // Add these to your NoteRepository interface
+    fun getNoteCompleteById(id: Long): Flow<NoteComplete?>
+    fun searchNotes(query: String): Flow<List<NoteWithTags>>
+    fun getPinnedNotes(): Flow<List<NoteWithTags>>
+    fun getArchivedNotes(): Flow<List<NoteWithTags>>
+    fun getTrashedNotes(): Flow<List<NoteWithTags>>
+
+
+    // Add these specialized methods
+    fun getArchivedNotesWithTagsAndChecklist(): Flow<List<NoteComplete>>
+    fun getTrashedNotesWithTagsAndChecklist(): Flow<List<NoteComplete>>
+    fun getUpcomingRemindersWithTagsAndChecklist(): Flow<List<NoteComplete>>
+    fun getCompletedRemindersWithTagsAndChecklist(): Flow<List<NoteComplete>>
 
 
 }

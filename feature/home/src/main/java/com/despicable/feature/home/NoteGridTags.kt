@@ -66,11 +66,11 @@ import com.despicable.core.common.navigation.LocalNavAnimatedVisibilityScope
 import com.despicable.core.common.navigation.LocalSharedTransitionScope
 import com.despicable.core.common.navigation.NoteSharedElementKey
 import com.despicable.core.common.navigation.NoteSharedElementType
-import com.despicable.core.model.Checklist
 import com.despicable.core.designsystem.component.ReminderInfo
 import com.despicable.core.designsystem.component.rememberContainerColor
 import com.despicable.core.designsystem.component.rememberTagColors
 import com.despicable.core.designsystem.theme.GridLayout
+import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
 import com.despicable.core.model.Tag
 
@@ -453,7 +453,8 @@ private fun BottomSection(
             ReminderInfo(
                 reminderDate = reminderDate,
                 isDone = isDone,
-                isClickable = false
+                isClickable = false,
+                noteColor = noteColor
             )
         }
 
@@ -495,11 +496,11 @@ private fun TagChip(
     noteColor: Int = 0
 ) {
     // Calculate colors based on theme and noteColor
-    val tagColors = rememberTagColors(noteColor)
+    val colors = rememberTagColors(noteColor)
 
     Surface(
-        color = tagColors.backgroundColor,
-        contentColor = tagColors.contentColor,
+        color = colors.surfaceColor,
+        contentColor = colors.onSurfaceColor,
         shape = RoundedCornerShape(4.dp),
         modifier = Modifier.height(22.dp)
     ) {

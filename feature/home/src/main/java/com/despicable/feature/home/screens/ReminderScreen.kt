@@ -31,14 +31,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.despicable.core.common.navigation.NoteActionType
-import com.despicable.feature.home.NoteScreenContent
 import com.despicable.core.designsystem.component.ReminderDialog
 import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.model.Note
-import com.despicable.core.model.NoteWithTags
 import com.despicable.feature.home.HandleNoteActions
 import com.despicable.feature.home.NoteItemTag
 import com.despicable.feature.home.NoteListViewModel
+import com.despicable.feature.home.NoteScreenContent
 import com.despicable.feature.home.NoteSnackBarHandler
 import com.despicable.feature.home.NoteWithTagsAndChecklist
 import com.despicable.feature.home.R
@@ -63,12 +62,11 @@ fun ReminderScreen(
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val upcomingReminders = uiState.notes.filter {
-        !it.note.isDone && it.note.reminderDate != null && !it.note.isTrashed
-    }
-    val completedReminders = uiState.notes.filter {
-        it.note.isDone && it.note.reminderDate != null && !it.note.isTrashed
-    }
+//    val upcomingReminders = uiState.notes.filter { !it.note.isDone && it.note.reminderDate != null && !it.note.isTrashed }
+//    val completedReminders = uiState.notes.filter { it.note.isDone && it.note.reminderDate != null && !it.note.isTrashed }
+
+    val upcomingReminders by viewModel.upcomingReminders.collectAsStateWithLifecycle(emptyList())
+    val completedReminders by viewModel.completedReminders.collectAsStateWithLifecycle(emptyList())
 
     var isSearchMode by rememberSaveable { mutableStateOf(false) }
 

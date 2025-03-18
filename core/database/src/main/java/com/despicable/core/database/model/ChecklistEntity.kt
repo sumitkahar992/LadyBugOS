@@ -10,11 +10,10 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import androidx.room.withTransaction
-import com.despicable.core.database.NoteDatabase
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.Serializable
 
-
+@Serializable
 @Entity(
     tableName = "checklist_items",
     foreignKeys = [
@@ -25,9 +24,7 @@ import kotlinx.coroutines.flow.Flow
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [
-        Index("noteId")
-    ]
+    indices = [Index("noteId", "position")]  // Composite index
 )
 data class ChecklistEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -74,10 +71,10 @@ interface ChecklistItemDao {
 
 
     @Transaction
-    suspend fun updateChecklistItems2( items: List<ChecklistEntity>) {
-            items.forEach { item ->
-                updateChecklistItem(item)
-            }
+    suspend fun updateChecklistItems2(items: List<ChecklistEntity>) {
+        items.forEach { item ->
+            updateChecklistItem(item)
+        }
 
     }
 

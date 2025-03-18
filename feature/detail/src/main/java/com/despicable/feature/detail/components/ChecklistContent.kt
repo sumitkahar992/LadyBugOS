@@ -58,7 +58,7 @@ import com.despicable.core.model.Checklist
 
 @Composable
 fun ChecklistItem(
-    dragModifier: Modifier = Modifier,
+    modifier: Modifier = Modifier,
     item: Checklist,
     onCheckedChange: (Boolean) -> Unit,
     onContentChange: (String) -> Unit,
@@ -112,7 +112,7 @@ fun ChecklistItem(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            DragHandle(dragModifier)
+            DragHandle(modifier)
 
             ChecklistCheckbox(
                 isChecked = item.isChecked,
@@ -182,9 +182,9 @@ fun AddItemButton(
 }
 
 @Composable
-private fun DragHandle(dragModifier: Modifier) {
+private fun DragHandle(modifier: Modifier) {
     IconButton(
-        modifier = dragModifier.size(30.dp),
+        modifier = modifier.size(30.dp),
         onClick = {}
     ) {
         Icon(
@@ -204,7 +204,7 @@ private fun ChecklistCheckbox(
         onCheckedChange = { onCheckedChange(it) },
         modifier = Modifier.padding(end = 4.dp),
         colors = CheckboxDefaults.colors(
-            checkedColor = MaterialTheme.colorScheme.primary,
+            checkedColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             uncheckedColor = MaterialTheme.colorScheme.onSurfaceVariant
         )
     )
