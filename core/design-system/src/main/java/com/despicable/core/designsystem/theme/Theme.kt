@@ -8,6 +8,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.despicable.core.designsystem.DarkNoteColors
+import com.despicable.core.designsystem.LightNoteColors
+import com.despicable.core.designsystem.LocalNoteColors
+import com.despicable.core.designsystem.NoteColors
 
 
 @Composable
@@ -28,8 +32,14 @@ fun LadyBugOSTheme(
         }
     }
 
+    val noteColors = when {
+        themeState.isDarkTheme -> NoteColors(DarkNoteColors)
+        else -> NoteColors(LightNoteColors)
+    }
+
     CompositionLocalProvider(
-        LocalThemePreferences provides themeState
+        LocalThemePreferences provides themeState,
+        LocalNoteColors provides noteColors
     ) {
         MaterialTheme(
             colorScheme = themeState.colorScheme,

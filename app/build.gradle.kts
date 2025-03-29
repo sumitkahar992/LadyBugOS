@@ -64,7 +64,7 @@ dependencies {
 
 
 
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
+    coreLibraryDesugaring(libs.android.desugarJdkLibs)
 
 
     implementation(libs.aboutlibrary.core)

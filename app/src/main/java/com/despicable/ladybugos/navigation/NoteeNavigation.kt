@@ -73,7 +73,8 @@ fun NoteeNavigation(
                         if (isOpenedFromWidget) {
                             navigationActions.handleWidgetNavigation(context)
                         } else {
-                            navController.popBackStackOnResume()
+//                            navController.popBackStackOnResume()
+                            navController.navigateUp()
                         }
                     },
                     onDelete = { noteId ->

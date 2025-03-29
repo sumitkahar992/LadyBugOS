@@ -46,7 +46,8 @@ import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
-import com.despicable.core.designsystem.darken
+import com.despicable.core.designsystem.DarkNoteColors
+import com.despicable.core.designsystem.LightNoteColors
 import com.despicable.core.model.getRelativeTimeAgo
 import com.despicable.widgets.R
 import com.despicable.widgets.data.ConfigWidgetActivity
@@ -81,8 +82,8 @@ fun NoteWidgetContent(
     val noteHeader = prefs[WidgetKeys.Prefs.noteHeader]
     val noteBody = prefs[WidgetKeys.Prefs.noteBody]
     val updatedAt = prefs[WidgetKeys.Prefs.noteLastUpdate]
-    val noteColor =
-        prefs[WidgetKeys.Prefs.noteColor]?.let { Color(it) } // Retrieve note color
+    // Get the color index directly instead of creating a Color
+    val colorId = prefs[WidgetKeys.Prefs.noteColor] ?: 0
     val isDeleted = prefs[WidgetKeys.Prefs.isDeleted] ?: false
 
     val isChecklist = prefs[WidgetKeys.Prefs.isChecklist] ?: false
@@ -104,10 +105,11 @@ fun NoteWidgetContent(
         }
     } ?: emptyList()
 
+
     // Background color based on system theme
     val backgroundColor = ColorProvider(
-        day = noteColor ?: Color.LightGray,
-        night = noteColor?.darken(0.4f) ?: Color.DarkGray
+        day = getColorFromPalette(colorId, isLight = true),
+        night = getColorFromPalette(colorId, isLight = false)
     )
 
     /**
@@ -522,4 +524,16 @@ object AndroidDestinations {
     )
 )*/
 
+
+// Simplify getColorFromPalette to use colorId directly instead of trying to map it
+private fun getColorFromPalette(colorId: Int, isLight: Boolean): Color {
+    val colorPalette = if (isLight) LightNoteColors else DarkNoteColors
+
+    return if (colorId >= 0 && colorId < colorPalette.size) {
+        colorPalette[colorId]
+    } else {
+        // Fallback to default colors
+        if (isLight) Color.White else Color(0xFF202124)
+    }
+}
 

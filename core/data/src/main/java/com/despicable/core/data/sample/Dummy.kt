@@ -1,12 +1,10 @@
 package com.despicable.core.data.sample
 
 import android.content.Context
-import androidx.compose.ui.graphics.toArgb
 import com.despicable.core.data.model.toDomain
 import com.despicable.core.data.repository.NoteRepository
 import com.despicable.core.database.model.NoteEntity
 import com.despicable.core.database.model.TagEntity
-import com.despicable.core.designsystem.colorPalette
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -31,9 +29,9 @@ class LoadSampleDataUseCase(
                 val sampleNotes = getSampleNotes()
                     .map {
                         it.copy(
-                            lightColor = colorPalette.random().toArgb(),
+                            // Use color index instead of ARGB values for better theme compatibility
+                            lightColor = Random.nextInt(0, 18), // 0-9 for our 10 note colors
                             updateDate = generateRandomDate()
-                            // Replace string dates with timestamps
 
                         )
                     }
@@ -64,7 +62,17 @@ class LoadSampleDataUseCase(
             TagEntity(11, "Health"),
             TagEntity(12, "Finance"),
             TagEntity(13, "Education"),
-            TagEntity(14, "Hobby")
+            TagEntity(14, "CODEE"),
+            TagEntity(15, "WORKEE"),
+            TagEntity(16, "JOBEE"),
+            TagEntity(17, "SLEEPY"),
+            TagEntity(18, "NO-FAP"),
+            TagEntity(19, "DEVIL"),
+            TagEntity(20, "ANGEL"),
+            TagEntity(21, "HINDU"),
+            TagEntity(22, "SANATANI"),
+            TagEntity(23, "SHIVA"),
+            TagEntity(24, "KRISHNA"),
         )
     }
 

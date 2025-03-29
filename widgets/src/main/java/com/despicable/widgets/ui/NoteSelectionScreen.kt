@@ -1,6 +1,7 @@
 package com.despicable.widgets.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,8 +38,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.despicable.core.designsystem.DarkNoteColors
+import com.despicable.core.designsystem.LightNoteColors
 import com.despicable.core.model.getRelativeTimeAgo
-import com.despicable.widgets.mapper.NoteMapper.toWidgetNote
 import com.despicable.widgets.model.WidgetNote
 import org.koin.androidx.compose.koinViewModel
 
@@ -98,7 +100,7 @@ fun NotesList(
             key = { it.id }
         ) { note ->
 
-            NotePreview(note = note){
+            NotePreview(note = note) {
                 onNoteSelected(note)
             }
 
@@ -153,6 +155,17 @@ fun NotePreview(
     note: WidgetNote,
     onNoteSelected: (WidgetNote) -> Unit
 ) {
+    // Get the correct color from the palette based on the colorId
+    val colorId = note.color
+    val isDarkTheme = isSystemInDarkTheme()
+    val backgroundColor =
+        if (colorId >= 0 && colorId < (if (isDarkTheme) DarkNoteColors else LightNoteColors).size) {
+            if (isDarkTheme) DarkNoteColors[colorId] else LightNoteColors[colorId]
+        } else {
+            // Fallback
+            if (isDarkTheme) Color(0xFF202124) else Color.White
+        }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -160,7 +173,7 @@ fun NotePreview(
             .clickable(onClick = { onNoteSelected(note) }),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(note.color)
+            containerColor = backgroundColor
         )
     ) {
         Column(

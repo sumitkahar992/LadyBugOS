@@ -239,6 +239,15 @@ class NoteListViewModel(
         query: String,
         selectedTagId: Long?
     ): List<NoteWithTags> {
+
+        // Short-circuit if no filtering needed
+        if (query.isEmpty() && selectedTagId == null) {
+            return notes.sortedWith(
+                compareByDescending<NoteWithTags> { it.note.isPinned }
+                    .thenByDescending { it.note.pinnedDate }
+            )
+        }
+
         return notes
             .asSequence()
             .filter { noteWithTags ->
@@ -324,9 +333,43 @@ class NoteListViewModel(
                 )
             } catch (e: Exception) {
                 Timber.e(e, "Error handling note action")
+                _snackBarMessage.value = SnackBarMessage(
+                    message = "Error handling action",
+                    onDismiss = { _snackBarMessage.value = null }
+                )
             }
         }
     }
+
+    // Add this function to update a single note in the UI state
+    fun updateSingleNoteInUiState(
+        updatedNote: Note,
+        updatedTags: List<Tag>? = null,
+        updatedChecklist: List<Checklist>? = null
+    ) =
+        viewModelScope.launch {
+            _uiState.update { currentState ->
+                val currentNotes = currentState.notes.toMutableList()
+
+                // Find the index of the note to update
+                val index = currentNotes.indexOfFirst { it.note.id == updatedNote.id }
+
+                if (index != -1) {
+                    // Update just this one note in the list
+                    val existingItem = currentNotes[index]
+                    Timber.tag("DEBUG").d("[updateSingleNoteInUiState]")
+                    Timber.tag("DEBUG").d("existingItem:[${existingItem.note.id}]")
+
+                    currentNotes[index] = NoteWithTagsAndChecklist(
+                        note = updatedNote,
+                        tags = updatedTags ?: existingItem.tags,
+                        checklistItems = updatedChecklist ?: existingItem.checklistItems
+                    )
+                }
+
+                currentState.copy(notes = currentNotes)
+            }
+        }
 
 
     private fun updateNotes(
@@ -347,10 +390,19 @@ class NoteListViewModel(
                 widgetUpdater.updateWidgetsForNotes(updatedNotes)
 
                 // Refresh notes list to ensure UI is in sync
-                initializeNotes()
+//                initializeNotes()
+
+                // Instead of full reinitialization, just update these notes in UI state
+                updatedNotes.forEach { note ->
+                    updateSingleNoteInUiState(note)
+                }
 
             } catch (e: Exception) {
                 Timber.e(e, "Error updating notes")
+                _snackBarMessage.value = SnackBarMessage(
+                    message = "Error updating notes",
+                    onDismiss = { _snackBarMessage.value = null }
+                )
             }
         }
     }

@@ -37,6 +37,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.TableRows
 import androidx.compose.material3.Button
@@ -70,7 +72,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.despicable.core.designsystem.component.ScreenType
 import com.despicable.core.designsystem.component.SelectionTopBar
+import com.despicable.core.designsystem.theme.LocalThemeProvider
+import com.despicable.core.designsystem.theme.Theme
 import com.despicable.core.model.Note
+import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 
 @Composable
@@ -370,6 +375,7 @@ private fun LayoutButton(
 @Composable
 fun SearchBar(
     modifier: Modifier = Modifier,
+    viewModel: NoteListViewModel = koinViewModel(),
     isFocused: MutableState<Boolean>,
     onMenuClick: () -> Unit = {},
     onLayoutClick: () -> Unit = {},
@@ -393,6 +399,9 @@ fun SearchBar(
             keyboardController?.hide()
         }
     )
+    val theme = LocalThemeProvider.theme
+
+
     Row(
         modifier = modifier
             .clickable(
@@ -447,6 +456,13 @@ fun SearchBar(
             )
         )
 
+        ThemeToggleIcon(
+            currentTheme = theme,
+            onThemeChange = { newTheme ->
+                viewModel.updateTheme(newTheme)
+            }
+        )
+
         LayoutButton(
             onLayoutClick = onLayoutClick,
             isFocused = isFocused,
@@ -457,6 +473,37 @@ fun SearchBar(
         )
     }
 
+
+}
+
+@Composable
+fun ThemeToggleIcon(
+    currentTheme: Theme,
+    onThemeChange: (Theme) -> Unit
+) {
+    // Icon based on current theme
+    val icon = when (currentTheme) {
+        Theme.Light -> Icons.Default.DarkMode  // Show dark mode icon when in light theme
+        Theme.Dark -> Icons.Default.LightMode  // Show light mode icon when in dark theme
+        else -> Icons.Default.LightMode // Show settings icon when using system theme
+    }
+
+    // Next theme when clicked
+    val nextTheme = when (currentTheme) {
+        Theme.Light -> Theme.Dark
+        Theme.Dark -> Theme.Light
+        else -> Theme.Light
+    }
+
+    IconButton(
+        modifier = Modifier.padding(4.dp),
+        onClick = { onThemeChange(nextTheme) }
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = "Toggle theme",
+        )
+    }
 
 }
 

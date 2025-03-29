@@ -200,8 +200,35 @@ class WidgetUpdater(
     }
 
     // Public API methods
-    suspend fun updateWidgetFromConfig(glanceId: GlanceId, note: Note) =
+/*    suspend fun updateWidgetFromConfig(glanceId: GlanceId, note: Note) =
         executeUpdate(UpdateOperation.Configuration(glanceId, note))
+        */
+
+    suspend fun updateWidgetFromConfig(
+        glanceId: GlanceId,
+        note: Note,
+        checklistItems: List<Checklist> = emptyList()
+    ) {
+        // Update basic note info
+        updateAppWidgetState(context, glanceId) { prefs ->
+            setNotePreferences(prefs, note)
+
+            // Also update checklist items if this is a checklist note
+            if (note.isChecklist && checklistItems.isNotEmpty()) {
+                val widgetItems = checklistItems.map { item ->
+                    WidgetChecklistItem(
+                        id = item.id,
+                        content = item.content,
+                        isChecked = item.isChecked,
+                        position = item.position
+                    )
+                }
+                prefs[WidgetKeys.Prefs.checklistItems] = Json.encodeToString(widgetItems)
+            }
+        }
+
+        NoteWidget().update(context, glanceId)
+    }
 
     suspend fun updateAllWidgets(notes: List<Note>) = executeUpdate(UpdateOperation.Multiple(notes))
 
@@ -300,6 +327,10 @@ class WidgetUpdater(
             set(WidgetKeys.Prefs.noteHeader, note.title)
             set(WidgetKeys.Prefs.noteBody, note.content)
             set(WidgetKeys.Prefs.noteLastUpdate, note.updateDate.toString())
+
+            // Log color ID to verify it's being set correctly
+            Timber.tag("DEBUG").d("Setting note color ID: ${note.lightColor}")
+
             set(WidgetKeys.Prefs.noteColor, note.lightColor)
             set(WidgetKeys.Prefs.isDeleted, false)
 

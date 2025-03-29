@@ -31,7 +31,7 @@ dependencies {
 
     implementation(libs.javax.inject)
 
-    implementation(libs.androidx.workmanager)
+    implementation(libs.androidx.work.runtime.ktx)
 
     implementation(libs.androidx.material3)
 

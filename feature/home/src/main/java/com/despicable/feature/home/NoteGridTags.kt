@@ -67,12 +67,13 @@ import com.despicable.core.common.navigation.LocalSharedTransitionScope
 import com.despicable.core.common.navigation.NoteSharedElementKey
 import com.despicable.core.common.navigation.NoteSharedElementType
 import com.despicable.core.designsystem.component.ReminderInfo
-import com.despicable.core.designsystem.component.rememberContainerColor
 import com.despicable.core.designsystem.component.rememberTagColors
+import com.despicable.core.designsystem.rememberNoteColor
 import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
 import com.despicable.core.model.Tag
+import timber.log.Timber
 
 
 @Composable
@@ -181,6 +182,7 @@ fun SectionHeader(text: String) {
     )
 }
 
+
 @OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun NoteItemTag(
@@ -204,11 +206,11 @@ fun NoteItemTag(
         }
     }
 
+    // Use ease-in-out for smoother transitions
     val borderAnimationSpec = remember {
         spring<Color>(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessLow,
-            visibilityThreshold = null
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessLow
         )
     }
 
@@ -218,7 +220,7 @@ fun NoteItemTag(
         animationSpec = borderAnimationSpec
     )
 
-    val surfaceColor = rememberContainerColor(note.lightColor)
+    val surfaceColor = rememberNoteColor(note.lightColor)
     val outlineVariant = MaterialTheme.colorScheme.outlineVariant
 
     val borderStroke = if (note.lightColor == 0) {
@@ -233,17 +235,50 @@ fun NoteItemTag(
         borderStroke
     }
 
+    // Safely access scopes with reasonable fallbacks
     val sharedTransitionScope = LocalSharedTransitionScope.current
-        ?: throw IllegalStateException("No Scope found")
+        ?: return // Early return instead of throwing exception
     val animatedVisibilityScope = LocalNavAnimatedVisibilityScope.current
-        ?: throw IllegalStateException("No Scope found")
+        ?: return
+
+    // Use different transition specs for enter vs exit with ease-in for back navigation
+    // Make sure corners never go fully to 0dp to preserve rounded appearance
+    /*    val roundedCornerAnimation by animatedVisibilityScope.transition.animateDp(
+            label = "Rounded corner",
+            transitionSpec = {
+                when {
+                    // Going to detail - smoother acceleration
+                    initialState == EnterExitState.PreEnter ->
+                        tween(250, easing = EaseOutQuart)
+                    // Coming back to list - natural deceleration
+                    else ->
+                        tween(300, easing = EaseOutQuint)
+                }
+            }
+        ) {
+            if (it == EnterExitState.Visible) 12.dp else 12.dp  // Never go to 0dp
+        }*/
 
     val roundedCornerAnimation by animatedVisibilityScope.transition.animateDp(
         label = "Rounded corner",
         transitionSpec = { spring(stiffness = Spring.StiffnessLow) }
     ) {
-        if (it == EnterExitState.Visible) 12.dp else 0.dp
+        val size = if (it == EnterExitState.Visible) 12.dp else 4.dp
+
+        Timber.tag("NoteCorners").d("State: $it, Corner size: $size")
+        size
+
     }
+
+
+    val boundsKey = remember(note.id) {
+        NoteSharedElementKey(note.id, NoteSharedElementType.Bounds)
+    }
+
+    val contentKey = remember(note.id) {
+        NoteSharedElementKey(note.id, NoteSharedElementType.Content)
+    }
+
 
     with(sharedTransitionScope) {
         Surface(
@@ -252,16 +287,20 @@ fun NoteItemTag(
                 .padding(4.dp)
                 .skipToLookaheadSize()
                 .sharedBounds(
-                    sharedContentState = rememberSharedContentState(
-                        key = NoteSharedElementKey(note.id, NoteSharedElementType.Bounds)
-                    ),
+                    sharedContentState = rememberSharedContentState(boundsKey),
                     animatedVisibilityScope = animatedVisibilityScope,
                     enter = EnterTransition.None,
                     exit = ExitTransition.None,
                     resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
                     clipInOverlayDuringTransition = OverlayClip(
                         RoundedCornerShape(roundedCornerAnimation)
-                    )
+                    ),
+//                    boundsTransform = { _, _ ->
+//                        spring(
+//                            dampingRatio = Spring.DampingRatioLowBouncy,
+//                            stiffness = Spring.StiffnessLow
+//                        )
+//                    }
                 )
                 .combinedClickable(
                     onClick = onClick,
@@ -279,9 +318,7 @@ fun NoteItemTag(
             NoteContent(
                 skipModifier = Modifier.skipToLookaheadSize(),
                 modifier = Modifier.sharedBounds(
-                    sharedContentState = rememberSharedContentState(
-                        key = NoteSharedElementKey(note.id, NoteSharedElementType.Content)
-                    ),
+                    sharedContentState = rememberSharedContentState(contentKey),
                     animatedVisibilityScope = animatedVisibilityScope,
                     resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
                     clipInOverlayDuringTransition = OverlayClip(
@@ -298,6 +335,7 @@ fun NoteItemTag(
         }
     }
 }
+
 
 @Composable
 private fun NoteContent(

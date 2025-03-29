@@ -81,7 +81,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -97,7 +96,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -122,8 +120,8 @@ import com.despicable.core.designsystem.component.NoteeDialog
 import com.despicable.core.designsystem.component.ReminderDialog
 import com.despicable.core.designsystem.component.ReminderInfo
 import com.despicable.core.designsystem.component.TagChip
-import com.despicable.core.designsystem.component.rememberContainerColor
 import com.despicable.core.designsystem.component.rememberTagColors
+import com.despicable.core.designsystem.rememberNoteColor
 import com.despicable.core.model.getRelativeTimeAgo
 import com.despicable.feature.detail.components.AddItemButton
 import com.despicable.feature.detail.components.ChecklistItem
@@ -166,7 +164,7 @@ fun NoteDetailScreen(
     }
 
 
-    val containerColor = rememberContainerColor(uiState.lightColor)
+    val containerColor = rememberNoteColor(uiState.lightColor)
 
     // Handler for note actions
     val handleAction: (NoteAction) -> Unit = { action ->
@@ -216,22 +214,22 @@ fun NoteDetailScreen(
         }
     }
 
-    BackHandler {
+    BackHandler(true) {
         Timber.tag("DEBUG").d("[]BackHandler[]")
         onBack()
     }
 
 
     // Note Detail screen
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.deleteNoteIfEmpty()
-            viewModel.saveNote(
-                onComplete = onBack,
-                onSkip = onBack
-            )
-        }
-    }
+//    DisposableEffect(Unit) {
+//        onDispose {
+//            viewModel.deleteNoteIfEmpty()
+//            viewModel.saveNote(
+//                onComplete = onBack,
+//                onSkip = onBack
+//            )
+//        }
+//    }
 
     val sharedTransitionScope = LocalSharedTransitionScope.current
         ?: throw IllegalStateException("No Scope found")
@@ -270,6 +268,7 @@ fun NoteDetailScreen(
 
             topBar = {
                 EditNoteTopAppBar(
+//                    modifier = Modifier.skipToLookaheadSize(),
                     containerColor = Color.Transparent,
                     isPinned = uiState.isPinned,
                     isArchived = uiState.isArchived,
@@ -296,6 +295,7 @@ fun NoteDetailScreen(
             },
             bottomBar = {
                 NoteDetailBottomBar(
+//                    modifier = Modifier.skipToLookaheadSize(),
 //                    modifier = Modifier.imePadding(),
                     onLeftMenuClick = { showLeftBottomSheet = true },
                     onRightMenuClick = { showRightBottomSheet = true },
@@ -383,9 +383,9 @@ fun NoteDetailScreen(
         // Dialogs
         if (isColorPickerDialogVisible && disableInTrash) {
             ColorPickerDialog(
-                selectedColor = containerColor,
+                currentColorId = uiState.lightColor,
                 onColorSelected = { selectedColor ->
-                    viewModel.updateColor(selectedColor.toArgb())
+                    viewModel.updateColor(selectedColor)
                     isColorPickerDialogVisible = false
                 },
                 onDismissRequest = { isColorPickerDialogVisible = false }
@@ -1002,6 +1002,7 @@ fun NoteTextField(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditNoteTopAppBar(
+    modifier: Modifier = Modifier,
     containerColor: Color,
     isPinned: Boolean,
     isArchived: Boolean,
@@ -1014,6 +1015,7 @@ fun EditNoteTopAppBar(
     onTogglePin: () -> Unit
 ) {
     CenterAlignedTopAppBar(
+        modifier = modifier,
         title = {},
         colors = TopAppBarDefaults.topAppBarColors(containerColor = containerColor),
         navigationIcon = {
@@ -1164,7 +1166,7 @@ fun EditNoteTopAppBar(
 
 @Composable
 private fun NoteDetailBottomBar(
-//    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier,
     onLeftMenuClick: () -> Unit,
     onRightMenuClick: () -> Unit,
     containerColor: Color,
@@ -1173,7 +1175,7 @@ private fun NoteDetailBottomBar(
     val barHeight = 54.dp
 
     BottomAppBar(
-        modifier = Modifier
+        modifier = modifier
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))
             .horizontalWindowInsetsPadding()
             .height(barHeight),

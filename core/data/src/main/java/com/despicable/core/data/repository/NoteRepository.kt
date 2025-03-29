@@ -20,7 +20,8 @@ interface NoteRepository {
         checklistItems: List<Checklist>
     ): Long
     suspend fun updateNoteWithTagsChecklist(
-        note: Note, tagIds: List<Long>, checklistItems: List<Checklist>
+        note: Note, tagIds: List<Long>, checklistItems: List<Checklist>,
+        updateTimestamp: Boolean = true
     )
 
     suspend fun updateNotes(notes: List<Note>)
@@ -72,5 +73,19 @@ interface NoteRepository {
     fun getUpcomingRemindersWithTagsAndChecklist(): Flow<List<NoteComplete>>
     fun getCompletedRemindersWithTagsAndChecklist(): Flow<List<NoteComplete>>
 
+
+    // New atomic checklist operations
+/*    suspend fun addChecklistItem(noteId: Long, content: String, position: Int): Checklist
+    suspend fun removeChecklistItem(noteId: Long, position: Int): List<Checklist>
+    suspend fun toggleChecklistItem(noteId: Long, itemId: Long): Checklist
+    suspend fun updateChecklistItemContent(noteId: Long, itemId: Long, content: String): Checklist
+    suspend fun reorderChecklistItems(noteId: Long, fromPosition: Int, toPosition: Int): List<Checklist>
+
+
+    suspend fun smartUpdateNoteWithTagsChecklist(
+        note: Note,
+        tagIds: List<Long>,
+        checklistItems: List<Checklist>
+    ): Boolean*/
 
 }
