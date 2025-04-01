@@ -12,15 +12,11 @@ class FeaturePlugin : Plugin<Project> {
             }
 
             dependencies {
-                add("implementation", project(":core:model"))
                 add("implementation", project(":core:common"))
-//                add("implementation", project(":core:resources"))
-//                add("implementation", project(":core:ui:navigation"))
+
                 add("implementation", project(":core:design-system"))
 
 
-                add("implementation", libs.findLibrary("coil.kt").get())
-                add("implementation", libs.findLibrary("coil.kt.compose").get())
 
                 add("implementation", libs.findLibrary("androidx.hilt.navigation.compose").get())
                 add("implementation", libs.findLibrary("androidx.lifecycle.runtimeCompose").get())
@@ -29,7 +25,6 @@ class FeaturePlugin : Plugin<Project> {
 
 
                 add("implementation", libs.findLibrary("kotlinx.coroutines.android").get())
-                add("implementation", libs.findLibrary("timber").get())
                 add("implementation", libs.findLibrary("kotlinx.serialization.json").get())
 
             }

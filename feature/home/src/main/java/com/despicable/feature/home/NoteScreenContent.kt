@@ -6,49 +6,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.despicable.core.designsystem.R
+import androidx.compose.ui.res.stringResource
 import com.despicable.core.designsystem.component.EmptyStateContent
-import com.despicable.core.model.NoteWithTags
-
-/*@Composable
-fun NoteScreenContent(
-    modifier: Modifier = Modifier,
-    paddingValues: PaddingValues,
-    notes: List<NoteWithTags>,
-    isInitialized: Boolean,
-    searchQuery: String,
-    emptyIcon: Int,
-    emptyTitle: String,
-    content: @Composable () -> Unit
-) {
-    Crossfade(
-        modifier = modifier.padding(paddingValues = paddingValues),
-        targetState = Triple(
-            notes.isEmpty(),
-            isInitialized,
-            searchQuery.isEmpty()
-        ),
-        label = ""
-    ) { (isEmpty, initialized, noSearch) ->
-        when {
-            isEmpty && initialized && noSearch -> {
-                EmptyStateContent(
-                    icon = emptyIcon,
-                    title = emptyTitle
-                )
-            }
-
-            isEmpty && searchQuery.isNotEmpty() -> {
-                EmptyStateContent(
-                    icon = R.drawable.search,
-                    title = "No notes match your search"
-                )
-            }
-
-            else -> content()
-        }
-    }
-}*/
 
 @Composable
 fun NoteScreenContent(
@@ -82,7 +41,7 @@ fun NoteScreenContent(
             NoteScreenState.EmptySearch ->
                 EmptyStateContent(
                     icon = R.drawable.search,
-                    title = "No notes match your search"
+                    title = stringResource(R.string.home_no_notes_match_your_search)
                 )
 
             NoteScreenState.Content -> content()

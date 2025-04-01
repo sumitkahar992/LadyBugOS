@@ -9,11 +9,13 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDp
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -37,8 +39,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckBox
 import androidx.compose.material.icons.rounded.CheckBoxOutlineBlank
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,6 +60,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -73,7 +78,6 @@ import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
 import com.despicable.core.model.Tag
-import timber.log.Timber
 
 
 @Composable
@@ -113,7 +117,6 @@ fun NoteGridTags(
         columns = columns,
         modifier = modifier
             .fillMaxSize(),
-//            .animateContentSize(animationSpec = tween(durationMillis = 300)),
         horizontalArrangement = Arrangement.spacedBy(spacing),
         contentPadding = PaddingValues(
             start = start + startWindowInsetsPadding(),
@@ -129,7 +132,7 @@ fun NoteGridTags(
                 span = StaggeredGridItemSpan.FullLine,
                 key = "pinned_header"
             ) {
-                SectionHeader(text = "Pinned")
+                SectionHeader(text = stringResource(R.string.home_section_header_pinned))
             }
         }
 
@@ -138,7 +141,7 @@ fun NoteGridTags(
             key = { it.note.id }
         ) { noteWithTags ->
             NoteItemTag(
-                modifier = Modifier.animateItem(),
+                modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
                 noteWithTags = noteWithTags,
                 isSelected = noteWithTags.note in selectedNotes,
                 onClick = { onNoteClick(noteWithTags.note) },
@@ -152,7 +155,7 @@ fun NoteGridTags(
                 span = StaggeredGridItemSpan.FullLine,
                 key = "other_header"
             ) {
-                SectionHeader(text = "Other")
+                SectionHeader(text = stringResource(R.string.home_section_header_other))
             }
         }
 
@@ -161,7 +164,7 @@ fun NoteGridTags(
             key = { it.note.id }
         ) { noteWithTags ->
             NoteItemTag(
-                modifier = Modifier.animateItem(),
+                modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
                 noteWithTags = noteWithTags,
                 isSelected = noteWithTags.note in selectedNotes,
                 onClick = { onNoteClick(noteWithTags.note) },
@@ -197,7 +200,6 @@ fun NoteItemTag(
     val tags = noteWithTags.tags
     val hapticFeedback = LocalHapticFeedback.current
 
-    // Memoize derived values
     val (titleSize, contentSize) = remember(gridLayout) {
         when (gridLayout) {
             GridLayout.OneColumn -> 18.sp to 14.sp
@@ -206,7 +208,110 @@ fun NoteItemTag(
         }
     }
 
-    // Use ease-in-out for smoother transitions
+
+    // Get transition scopes
+    val sharedTransitionScope = LocalSharedTransitionScope.current
+        ?: throw IllegalStateException("No Scope found")
+    val animatedVisibilityScope = LocalNavAnimatedVisibilityScope.current
+        ?: throw IllegalStateException("No Scope found")
+
+
+    val roundedCornerAnimation by animatedVisibilityScope.transition.animateDp(
+        label = "Rounded corner",
+        transitionSpec = { spring(stiffness = Spring.StiffnessLow) }
+    ) {
+        if (it == EnterExitState.Visible) 12.dp else 0.dp
+
+    }
+
+
+
+
+
+
+    val boundsKey = remember(note.id) {
+        NoteSharedElementKey(note.id, NoteSharedElementType.Bounds)
+    }
+
+    val contentKey = remember(note.id) {
+        NoteSharedElementKey(note.id, NoteSharedElementType.Content)
+    }
+
+
+    with(sharedTransitionScope) {
+        Box(
+            modifier = Modifier
+                .padding(4.dp)
+                .sharedBounds(
+                    sharedContentState = rememberSharedContentState(boundsKey),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    enter = EnterTransition.None,
+                    exit = ExitTransition.None,
+                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                    clipInOverlayDuringTransition = OverlayClip(
+                        RoundedCornerShape(roundedCornerAnimation)
+                    )
+                )
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onLongPress()
+                    }
+                )
+        ) {
+
+                NoteContent(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .sharedBounds(
+                        sharedContentState = rememberSharedContentState(contentKey),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                        clipInOverlayDuringTransition = OverlayClip(
+                            RoundedCornerShape(roundedCornerAnimation)
+                        ),
+                    ),
+                    note = note,
+                    tags = tags,
+                    checkList = noteWithTags.checklistItems,
+                    gridLayout = gridLayout,
+                    titleSize = titleSize,
+                    contentSize = contentSize,
+                    isSelected = isSelected
+                )
+            }
+        }
+    }
+
+
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun SharedTransitionScope.NoteContent(
+    modifier: Modifier = Modifier,
+    note: Note,
+    tags: List<Tag>,
+    checkList: List<Checklist>,
+    gridLayout: GridLayout,
+    titleSize: TextUnit,
+    contentSize: TextUnit,
+    isSelected: Boolean
+) {
+
+    val shapeAnimationSpec = remember {
+        spring<Dp>(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    }
+
+    val shape by animateDpAsState(
+        targetValue = if (isSelected) 16.dp else 12.dp,
+        label = "shape",
+        animationSpec = shapeAnimationSpec
+    )
+
     val borderAnimationSpec = remember {
         spring<Color>(
             dampingRatio = Spring.DampingRatioLowBouncy,
@@ -235,184 +340,82 @@ fun NoteItemTag(
         borderStroke
     }
 
-    // Safely access scopes with reasonable fallbacks
-    val sharedTransitionScope = LocalSharedTransitionScope.current
-        ?: return // Early return instead of throwing exception
-    val animatedVisibilityScope = LocalNavAnimatedVisibilityScope.current
-        ?: return
 
-    // Use different transition specs for enter vs exit with ease-in for back navigation
-    // Make sure corners never go fully to 0dp to preserve rounded appearance
-    /*    val roundedCornerAnimation by animatedVisibilityScope.transition.animateDp(
-            label = "Rounded corner",
-            transitionSpec = {
-                when {
-                    // Going to detail - smoother acceleration
-                    initialState == EnterExitState.PreEnter ->
-                        tween(250, easing = EaseOutQuart)
-                    // Coming back to list - natural deceleration
-                    else ->
-                        tween(300, easing = EaseOutQuint)
-                }
-            }
-        ) {
-            if (it == EnterExitState.Visible) 12.dp else 12.dp  // Never go to 0dp
-        }*/
-
-    val roundedCornerAnimation by animatedVisibilityScope.transition.animateDp(
-        label = "Rounded corner",
-        transitionSpec = { spring(stiffness = Spring.StiffnessLow) }
+    OutlinedCard(
+        border = border,
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = surfaceColor
+        ),
+        elevation = CardDefaults.cardElevation(if (isSelected) 2.dp else 1.dp),
+        shape = RoundedCornerShape(shape)
     ) {
-        val size = if (it == EnterExitState.Visible) 12.dp else 4.dp
-
-        Timber.tag("NoteCorners").d("State: $it, Corner size: $size")
-        size
-
-    }
-
-
-    val boundsKey = remember(note.id) {
-        NoteSharedElementKey(note.id, NoteSharedElementType.Bounds)
-    }
-
-    val contentKey = remember(note.id) {
-        NoteSharedElementKey(note.id, NoteSharedElementType.Content)
-    }
-
-
-    with(sharedTransitionScope) {
-        Surface(
-            modifier = modifier
+        Column(
+            modifier = Modifier
                 .fillMaxWidth()
-                .padding(4.dp)
-                .skipToLookaheadSize()
-                .sharedBounds(
-                    sharedContentState = rememberSharedContentState(boundsKey),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    enter = EnterTransition.None,
-                    exit = ExitTransition.None,
-                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                    clipInOverlayDuringTransition = OverlayClip(
-                        RoundedCornerShape(roundedCornerAnimation)
+                .padding(14.dp)
+        ) {
+            // Title Section
+            if (note.title.isNotBlank()) {
+                Text(
+                    modifier = Modifier.skipToLookaheadSize(),
+                    text = note.title,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold
                     ),
-//                    boundsTransform = { _, _ ->
-//                        spring(
-//                            dampingRatio = Spring.DampingRatioLowBouncy,
-//                            stiffness = Spring.StiffnessLow
-//                        )
-//                    }
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = if (gridLayout == GridLayout.OneColumn) 1 else 3,
+                    overflow = TextOverflow.Ellipsis,
+                    fontSize = titleSize
                 )
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onLongPress()
-                    }
-                ),
-            border = border,
-            color = surfaceColor,
-            shape = RoundedCornerShape(roundedCornerAnimation),
-            shadowElevation = if (isSelected) 2.dp else 0.dp,
+            }
 
-            ) {
-            NoteContent(
-                skipModifier = Modifier.skipToLookaheadSize(),
-                modifier = Modifier.sharedBounds(
-                    sharedContentState = rememberSharedContentState(contentKey),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                    clipInOverlayDuringTransition = OverlayClip(
-                        RoundedCornerShape(roundedCornerAnimation)
+            Spacer(modifier = Modifier.height(8.dp).skipToLookaheadSize())
+
+
+            // Content Section with max lines based on grid
+            if (note.isChecklist) {
+                ChecklistContent(
+                    modifier = Modifier.skipToLookaheadSize(),
+                    list = checkList,
+                    contentSize = contentSize,
+                    gridLayout = gridLayout
+                )
+            } else if (note.content.isNotBlank()) {
+                Text(
+                    modifier = Modifier.skipToLookaheadSize(),
+                    text = note.content,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        lineHeight = 20.sp
                     ),
-                ),
-                note = note,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = when (gridLayout) {
+                        GridLayout.OneColumn -> 8
+                        GridLayout.TwoColumns -> 14
+                        GridLayout.ThreeColumns -> 12
+                    },
+                    fontSize = contentSize,
+                )
+            }
+
+            // Bottom Section
+            BottomSection(
+                modifier = Modifier.skipToLookaheadSize(),
+                reminderDate = note.reminderDate,
+                isDone = note.isDone,
                 tags = tags,
-                checkList = noteWithTags.checklistItems,
-                gridLayout = gridLayout,
-                titleSize = titleSize,
-                contentSize = contentSize
+                noteColor = note.lightColor
             )
         }
+
     }
-}
-
-
-@Composable
-private fun NoteContent(
-    modifier: Modifier = Modifier,
-    skipModifier: Modifier = Modifier,
-    note: Note,
-    tags: List<Tag>,
-    checkList: List<Checklist>,
-    gridLayout: GridLayout,
-    titleSize: TextUnit,
-    contentSize: TextUnit,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(14.dp)
-    ) {
-        // Title Section
-        if (note.title.isNotBlank()) {
-            Text(
-                modifier = skipModifier,
-                text = note.title,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.SemiBold
-                ),
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = if (gridLayout == GridLayout.OneColumn) 1 else 3,
-                overflow = TextOverflow.Ellipsis,
-                fontSize = titleSize
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-
-        // Content Section with max lines based on grid
-        if (note.isChecklist) {
-            ChecklistContent(
-                modifier = skipModifier,
-                list = checkList,
-                contentSize = contentSize,
-                gridLayout = gridLayout
-            )
-        } else if (note.content.isNotBlank()) {
-            Text(
-                text = note.content,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    lineHeight = 20.sp
-                ),
-                color = MaterialTheme.colorScheme.onSurface,
-                overflow = TextOverflow.Ellipsis,
-                maxLines = when (gridLayout) {
-                    GridLayout.OneColumn -> 8
-                    GridLayout.TwoColumns -> 14
-                    GridLayout.ThreeColumns -> 12
-                },
-                fontSize = contentSize,
-                modifier = skipModifier,
-            )
-        }
-
-        // Bottom Section
-        BottomSection(
-            modifier = skipModifier,
-            reminderDate = note.reminderDate,
-            isDone = note.isDone,
-            tags = tags,
-            noteColor = note.lightColor
-        )
-    }
-
 }
 
 
 @Composable
 private fun ChecklistContent(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     list: List<Checklist>,
     contentSize: TextUnit,
     gridLayout: GridLayout
@@ -440,7 +443,6 @@ private fun ChecklistContent(
                     },
                     contentDescription = null,
                     modifier = Modifier.size(16.dp),
-//                    tint = MaterialTheme.colorScheme.onSurface,
                     tint = if (item.isChecked) {
                         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     } else {
@@ -453,7 +455,6 @@ private fun ChecklistContent(
                     fontSize = contentSize,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-//                    color = MaterialTheme.colorScheme.onSurface
                     color = MaterialTheme.colorScheme.onSurface.copy(
                         alpha = if (item.isChecked) 0.6f else 1f
                     ),
@@ -463,7 +464,7 @@ private fun ChecklistContent(
 
         if (list.size > maxItems) {
             Text(
-                text = " + ${list.size - maxItems} more items",
+                text = stringResource(R.string.home_checklist_more_items, list.size - maxItems),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -520,7 +521,7 @@ private fun TagList(tags: List<Tag>, noteColor: Int) {
 
         if (tags.size > 2) {
             TagChip(
-                text = "+${tags.size - 2}",
+                text = stringResource(R.string.home_notegrid_tagsize, tags.size - 2),
                 noteColor = noteColor
             )
         }

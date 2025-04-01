@@ -1,9 +1,6 @@
 package com.despicable.feature.home
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -32,7 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.despicable.core.designsystem.component.DatePickerContent
@@ -55,7 +52,7 @@ fun LayoutSelectionDialog(
     NoteeDialog(
         enabled = enabled,
         onDismiss = onDismiss,
-        title = "Select Layout",
+        title = stringResource(R.string.home_searchbar_select_layout),
         description = {
             Column {
                 GridLayout.entries.forEach { layout ->
@@ -73,9 +70,9 @@ fun LayoutSelectionDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = when (layout) {
-                                GridLayout.OneColumn -> "Single Column"
-                                GridLayout.TwoColumns -> "Two Columns"
-                                GridLayout.ThreeColumns -> "Three Columns"
+                                GridLayout.OneColumn -> stringResource(R.string.home_layout_single_column)
+                                GridLayout.TwoColumns -> stringResource(R.string.home_layout_two_columns)
+                                GridLayout.ThreeColumns -> stringResource(R.string.home_layout_three_columns)
                             }
                         )
                         Spacer(modifier = Modifier.weight(1f))
@@ -123,16 +120,6 @@ fun LayoutSelectionDialog(
         */
 
 
-fun Modifier.animateItemPlacement(): Modifier = composed {
-    this.then(
-        Modifier.animateContentSize(
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioMediumBouncy,
-                stiffness = Spring.StiffnessLow
-            )
-        )
-    )
-}
 
 @Preview(showBackground = true)
 @Preview(
@@ -153,14 +140,13 @@ private fun ReminderDialogPreview() {
                 showDialog = showDialog,
                 initialDate = System.currentTimeMillis(),
                 onDismiss = { showDialog = false },
-                onSetReminder = { /* Handle reminder setting */ },
-                onDeleteReminder = { /* Handle reminder deletion */ }
+                onSetReminder = { },
+                onDeleteReminder = { }
             )
         }
     }
 }
 
-// For Time Picker Preview
 @Preview(showBackground = true)
 @Composable
 private fun TimePickerPreview() {
@@ -178,7 +164,6 @@ private fun TimePickerPreview() {
     }
 }
 
-// For Date Picker Preview
 @Preview(showBackground = true)
 @Composable
 private fun DatePickerPreview() {

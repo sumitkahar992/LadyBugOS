@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.deathnote.android.feature)
     alias(libs.plugins.deathnote.android.library.compose)
+//    alias(libs.plugins.dependencyanalysis)
+
 }
 
 android {
@@ -9,17 +11,15 @@ android {
 
 dependencies {
 
-    implementation(projects.core.domain)
-    implementation(projects.core.data)
+    api(projects.core.domain)
+    api(projects.core.data)
 
-    //TEMP
-    implementation(projects.core.database)
-
-    implementation(projects.widgets)
+    api(projects.widgets)
 
 
     implementation(libs.androidx.navigation.runtime.ktx)
 
+    implementation(libs.timber)
 
 
     coreLibraryDesugaring(libs.android.desugarJdkLibs)
@@ -32,34 +32,27 @@ dependencies {
 
     // Koin
     implementation(libs.koin.androidx.compose)
-    implementation(libs.koin.core)
+    implementation(libs.koin.core.viewmodel)
 
-    implementation(libs.javax.inject)
+//    implementation(libs.koin.core)
 
 
-    // Work
-    implementation(libs.androidx.work.runtime.ktx)
-    implementation(libs.koin.androidx.workmanager)
 
 
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.foundation.layout)
 
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
+
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
-
+    debugRuntimeOnly(libs.androidx.ui.test.manifest)
     implementation(libs.reorderable)
+
+
 
 
 }

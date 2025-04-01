@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.deathnote.android.feature)
     alias(libs.plugins.deathnote.android.library.compose)
+//    alias(libs.plugins.dependencyanalysis)
+
 }
 
 android {
@@ -41,6 +43,9 @@ dependencies {
 
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.foundation.layout)
+
+    implementation(libs.timber)
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

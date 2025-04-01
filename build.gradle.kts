@@ -9,4 +9,7 @@ plugins {
     alias(libs.plugins.about.library) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.room) apply false
+    alias(libs.plugins.dependencyanalysis)
+//    id("com.autonomousapps.dependency-analysis")
+
 }

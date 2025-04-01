@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.deathnote.android.feature)
     alias(libs.plugins.deathnote.android.library.compose)
+//    alias(libs.plugins.dependencyanalysis)
+
 }
 
 android {
@@ -9,19 +11,19 @@ android {
 
 dependencies {
 
-    implementation(projects.core.domain)
     implementation(projects.core.data)
 
 
     // Widgets
     implementation(libs.glance.appwidget)
-    implementation(libs.glance.material3)
 
-    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.timber)
+
+
 
     // Widgets Preview
-    debugImplementation(libs.androidx.glance.preview)
-    debugImplementation(libs.androidx.glance.appwidget.preview)
+//    debugImplementation(libs.androidx.glance.preview)
+//    debugImplementation(libs.androidx.glance.appwidget.preview)
 
     implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.core)
@@ -31,8 +33,9 @@ dependencies {
 
     implementation(libs.javax.inject)
 
-    implementation(libs.androidx.work.runtime.ktx)
 
     implementation(libs.androidx.material3)
+
+
 
 }

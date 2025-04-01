@@ -66,6 +66,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -76,7 +77,6 @@ import com.despicable.core.designsystem.theme.LocalThemeProvider
 import com.despicable.core.designsystem.theme.Theme
 import com.despicable.core.model.Note
 import org.koin.androidx.compose.koinViewModel
-import timber.log.Timber
 
 @Composable
 fun SearchBarWithActions(
@@ -213,7 +213,6 @@ fun SearchBarWithActions(
                     )
 
                 } else {
-                    // Show regular search bar when no selection
                     SearchBar(
                         modifier = modifier
                             .padding(
@@ -239,7 +238,6 @@ fun SearchBarWithActions(
         }
     }
 
-    // Update BackHandler to handle both search and selection
     BackHandler(enabled = isFocused.value || searchQuery.isNotEmpty() || selectedNotes.isNotEmpty()) {
         when {
             selectedNotes.isNotEmpty() -> onClearSelection()
@@ -257,9 +255,6 @@ fun SearchBarWithActions(
             isFocused.value = true
         }
     }
-
-    Timber.tag("DEBUG").d("[iS FOCUSED]- [${isFocused.value}]")
-
 }
 
 @Composable
@@ -284,7 +279,7 @@ private fun MenuButton(
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
-                contentDescription = "Back",
+                contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }
@@ -349,7 +344,6 @@ private fun LayoutButton(
                 clip = false
             ) + fadeOut(),
         ) {
-            // Color(0xFFE3E3E3)
             Button(
                 modifier = Modifier
                     .fillMaxHeight(),
@@ -414,7 +408,6 @@ fun SearchBar(
                 shape = RoundedCornerShape(cornerRadius)
             )
             .fillMaxHeight()
-//            .padding(horizontal = 15.dp)
             .padding(top = topPadding),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -435,7 +428,7 @@ fun SearchBar(
             onValueChange = onSearchQueryChange,
             placeholder = {
                 Text(
-                    text = "Search your notes",
+                    text = stringResource(R.string.home_search_your_notes),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             },
@@ -481,14 +474,12 @@ fun ThemeToggleIcon(
     currentTheme: Theme,
     onThemeChange: (Theme) -> Unit
 ) {
-    // Icon based on current theme
     val icon = when (currentTheme) {
-        Theme.Light -> Icons.Default.DarkMode  // Show dark mode icon when in light theme
-        Theme.Dark -> Icons.Default.LightMode  // Show light mode icon when in dark theme
-        else -> Icons.Default.LightMode // Show settings icon when using system theme
+        Theme.Light -> Icons.Default.DarkMode
+        Theme.Dark -> Icons.Default.LightMode
+        else -> Icons.Default.LightMode
     }
 
-    // Next theme when clicked
     val nextTheme = when (currentTheme) {
         Theme.Light -> Theme.Dark
         Theme.Dark -> Theme.Light
@@ -501,47 +492,8 @@ fun ThemeToggleIcon(
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = "Toggle theme",
+            contentDescription = null,
         )
     }
 
 }
-
-/*
-
-@Keep
-internal enum class Keyboard {
-    Opened, Closed
-}
-
-@Composable
-internal fun keyboardAsState(): State<Keyboard> {
-    val keyboardState = remember { mutableStateOf(Keyboard.Closed) }
-    val view = LocalView.current
-    DisposableEffect(view) {
-        val onGlobalListener = ViewTreeObserver.OnGlobalLayoutListener {
-            val rect = Rect()
-            view.getWindowVisibleDisplayFrame(rect)
-            val screenHeight = view.rootView.height
-            val keypadHeight = screenHeight - rect.bottom
-            keyboardState.value = if (keypadHeight > screenHeight * 0.15) {
-                Keyboard.Opened
-            } else {
-                Keyboard.Closed
-            }
-        }
-        view.viewTreeObserver.addOnGlobalLayoutListener(onGlobalListener)
-
-        onDispose {
-            view.viewTreeObserver.removeOnGlobalLayoutListener(onGlobalListener)
-        }
-    }
-
-    return keyboardState
-}*/
-/*   LaunchedEffect(isKeyboardVisible) {
-        if (isKeyboardVisible == Keyboard.Closed) {
-            isFocused.value = false
-            focusManager.clearFocus()
-        }
-    }*/

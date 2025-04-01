@@ -18,4 +18,6 @@ dependencies {
 
     // Work
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.timber)
+
 }

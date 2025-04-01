@@ -52,13 +52,13 @@
 #-dontwarn okio.**
 #-dontwarn retrofit2.Platform$Java8
 
--dontobfuscate
-
-# Your model classes
--keepclassmembers class com.despicable.core.model.** { *; }
--keepclassmembers class com.despicable.core.database.model** { *; }
--keepclassmembers class com.despicable.widgets.model** { *; }
--keepclassmembers class com.despicable.core.designsystem.theme** { *; }
+#-dontobfuscate
+#
+## Your model classes
+#-keepclassmembers class com.despicable.core.model.** { *; }
+#-keepclassmembers class com.despicable.core.database.model** { *; }
+#-keepclassmembers class com.despicable.widgets.model** { *; }
+#-keepclassmembers class com.despicable.core.designsystem.theme** { *; }
 
 #
 #

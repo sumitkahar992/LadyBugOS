@@ -26,4 +26,5 @@ internal fun Project.configureAndroidCompose(
             add("debugImplementation", libs.findLibrary("ui-tooling").get())
         }
     }
+
 }

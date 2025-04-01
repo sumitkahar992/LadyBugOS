@@ -27,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -62,8 +63,6 @@ fun ReminderScreen(
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-//    val upcomingReminders = uiState.notes.filter { !it.note.isDone && it.note.reminderDate != null && !it.note.isTrashed }
-//    val completedReminders = uiState.notes.filter { it.note.isDone && it.note.reminderDate != null && !it.note.isTrashed }
 
     val upcomingReminders by viewModel.upcomingReminders.collectAsStateWithLifecycle(emptyList())
     val completedReminders by viewModel.completedReminders.collectAsStateWithLifecycle(emptyList())
@@ -132,7 +131,7 @@ fun ReminderScreen(
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
         topBar = {
             AnimatedTopBar(
-                title = "Reminder",
+                title = stringResource(R.string.reminder_topbar_title),
                 selectedNotes = selectedNotes,
                 isSearchActive = isSearchExpanded,
                 onSearchActiveChange = { isSearchExpanded = it },
@@ -141,19 +140,22 @@ fun ReminderScreen(
                 onPinNotes = {
                     handleAction(
                         viewModel::pinAndUnarchiveNotes,
-                        "Notes pinned"
+                        stringResource(R.string.snackbar_notes_pinned)
                     )
                 },
                 onUnarchiveNotes = {
                     handleAction(
                         viewModel::unarchiveNotes,
-                        "Notes unarchived"
+                        stringResource(R.string.snackbar_notes_unarchived)
                     )
                 },
                 onDeleteNotes = {
                     handleAction(
                         viewModel::trashNotes,
-                        "${selectedNotes.size} notes moved to trash"
+                        stringResource(
+                            R.string.snackbar_notes_moved_to_trash,
+                            selectedNotes.size
+                        )
                     )
                 },
                 onMenuClick = onMenuClick,
@@ -169,7 +171,7 @@ fun ReminderScreen(
             isInitialized = uiState.isNotesInitialized,
             searchQuery = uiState.searchQuery,
             emptyIcon = R.drawable.reminders,
-            emptyTitle = "No notes with reminders"
+            emptyTitle = stringResource(R.string.reminder_no_notes_with_reminders)
         ) {
             NoteGridTagsReminder(
                 modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -261,7 +263,7 @@ fun NoteGridTagsReminder(
                 span = StaggeredGridItemSpan.FullLine,
                 key = "upcoming_header"
             ) {
-                SectionHeader(text = "Upcoming")
+                SectionHeader(text = stringResource(R.string.home_section_header_upcoming))
             }
         }
 
@@ -284,7 +286,7 @@ fun NoteGridTagsReminder(
                 span = StaggeredGridItemSpan.FullLine,
                 key = "completed_header"
             ) {
-                SectionHeader(text = "Completed")
+                SectionHeader(text = stringResource(R.string.home_section_header_completed))
             }
         }
 

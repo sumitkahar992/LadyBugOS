@@ -39,6 +39,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -73,7 +74,6 @@ fun ArchivedScreen(
     clearNoteAction: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-//    val archivedNotes = uiState.notes.filter { it.note.isArchived && !it.note.isTrashed }
     val archivedNotes by viewModel.archivedNotes.collectAsStateWithLifecycle(emptyList())
 
     val snackbarMessage by viewModel.snackBarMessage.collectAsStateWithLifecycle()
@@ -147,7 +147,7 @@ fun ArchivedScreen(
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
         topBar = {
             AnimatedTopBar(
-                title = "Archive",
+                title = stringResource(R.string.archive_topbar_title),
                 selectedNotes = selectedNotes,
                 isSearchActive = isSearchBarVisible.value,
                 onSearchActiveChange = { isSearchBarVisible.value = it },
@@ -158,19 +158,22 @@ fun ArchivedScreen(
                 onPinNotes = {
                     handleAction(
                         viewModel::pinAndUnarchiveNotes,
-                        "${selectedNotes.size} notes pinned and un-archived"
+                        stringResource(
+                            R.string.snackbar_notes_pinned_and_un_archived,
+                            selectedNotes.size
+                        )
                     )
                 },
                 onUnarchiveNotes = {
                     handleAction(
                         viewModel::unarchiveNotes,
-                        "${selectedNotes.size} notes un-archived"
+                        stringResource(R.string.snackbar_notes_un_archived, selectedNotes.size)
                     )
                 },
                 onDeleteNotes = {
                     handleAction(
                         viewModel::trashNotes,
-                        "${selectedNotes.size} notes moved to trash"
+                        stringResource(R.string.snackbar_notes_moved_to_trashed, selectedNotes.size)
                     )
                 },
                 onMenuClick = onMenuClick,
@@ -187,7 +190,7 @@ fun ArchivedScreen(
             isInitialized = uiState.isNotesInitialized,
             searchQuery = uiState.searchQuery,
             emptyIcon = R.drawable.archive,
-            emptyTitle = "No archived notes available"
+            emptyTitle = stringResource(R.string.archive_no_archived_notes_available)
         ) {
             NoteGridTags(
                 modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -244,11 +247,11 @@ fun AnimatedTopBar(
     isSearchActive: Boolean,
     onSearchActiveChange: (Boolean) -> Unit,
     onSetReminder: () -> Unit,
-    onPinNotes: () -> Unit,
-    onDeleteNotes: () -> Unit,
+    onPinNotes: @Composable () -> Unit,
+    onDeleteNotes: @Composable () -> Unit,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    onUnarchiveNotes: () -> Unit,
+    onUnarchiveNotes: @Composable () -> Unit,
     scrollBehavior: TopAppBarScrollBehavior
 ) {
     val isFocused = remember { mutableStateOf(true) }
@@ -306,34 +309,6 @@ fun AnimatedTopBar(
             scrollBehavior = scrollBehavior,
         )
 
-        /*        SearchBar(
-                    inputField = {
-                        SearchBarDefaults.InputField(
-                            query = searchQuery,
-                            onQueryChange = onSearchQueryChange,
-                            onSearch = onSearchQueryChange,
-                            expanded = false,
-                            onExpandedChange = {},
-                            enabled = true,
-                            placeholder = { Text("Search") },
-                            leadingIcon = { Icon(Icons.Rounded.Search, contentDescription = "Search") },
-                            trailingIcon = {
-
-                            },
-                            interactionSource = null,
-                        )
-                    },
-                    expanded = false,
-                    onExpandedChange = {},
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 36.dp, vertical = 18.dp),
-                    shape = SearchBarDefaults.inputFieldShape,
-                    tonalElevation = SearchBarDefaults.TonalElevation,
-                    shadowElevation = SearchBarDefaults.ShadowElevation,
-                    windowInsets = SearchBarDefaults.windowInsets,
-                    content =  {},
-                )*/
 
         // Expanded search view and Selection top bar container
         Box(
@@ -349,11 +324,11 @@ fun AnimatedTopBar(
                 selectedNotes.isNotEmpty() -> {
                     SelectionTopBar(
                         onClearSelection = onClearSelection,
-                        onPinNotes = onPinNotes,
-                        onUnpinNotes = onPinNotes,
+                        onPinNotes = { onPinNotes },
+                        onUnpinNotes = { onPinNotes },
                         onSetReminder = onSetReminder,
-                        onUnarchiveNotes = onUnarchiveNotes,
-                        onDeleteNotes = onDeleteNotes,
+                        onUnarchiveNotes = { onUnarchiveNotes },
+                        onDeleteNotes = { onDeleteNotes },
                         selectedNotes = selectedNotes,
                         screenType = ScreenType.Archive,
                     )
@@ -379,139 +354,6 @@ fun AnimatedTopBar(
         }
     }
 }
-
-
-/*
-        // SearchBar Overlay
-        AnimatedSearchBarOverlay(
-            isVisible = isSearchActive,
-            searchQuery = searchQuery,
-            onSearchQueryChange = onSearchQueryChange,
-            onSearchActiveChange = onSearchActiveChange,
-            suggestions = suggestions,
-            onSuggestionSelected = onSuggestionSelected
-        )
-
-
-@Composable
-fun AnimatedSearchBarOverlay(
-    isVisible: Boolean,
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    onSearchActiveChange: (Boolean) -> Unit,
-    suggestions: List<String>,
-    onSuggestionSelected: (String) -> Unit
-) {
-    val alpha by animateFloatAsState(
-        targetValue = if (isVisible) 1f else 0f,
-        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing), label = ""
-    )
-    val scale by animateFloatAsState(
-        targetValue = if (isVisible) 1f else 0.8f,
-        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing), label = ""
-    )
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .zIndex(if (isVisible) 1f else 0f)
-    ) {
-        if (isVisible || alpha > 0f) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .alpha(alpha)
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                        transformOrigin = TransformOrigin(0.5f, 0f)
-                    },
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 3.dp
-            ) {
-                CollapsibleSearchBar(
-                    searchQuery = searchQuery,
-                    onSearchQueryChange = onSearchQueryChange,
-                    onSearchActiveChange = onSearchActiveChange,
-                    suggestions = suggestions,
-                    onSuggestionSelected = onSuggestionSelected
-                )
-            }
-        }
-    }
-}
-
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CollapsibleSearchBar(
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    onSearchActiveChange: (Boolean) -> Unit,
-    suggestions: List<String> = emptyList(),
-    onSuggestionSelected: (String) -> Unit = {}
-) {
-    // Ensure the search bar overlays smoothly without pushing content
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth(), tonalElevation = 4.dp
-    ) {
-        SearchBar(
-            inputField = {
-                SearchBarDefaults.InputField(
-                    query = searchQuery,
-                    onQueryChange = { newQuery -> onSearchQueryChange(newQuery) },
-                    onSearch = { onSearchActiveChange(false) },
-                    expanded = true,
-                    onExpandedChange = { if (!it) onSearchActiveChange(false) },
-                    placeholder = { Text("Search notes") },
-                    leadingIcon = {
-                        IconButton(onClick = { onSearchActiveChange(false) }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                        }
-                    }
-                )
-            },
-            expanded = true,
-            onExpandedChange = { active -> if (!active) onSearchActiveChange(false) },
-            modifier = Modifier.fillMaxWidth(),
-            colors = SearchBarDefaults.colors(),
-            content = {
-                LazyColumn {
-                    items(suggestions) { suggestion ->
-                        SuggestionItem(
-                            suggestion = suggestion,
-                            onSuggestionSelected = {
-                                onSuggestionSelected(it)
-                                onSearchQueryChange(it)
-                            }
-                        )
-                    }
-                }
-            }
-        )
-    }
-}
-
-@Composable
-fun SuggestionItem(
-    suggestion: String,
-    onSuggestionSelected: (String) -> Unit
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = { onSuggestionSelected(suggestion) }
-    ) {
-        Text(
-            text = suggestion,
-            modifier = Modifier.padding(16.dp)
-        )
-    }
-}
-*/
-
-
 
 
 

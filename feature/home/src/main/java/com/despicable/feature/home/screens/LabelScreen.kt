@@ -68,6 +68,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -81,6 +82,7 @@ import com.despicable.core.designsystem.component.NoteeDialog
 import com.despicable.core.designsystem.theme.LadyBugOSTheme
 import com.despicable.core.model.Tag
 import com.despicable.feature.home.NoteListViewModel
+import com.despicable.feature.home.R
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
 
@@ -145,17 +147,16 @@ fun TagManagementScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),  // Reset window insets
         topBar = {
             TopAppBar(
-                title = { Text("Edit labels", Modifier.padding(start = 16.dp)) },
+                title = { Text(stringResource(R.string.label_edit_labels), Modifier.padding(start = 16.dp)) },
                 navigationIcon = {
                     IconButton(onClick = {
                         clearFocusAndHideKeyboard()
                         onNavigateBack()
                     }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                     }
                 },
                 scrollBehavior = scrollBehavior,
-//                colors = TopAppBarDefaults.topAppBarColors(scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
                 windowInsets = WindowInsets.systemBars.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
             )
         }) { padding ->

@@ -35,6 +35,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,7 +44,6 @@ import com.despicable.core.common.navigation.NoteActionType
 import com.despicable.core.designsystem.component.ReminderDialog
 import com.despicable.core.designsystem.component.SwipeToDismissContentSnack
 import com.despicable.core.designsystem.component.tagHeader
-import com.despicable.core.designsystem.theme.LocalThemeProvider
 import com.despicable.core.model.Note
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -72,9 +72,7 @@ fun NoteListScreen(
 
     // grid layout
     var showLayoutDialog by remember { mutableStateOf(false) }
-    var showThemeDialog by remember { mutableStateOf(false) }
-    val theme = LocalThemeProvider.theme
-//    val focusManager = LocalFocusManager.current
+
     val keyboardController = LocalSoftwareKeyboardController.current
 
 
@@ -116,7 +114,6 @@ fun NoteListScreen(
             toggleSelection(note)
         } else {
             keyboardController?.hide() // Dismiss keyboard UI
-//            focusManager.clearFocus() // Clear any active text field focus
             navigateToDetail(note.id)
         }
     }
@@ -185,44 +182,6 @@ fun NoteListScreen(
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f))
             )
 
-            /*
-                NoteListSearchUI(
-                    onMenuClick = onMenuClick,
-                    searchQuery = uiState.searchQuery,
-                    onGridLayoutClick = { showLayoutDialog = true },
-                    onSearchQueryChanged = viewModel::updateSearchQuery,
-                    selectedNotes = selectedNotes,
-                    onClearSelection = { selectedNotes = emptySet() },
-                    onPinNotes = { handlePinNotes() },
-                    onUnPinNotes = { handlePinNotes() },
-                    onArchiveNotes = { selectedNotes ->
-                        handleAction(
-                            action = { viewModel.archiveNotes(selectedNotes.toList()) },
-                            message = "${selectedNotes.size} notes archived and unpinned",
-                            restoreAction = { viewModel.undoLastOperation() }
-                        )
-                    },
-                    onDeleteNotes = { selectedNotes ->
-                        handleAction(
-                            action = { viewModel.trashNotes(selectedNotes.toList()) },
-                            message = "${selectedNotes.size} notes moved to trash and unpinned",
-                            restoreAction = { viewModel.undoLastOperation() }
-                        )
-                    },
-                    isSearchBarVisible = isSearchBarVisible.value,
-                    onSetReminder = {
-                        showReminderDialog = true
-                    },
-                    isSearchActive = isSearchExpanded,
-                    onSearchActiveChange = { expanded ->
-                        isSearchExpanded = expanded
-                    },
-                    onThemeClick = {
-                        showThemeDialog = true
-                    },
-                    screenType = ScreenType.List,
-                    scrollBehavior = scrollBehavior
-                )*/
 
             SearchBarWithActions(
                 searchQuery = uiState.searchQuery,
@@ -261,28 +220,6 @@ fun NoteListScreen(
     }
 
     val initialDate = selectedNotes.firstOrNull()?.reminderDate
-
-    /*    NoteeDialog(
-            enabled = showThemeDialog,
-            title = "Choose Theme",
-            onDismiss = { showThemeDialog = false },
-            description = {
-                Column(Modifier.selectableGroup()) {
-                    com.despicable.feature.settings.ThemeOption(Theme.Light, theme) {
-                        viewModel.updateTheme(Theme.Light)
-                        showThemeDialog = false
-                    }
-                    com.despicable.feature.settings.ThemeOption(Theme.Dark, theme) {
-                        viewModel.updateTheme(Theme.Dark)
-                        showThemeDialog = false
-                    }
-                    com.despicable.feature.settings.ThemeOption(Theme.System, theme) {
-                        viewModel.updateTheme(Theme.System)
-                        showThemeDialog = false
-                    }
-                }
-            }
-        )*/
 
     ReminderDialog(
         showDialog = showReminderDialog,
@@ -334,7 +271,7 @@ private fun NoteFAB(navigateToDetail: (Long) -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Icon(Icons.Outlined.Edit, contentDescription = null)
-            Text("Create", fontSize = 15.sp)
+            Text(stringResource(R.string.home_fab_button_create), fontSize = 15.sp)
         }
     }
 }

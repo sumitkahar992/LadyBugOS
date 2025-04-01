@@ -245,8 +245,6 @@ fun NoteDetailScreen(
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
-                .imePadding()
-                .skipToLookaheadSize()
                 .sharedBounds(
                     rememberSharedContentState(
                         key = NoteSharedElementKey(
@@ -261,7 +259,9 @@ fun NoteDetailScreen(
                     enter = EnterTransition.None,
                     exit = ExitTransition.None,
                 )
-                .clip(RoundedCornerShape(roundedCornerAnim)),
+                .clip(RoundedCornerShape(roundedCornerAnim))
+                .imePadding(),
+//                .skipToLookaheadSize()
             containerColor = containerColor,
             contentColor = MaterialTheme.colorScheme.onSurface,
             snackbarHost = { SnackbarHost(snackBarHostState) },
@@ -306,16 +306,12 @@ fun NoteDetailScreen(
             contentWindowInsets = WindowInsets.ime,
         ) { innerPadding ->
 
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .horizontalWindowInsetsPadding()
-                    .padding(innerPadding)
-            ) {
                 EditNoteContent(
-                    skipModifier = Modifier.skipToLookaheadSize(),
+                    skipModifier = Modifier,
+//                        .skipToLookaheadSize(),
                     modifier = Modifier
-                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .horizontalWindowInsetsPadding()
                         .sharedBounds(
                             sharedContentState = rememberSharedContentState(
                                 key = NoteSharedElementKey(
@@ -361,7 +357,7 @@ fun NoteDetailScreen(
                     }
                 )
 
-            }
+
         }
 
         // Delete confirmation dialog

@@ -26,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.despicable.core.designsystem.component.CollapsedSearchView
@@ -121,7 +122,7 @@ fun TrashScreen(
                 if (trashedNotes.isEmpty()) {
                     EmptyStateContent(
                         icon = R.drawable.trash,
-                        title = "No trashed notes available"
+                        title = stringResource(R.string.trash_no_trashed_notes_available)
                     )
                 } else {
                     NoteGridTags(
@@ -157,7 +158,7 @@ fun TopBarTrash(
 
     if (selectedNotes.isEmpty()) {
         CollapsedSearchView(
-            title = "Trash",
+            title = stringResource(R.string.trash_topbar_title),
             onMenuClick = onMenuClick,
             screenType = ScreenType.Trash,
             onEmptyTrash = {
@@ -178,11 +179,11 @@ fun TopBarTrash(
 
     NoteeDialog(
         enabled = showDeleteDialog,
-        title = "Delete note forever",
-        description = "Are you sure you want to permanently delete these notes?",
+        title = stringResource(R.string.trash_delete_dialog_title),
+        description = stringResource(R.string.trash_delete_dialog_desc),
         icon = Icons.Default.DeleteForever,
-        confirmText = "Delete",
-        dismissText = "Cancel",
+        confirmText = stringResource(R.string.trash_dialog_confirm_delete),
+        dismissText = stringResource(R.string.trash_dialog_confirm_cancel),
         onConfirm = {
             onDeleteNotes()
             showDeleteDialog = false
@@ -194,10 +195,10 @@ fun TopBarTrash(
 
     NoteeDialog(
         enabled = showEmptyTrashDialog,
-        title = "Empty Trash",
-        description = "All notes in Trash will be permanently deleted. This action cannot be undone.",
-        confirmText = "Empty Trash",
-        dismissText = "Cancel",
+        title = stringResource(R.string.dialog_empty_trash),
+        description = stringResource(R.string.empty_trash_desc),
+        confirmText = stringResource(R.string.empty_trash_confirm),
+        dismissText = stringResource(R.string.cancel_empty_trash),
         onConfirm = {
             onEmptyTrash()
             showEmptyTrashDialog = false

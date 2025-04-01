@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.deathnote.android.library)
     alias(libs.plugins.kotlin.serialization)
+//    alias(libs.plugins.dependencyanalysis)
+
 }
 
 android {
@@ -11,16 +13,14 @@ dependencies {
 
     api(projects.core.model)
     api(projects.core.data)
-    implementation(projects.notifications)
+    api(projects.notifications)
 
 
-    implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.javax.inject)
+    runtimeOnly(libs.kotlinx.coroutines.android)
 
     implementation(libs.kotlinx.serialization.json)
 
 
     implementation(project.dependencies.platform(libs.koin.bom))
-    implementation(libs.koin.core)
     implementation(libs.koin.androidx.compose)
 }

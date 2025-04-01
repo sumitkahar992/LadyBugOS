@@ -35,8 +35,8 @@ class ApplicationPlugin : Plugin<Project> {
                             getDefaultProguardFile("proguard-android-optimize.txt"),
                             "proguard-rules.pro"
                         )
-                        isDebuggable = false
-                        isDefault = false
+//                        isDebuggable = false
+//                        isDefault = false
 //            resValue("string", "application_name", "Kot Weather")
                         signingConfig = signingConfigs.getByName("release")
                     }
