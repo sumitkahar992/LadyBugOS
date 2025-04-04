@@ -14,11 +14,12 @@ dependencies {
 
     implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.androidx.compose)
-
-
-
-
     implementation(libs.kotlinx.serialization.json)
+
+
+    implementation(libs.javax.inject)
+
+    implementation(libs.kotlinx.datetime)
 
 
 

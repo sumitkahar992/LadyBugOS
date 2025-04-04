@@ -4,6 +4,7 @@ import com.despicable.core.data.model.toDomain
 import com.despicable.core.data.model.toEntity
 import com.despicable.core.data.model.toNoteTagsDomainList
 import com.despicable.core.data.model.toTagDomainList
+import com.despicable.core.database.dao.ChecklistDao
 import com.despicable.core.database.dao.NoteDao
 import com.despicable.core.database.dao.TagDao
 import com.despicable.core.model.Checklist
@@ -27,6 +28,7 @@ import javax.inject.Inject
 class NoteRepositoryImpl @Inject constructor(
     private val noteDao: NoteDao,
     private val tagDao: TagDao,
+    private val checklistDao: ChecklistDao,
     private val reminderScheduler: ReminderScheduler
 ) : NoteRepository {
 
@@ -58,7 +60,8 @@ class NoteRepositoryImpl @Inject constructor(
         noteDao.insertNoteWithTagsAndChecklist(
             noteWithCurrentTime.toEntity(),
             tagIds,
-            checklistItems.map { it.toEntity() }
+            checklistItems.map { it.toEntity() },
+            checklistDao
         )
     }
 
@@ -79,7 +82,8 @@ class NoteRepositoryImpl @Inject constructor(
         noteDao.updateNoteWithTagsAndChecklist(
             noteToSave.toEntity(),
             tagIds,
-            checklistItems.map { it.toEntity() }
+            checklistItems.map { it.toEntity() },
+            checklistDao
         )
     }
 
@@ -91,9 +95,6 @@ class NoteRepositoryImpl @Inject constructor(
         noteDao.deleteNoteCompletely(note.id)
     }
 
-    override suspend fun emptyTrash() = withContext(Dispatchers.IO) {
-        noteDao.emptyTrash()
-    }
 
     override suspend fun emptyTrashWithTags() = withContext(Dispatchers.IO) {
         noteDao.emptyTrash() // The cascade delete will handle tag cross-references
@@ -149,11 +150,11 @@ class NoteRepositoryImpl @Inject constructor(
     // Checklist Operations
     override suspend fun updateNoteChecklist(noteId: Long, isChecklist: Boolean) =
         withContext(Dispatchers.IO) {
-            noteDao.updateNoteChecklist(noteId, isChecklist)
+            checklistDao.updateNoteChecklist(noteId, isChecklist)
         }
 
     override suspend fun insertChecklistItem(item: Checklist): Long = withContext(Dispatchers.IO) {
-        noteDao.insertChecklistItem(item.toEntity())
+        checklistDao.insertChecklistItem(item.toEntity())
     }
 
     override fun getChecklistItemsByNoteId(noteId: Long): Flow<List<Checklist>> =
@@ -162,20 +163,20 @@ class NoteRepositoryImpl @Inject constructor(
         }
 
     override suspend fun updateChecklistItem(item: Checklist) = withContext(Dispatchers.IO) {
-        noteDao.updateChecklistItem(item.toEntity())
+        checklistDao.updateChecklistItem(item.toEntity())
     }
 
     override suspend fun deleteChecklistItemsByNoteId(noteId: Long) = withContext(Dispatchers.IO) {
-        noteDao.deleteAllChecklistItemsForNote(noteId)
+        checklistDao.deleteAllChecklistItemsForNote(noteId)
     }
 
     override suspend fun deleteChecklistItem(itemId: Long) = withContext(Dispatchers.IO) {
-        noteDao.deleteChecklistItem(itemId)
+        checklistDao.deleteChecklistItem(itemId)
     }
 
     override suspend fun updateAllChecklistItems(items: List<Checklist>) =
         withContext(Dispatchers.IO) {
-            noteDao.updateChecklistItems(items.map { it.toEntity() })
+            checklistDao.updateChecklistItems(items.map { it.toEntity() })
         }
 
     // Status Operations

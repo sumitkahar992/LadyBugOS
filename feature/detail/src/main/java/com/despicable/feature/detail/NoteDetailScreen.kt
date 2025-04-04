@@ -2,8 +2,6 @@ package com.despicable.feature.detail
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.EnterExitState
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.animateDp
 import androidx.compose.foundation.background
@@ -81,6 +79,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -221,15 +220,15 @@ fun NoteDetailScreen(
 
 
     // Note Detail screen
-//    DisposableEffect(Unit) {
-//        onDispose {
-//            viewModel.deleteNoteIfEmpty()
-//            viewModel.saveNote(
-//                onComplete = onBack,
-//                onSkip = onBack
-//            )
-//        }
-//    }
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.deleteNoteIfEmpty()
+            viewModel.saveNote(
+                onComplete = onBack,
+                onSkip = onBack
+            )
+        }
+    }
 
     val sharedTransitionScope = LocalSharedTransitionScope.current
         ?: throw IllegalStateException("No Scope found")
@@ -241,34 +240,33 @@ fun NoteDetailScreen(
         if (it != EnterExitState.Visible) 12.dp else 0.dp
     }
 
+    val boundsKey = remember(uiState.id) {
+        NoteSharedElementKey(uiState.id, NoteSharedElementType.Bounds)
+    }
+
+    val contentKey = remember(uiState.id) {
+        NoteSharedElementKey(uiState.id, NoteSharedElementType.Content)
+    }
+
     with(sharedTransitionScope) {
         Scaffold(
             modifier = Modifier
-                .fillMaxSize()
+                .skipToLookaheadSize()
                 .sharedBounds(
-                    rememberSharedContentState(
-                        key = NoteSharedElementKey(
-                            noteId = uiState.id,
-                            type = NoteSharedElementType.Bounds
-                        )
-                    ),
-                    animatedVisibilityScope,
+                    sharedContentState = rememberSharedContentState(boundsKey),
+                    animatedVisibilityScope = animatedVisibilityScope,
                     clipInOverlayDuringTransition = OverlayClip(
                         RoundedCornerShape(roundedCornerAnim)
                     ),
-                    enter = EnterTransition.None,
-                    exit = ExitTransition.None,
                 )
+                .fillMaxSize()
                 .clip(RoundedCornerShape(roundedCornerAnim))
                 .imePadding(),
-//                .skipToLookaheadSize()
             containerColor = containerColor,
             contentColor = MaterialTheme.colorScheme.onSurface,
             snackbarHost = { SnackbarHost(snackBarHostState) },
-
             topBar = {
                 EditNoteTopAppBar(
-//                    modifier = Modifier.skipToLookaheadSize(),
                     containerColor = Color.Transparent,
                     isPinned = uiState.isPinned,
                     isArchived = uiState.isArchived,
@@ -295,8 +293,6 @@ fun NoteDetailScreen(
             },
             bottomBar = {
                 NoteDetailBottomBar(
-//                    modifier = Modifier.skipToLookaheadSize(),
-//                    modifier = Modifier.imePadding(),
                     onLeftMenuClick = { showLeftBottomSheet = true },
                     onRightMenuClick = { showRightBottomSheet = true },
                     containerColor = containerColor,
@@ -306,56 +302,52 @@ fun NoteDetailScreen(
             contentWindowInsets = WindowInsets.ime,
         ) { innerPadding ->
 
-                EditNoteContent(
-                    skipModifier = Modifier,
-//                        .skipToLookaheadSize(),
-                    modifier = Modifier
-                        .padding(innerPadding)
-                        .horizontalWindowInsetsPadding()
-                        .sharedBounds(
-                            sharedContentState = rememberSharedContentState(
-                                key = NoteSharedElementKey(
-                                    uiState.id,
-                                    NoteSharedElementType.Content
-                                )
-                            ),
-                            animatedVisibilityScope = animatedVisibilityScope,
-                            clipInOverlayDuringTransition = OverlayClip(
-                                RoundedCornerShape(roundedCornerAnim)
-                            ),
+            EditNoteContent(
+                skipModifier = Modifier.skipToLookaheadSize(),
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .horizontalWindowInsetsPadding()
+                    .skipToLookaheadSize()
+                    .sharedBounds(
+                        sharedContentState = rememberSharedContentState(contentKey),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        clipInOverlayDuringTransition = OverlayClip(
+                            RoundedCornerShape(roundedCornerAnim)
                         ),
-                    uiState = uiState,
-                    onTitleChange = viewModel::updateNoteTitle,
-                    onContentChange = viewModel::updateNoteContent,
-                    onOpenColorPicker = { isColorPickerDialogVisible = true },
-                    onClickReminderInfo = { showReminderDialog = true },
-                    isDone = uiState.isDone,
-                    onDisabledClick = handleTrashRestore,
-                    enabled = !uiState.isTrashed,
-                    content = {
-                        // Calculate colors based on theme and noteColor
-                        val tagColors = rememberTagColors(uiState.lightColor)
+                    ),
+                uiState = uiState,
+                onTitleChange = viewModel::updateNoteTitle,
+                onContentChange = viewModel::updateNoteContent,
+                onOpenColorPicker = { isColorPickerDialogVisible = true },
+                onClickReminderInfo = { showReminderDialog = true },
+                isDone = uiState.isDone,
+                onDisabledClick = handleTrashRestore,
+                enabled = !uiState.isTrashed,
+                content = {
+                    // Calculate colors based on theme and noteColor
+                    val tagColors = rememberTagColors(uiState.lightColor)
 
-                        LazyRow(
-                            modifier = Modifier
-                                .wrapContentSize(unbounded = true)
-                                .width(LocalConfiguration.current.screenWidthDp.dp),
-                            contentPadding = PaddingValues(16.dp, 0.dp, 10.dp, 0.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            items(uiState.allTags) { tag ->
-                                TagChip(
-                                    tag = tag,
-                                    enabled = disableInTrash,
-                                    isSelected = uiState.selectedTagIds.contains(tag.id),
-                                    onClick = { viewModel.toggleTag(tag.id) },
-                                    containerColor = tagColors.surfaceColor,
-                                    labelColor = tagColors.onSurfaceColor
-                                )
-                            }
+                    LazyRow(
+                        modifier = Modifier
+                            .skipToLookaheadSize()
+                            .wrapContentSize(unbounded = true)
+                            .width(LocalConfiguration.current.screenWidthDp.dp),
+                        contentPadding = PaddingValues(16.dp, 0.dp, 10.dp, 0.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        items(uiState.allTags) { tag ->
+                            TagChip(
+                                tag = tag,
+                                enabled = disableInTrash,
+                                isSelected = uiState.selectedTagIds.contains(tag.id),
+                                onClick = { viewModel.toggleTag(tag.id) },
+                                containerColor = tagColors.surfaceColor,
+                                labelColor = tagColors.onSurfaceColor
+                            )
                         }
                     }
-                )
+                }
+            )
 
 
         }

@@ -11,7 +11,7 @@ import com.despicable.core.common.navigation.NoteAction
 import com.despicable.core.data.repository.NoteRepository
 import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
-import com.despicable.core.model.NoteWithTags
+import com.despicable.core.model.NoteComplete
 import com.despicable.core.model.Tag
 import com.despicable.feature.detail.navigation.DetailRoute
 import com.despicable.widgets.data.WidgetUpdater
@@ -47,6 +47,9 @@ class NoteDetailViewModel(
     init {
         val noteId = savedStateHandle.toRoute<DetailRoute>().id
 
+        fetchTags()
+
+
         if (noteId > 0) {
             loadNoteById(noteId)   // Load existing note
         } else {
@@ -55,26 +58,44 @@ class NoteDetailViewModel(
             }
         }
 
-        fetchTags()
         setupNoteUpdateFlow()
     }
 
+
     private fun loadNoteById(id: Long) {
         viewModelScope.launch {
-            repo.getNoteWithTagsById(id).catch { e -> Timber.e(e, "Error loading note") }
-                .firstOrNull()?.let { noteWithTags ->
-                    updateUiState { it.fromNoteWithTags(noteWithTags).copy(isLoading = false) }
+            repo.getNoteCompleteById(id)
+                .catch { e ->
+                    Timber.e(e, "Error loading note #$id")
+                    updateUiState { it.copy(isLoading = false) }
 
-                    // Start collecting checklist items immediately
-                    repo.getChecklistItemsByNoteId(id)
-                        .catch { e -> Timber.e(e, "Error loading checklist items") }
-                        .collect { items ->
-                            _uiState.update { it.copy(checklistItems = items) }
-                        }
+                }
+                .firstOrNull()?.let { noteComplete ->
+                    updateUiState {
+                        it.fromNoteComplete(noteComplete)
+                    }
 
                 }
         }
     }
+
+
+    /*    private fun loadNoteById(id: Long) {
+            viewModelScope.launch {
+                repo.getNoteWithTagsById(id).catch { e -> Timber.e(e, "Error loading note") }
+                    .firstOrNull()?.let { noteWithTags ->
+                        updateUiState { it.fromNoteWithTags(noteWithTags).copy(isLoading = false) }
+
+                        // Start collecting checklist items immediately
+                        repo.getChecklistItemsByNoteId(id)
+                            .catch { e -> Timber.e(e, "Error loading checklist items") }
+                            .collect { items ->
+                                _uiState.update { it.copy(checklistItems = items) }
+                            }
+
+                    }
+            }
+        }*/
 
 
     fun onEvent(event: CheckListEvent) {
@@ -216,7 +237,7 @@ class NoteDetailViewModel(
             repo.updateChecklistItem(updatedItem)
 
 
-            updateUiStateAndTriggerSave { state ->
+            updateUiStateAndTriggerSave(updateTimestamp = true) { state ->
                 val updatedItems = state.checklistItems.map {
                     if (it.id == item.id) updatedItem else it
                 }
@@ -327,7 +348,7 @@ class NoteDetailViewModel(
                 }
 
                 updateUiStateAndTriggerSave(
-                    updateTimestamp = false
+                    updateTimestamp = true
                 ) { state ->
                     state.copy(
                         id = noteId,
@@ -343,7 +364,7 @@ class NoteDetailViewModel(
                     .joinToString("\n") { it.content }
 
                 updateUiStateAndTriggerSave(
-                    updateTimestamp = false  // Don't update timestamp for UI toggle
+                    updateTimestamp = true  // Don't update timestamp for UI toggle
                 ) { state ->
                     state.copy(
                         isCheckList = false,
@@ -405,7 +426,8 @@ class NoteDetailViewModel(
             _noteUpdateTrigger.debounce(500L).distinctUntilChanged().flowOn(Dispatchers.Default)
                 .catch { e ->
                     Timber.e(e, "Error in note update flow")
-                }.collect { payload ->
+                }
+                .collect { payload ->
                     try {
                         repo.updateNoteWithTagsChecklist(
                             payload.note,
@@ -487,7 +509,8 @@ class NoteDetailViewModel(
         ) { currentState ->
             val updatedNote = currentState.toNote().copy(isPinned = !currentState.isPinned)
             currentState.copy(
-                isPinned = updatedNote.isPinned
+                isPinned = updatedNote.isPinned,
+                pinnedDate = System.currentTimeMillis()
             )
         }
     }
@@ -520,19 +543,34 @@ class NoteDetailViewModel(
         }
     }
 
+    /**
+     * Updates a note's reminder date and refreshes the UI state with the updated values.
+     * Does not modify update timestamp as this is a UI-related change.
+     *
+     * @param noteId The ID of the note to update
+     * @param reminderDate The new reminder date, or null to remove reminder
+     */
     fun updateNoteReminder(noteId: Long, reminderDate: Long?) {
         viewModelScope.launch {
-            repo.updateNoteReminder(noteId, reminderDate)
-            repo.getNoteById(noteId).firstOrNull()?.let { updatedNote ->
-                updateUiStateAndTriggerSave(
-                    updateTimestamp = false
-                ) {
-                    it.copy(
-                        reminderDate = updatedNote.reminderDate,
-                        id = updatedNote.id,
-                        isDone = updatedNote.isDone,
-                    )
+            try {
+                // Update the reminder in a single database call
+                repo.updateNoteReminder(noteId, reminderDate)
+
+                // Get the updated note to refresh UI state
+                repo.getNoteById(noteId).firstOrNull()?.let { updatedNote ->
+                    // Only update the relevant fields, not the entire state
+                    updateUiStateAndTriggerSave(updateTimestamp = false) { currentState ->
+                        currentState.copy(
+                            reminderDate = updatedNote.reminderDate,
+                            isDone = updatedNote.isDone
+                        )
+                    }
+
+                    // Update any associated widgets
+                    widgetUpdater.updateSingleWidget(updatedNote)
                 }
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to update reminder for note #$noteId")
             }
         }
     }
@@ -574,33 +612,74 @@ class NoteDetailViewModel(
         }
     }
 
+    /**
+     * Saves or updates a note with optimized database access.
+     * For new notes, performs an insert.
+     * For existing notes, only updates if there are meaningful changes.
+     *
+     * @param note The note to save or update
+     */
     private suspend fun saveOrUpdateNote(note: Note) {
-        if (note.id == 0L) {
-            repo.insertNoteWithTagsChecklist(
-                note,
-                uiState.value.selectedTagIds.toList(),
-                uiState.value.checklistItems
+        try {
+            // Handle new notes
+            if (note.id == 0L) {
+                val newNoteId = repo.insertNoteWithTagsChecklist(
+                    note,
+                    uiState.value.selectedTagIds.toList(),
+                    uiState.value.checklistItems
+                )
+
+                // Update UI state with the new ID
+                _uiState.update { it.copy(id = newNoteId) }
+                return
+            }
+
+            // For existing notes, check if there are meaningful changes
+            val currentState = uiState.value
+            val originalNote = repo.getNoteById(note.id).firstOrNull()
+
+            // Determine if there are content changes that should update the timestamp
+            val hasContentChanges = originalNote?.let { original ->
+                note.title != original.title ||
+                        note.content != original.content ||
+                        note.isChecklist != original.isChecklist ||
+                        // Consider checklist changes too
+                        (note.isChecklist && checklistItemsHaveChanged(currentState.checklistItems))
+            } == true
+
+            // Emit update through debounced flow
+            _noteUpdateTrigger.emit(
+                NoteUpdatePayload(
+                    note = note,
+                    tagIds = currentState.selectedTagIds.toList(),
+                    checklistItems = currentState.checklistItems,
+                    updateTimestamp = hasContentChanges
+                )
             )
-            return
+
+            // Update any widgets associated with this note
+            widgetUpdater.updateSingleWidget(note)
+
+        } catch (e: Exception) {
+            Timber.e(e, "Error saving/updating note #${note.id}")
         }
+    }
 
-        // For existing notes, only update if there were changes
-        val originalNote = repo.getNoteById(note.id).firstOrNull()
-        val hasChanges = originalNote?.let { original ->
-            note.title != original.title ||
-                    note.content != original.content ||
-                    note.isChecklist != original.isChecklist
-        } ?: false
 
-        _noteUpdateTrigger.emit(
-            NoteUpdatePayload(
-                note = note,
-                tagIds = uiState.value.selectedTagIds.toList(),
-                checklistItems = uiState.value.checklistItems,
-                updateTimestamp = hasChanges
-            )
-        )
-        widgetUpdater.updateSingleWidget(note)
+    /**
+     * Determines if checklist items have had meaningful content changes.
+     * This helps decide whether to update the note's timestamp.
+     *
+     * @param currentItems The current checklist items
+     * @return True if items have changed, false otherwise
+     */
+    private fun checklistItemsHaveChanged(currentItems: List<Checklist>): Boolean {
+        // Implementation depends on how you track original checklist state
+        // One approach is to store the original items when loading the note
+        // and compare against that, or track changes directly
+
+        // Simple implementation - assumes any non-empty items means changes
+        return currentItems.any { !it.content.isBlank() || it.isChecked }
     }
 
     fun handleNoteAction(
@@ -654,17 +733,26 @@ class NoteDetailViewModel(
 
     private fun fetchTags() {
         viewModelScope.launch {
-            repo.getAllTags().catch { e -> Timber.e(e, "Error fetching tags") }
+            repo.getAllTags()
+                .catch { e -> Timber.e(e, "Error fetching tags") }
                 .collect { tags ->
+                    Timber.tag("DEBUG").d("TAGS[fetchTags]=[$${tags.size}]")
                     updateUiState { it.copy(allTags = tags) }
                 }
         }
     }
 
     private fun updateUiState(update: (NoteUiState) -> NoteUiState) {
-        _uiState.update(update)
-
+        val currentState = _uiState.value
+        val updatedState = update(currentState)
+        Timber.tag("DEBUG")
+            .d("State update: allTags before=[${currentState.allTags.size}], after=[${updatedState.allTags.size}]")
+        _uiState.value = updatedState
     }
+//    private fun updateUiState(update: (NoteUiState) -> NoteUiState) {
+//        _uiState.update(update)
+//
+//    }
 
     private fun Set<Long>.toggle(id: Long) = if (contains(id)) minus(id) else plus(id)
 
@@ -720,22 +808,33 @@ class NoteDetailViewModel(
 
 // Main UI state
 data class NoteUiState(
+    // Status flags
     val isLoading: Boolean = true,
+
+    // UI state for text editing
+    val titleSelection: TextRange = TextRange(0),
+    val contentSelection: TextRange = TextRange(0),
+
+    // Core note properties
     val id: Long = 0,
     val title: String = "",
-    val titleSelection: TextRange = TextRange(0),
     val content: String = "",
-    val contentSelection: TextRange = TextRange(0),
     val lightColor: Int = 0,
     val isPinned: Boolean = false,
     val pinnedDate: Long? = null,
     val isArchived: Boolean = false,
     val isTrashed: Boolean = false,
+    val updateDate: Long = System.currentTimeMillis(),
+
+    // Reminder state
     val reminderDate: Long? = null,
     val isDone: Boolean = false,
-    val updateDate: Long = System.currentTimeMillis(),
-    val allTags: List<Tag> = emptyList(),
+
+    // Tag handling
+    val allTags: List<Tag> = listOf(Tag(1, "www"), Tag(2, "XXX")),
     val selectedTagIds: Set<Long> = emptySet(),
+
+    // Checklist state
     val isCheckList: Boolean = false,
     val checklistItems: List<Checklist> = emptyList(),
     val focusedItemPosition: Int = -1,
@@ -755,38 +854,71 @@ data class NoteUiState(
         isChecklist = isCheckList,
     )
 
-    fun isEmpty() = title.isBlank() && content.isBlank() && checklistItems.isEmpty()
+    fun isEmpty(): Boolean {
+        return title.isBlank() && content.isBlank() &&
+                (checklistItems.isEmpty() || checklistItems.all { it.content.isBlank() })
+    }
 
-    fun fromNoteWithTags(noteWithTags: NoteWithTags?) =
-        noteWithTags?.let {
-            copy(
-                id = it.note.id,
-                title = it.note.title,
-                content = it.note.content,
-                lightColor = it.note.lightColor,
-                isPinned = it.note.isPinned,
-                pinnedDate = it.note.pinnedDate,
-                isArchived = it.note.isArchived,
-                isTrashed = it.note.isTrashed,
-                reminderDate = it.note.reminderDate,
-                isDone = it.note.isDone,
-                updateDate = it.note.updateDate,
-                selectedTagIds = it.tags.map { tag -> tag.id }.toSet(),
-                isCheckList = it.note.isChecklist,
-                checklistItems = checklistItems,
-                focusedItemPosition = focusedItemPosition
-            )
-        } ?: this
 
-    private fun toTextFieldValue(text: String, selection: TextRange) = TextFieldValue(
-        text = text, selection = selection
-    )
+    /*    fun fromNoteWithTags(noteWithTags: NoteWithTags?): NoteUiState {
 
+            if (noteWithTags == null) return this
+
+            Timber.tag("DEBUG").d("TAGS[NoteComplete]=[$${noteWithTags.tags.size}]")
+
+
+            return copy(
+                    id = noteWithTags.note.id,
+                    title = noteWithTags.note.title,
+                    content = noteWithTags.note.content,
+                    lightColor = noteWithTags.note.lightColor,
+                    isPinned = noteWithTags.note.isPinned,
+                    pinnedDate = noteWithTags.note.pinnedDate,
+                    isArchived = noteWithTags.note.isArchived,
+                    isTrashed = noteWithTags.note.isTrashed,
+                    reminderDate = noteWithTags.note.reminderDate,
+                    isDone = noteWithTags.note.isDone,
+                    updateDate = noteWithTags.note.updateDate,
+                    selectedTagIds = noteWithTags.tags.map { tag -> tag.id }.toSet(),
+                    isCheckList = noteWithTags.note.isChecklist,
+                    checklistItems = checklistItems,
+                    focusedItemPosition = focusedItemPosition
+                )
+
+        }*/
+
+    fun fromNoteComplete(noteComplete: NoteComplete?): NoteUiState {
+        if (noteComplete == null) return this
+
+        Timber.tag("DEBUG").d("TAGS[NoteComplete]=[$${noteComplete.tags.size}]")
+
+
+        return copy(
+            id = noteComplete.note.id,
+            title = noteComplete.note.title,
+            content = noteComplete.note.content,
+            lightColor = noteComplete.note.lightColor,
+            isPinned = noteComplete.note.isPinned,
+            pinnedDate = noteComplete.note.pinnedDate,
+            isArchived = noteComplete.note.isArchived,
+            isTrashed = noteComplete.note.isTrashed,
+            reminderDate = noteComplete.note.reminderDate,
+            isDone = noteComplete.note.isDone,
+            updateDate = noteComplete.note.updateDate,
+            selectedTagIds = noteComplete.tags.map { tag -> tag.id }.toSet(),
+            isCheckList = noteComplete.note.isChecklist,
+            checklistItems = noteComplete.checklistItems,
+            focusedItemPosition = focusedItemPosition,
+            isLoading = false
+        )
+    }
+
+    // Computed properties for TextFieldValue (calculated only when accessed)
     val titleFieldValue: TextFieldValue
-        get() = toTextFieldValue(title, titleSelection)
+        get() = TextFieldValue(text = title, selection = titleSelection)
 
     val contentFieldValue: TextFieldValue
-        get() = toTextFieldValue(content, contentSelection)
+        get() = TextFieldValue(text = content, selection = contentSelection)
 
 
     // Add initialization logic for new notes
@@ -795,19 +927,22 @@ data class NoteUiState(
         pinnedDate = System.currentTimeMillis(),
         isLoading = false
     )
+
 }
 
 
 sealed interface CheckListEvent {
-    data object ToggleChecklist : CheckListEvent
+    data object ToggleChecklist : CheckListEvent // error time not updating
+
     data class ReorderChecklistItems(val fromPosition: Int, val toPosition: Int) : CheckListEvent
+    data class ChecklistItemChecked(val item: Checklist) : CheckListEvent
     data class AddChecklistItemAt(val position: Int) : CheckListEvent
     data class RemoveChecklistItem(val index: Int) : CheckListEvent
-    data class UpdateChecklistItemContent(val item: Checklist, val content: String) :
-        CheckListEvent
-
-    data class ChecklistItemChecked(val item: Checklist) : CheckListEvent
     data class UpdateFocusedPosition(val position: Int) : CheckListEvent
+
+    data class UpdateChecklistItemContent(val item: Checklist, val content: String) :
+        CheckListEvent  // error goes to top
+
 }
 
 /*

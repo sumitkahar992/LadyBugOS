@@ -1,5 +1,6 @@
 package com.despicable.core.database.model
 
+import android.annotation.SuppressLint
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Index
@@ -8,6 +9,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import kotlinx.serialization.Serializable
 
+@SuppressLint("UnsafeOptInUsageError")
 @Serializable
 @Entity(
     tableName = "notes",

@@ -82,49 +82,62 @@ class NoteListViewModel(
     private val _snackBarMessage = MutableStateFlow<SnackBarMessage?>(null)
     val snackBarMessage = _snackBarMessage.asStateFlow()
 
-    // Add these properties for reminder screens
-    val upcomingReminders = repo.getUpcomingRemindersWithTagsAndChecklist()
-        .map { noteCompleteList ->
-            noteCompleteList.map { noteComplete ->
+    // Change these properties to use the search query from uiState
+    val upcomingReminders = combine(
+        repo.getUpcomingRemindersWithTagsAndChecklist(),
+        _uiState.map { it.searchQuery }
+    ) { noteCompleteList, query ->
+        noteCompleteList
+            .map { noteComplete ->
                 NoteWithTagsAndChecklist(
                     note = noteComplete.note,
                     tags = noteComplete.tags,
                     checklistItems = noteComplete.checklistItems
                 )
             }
-        }
+            .filter { it.note.matchesSearch(query) } // Apply search filter
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyList())
 
-    val completedReminders = repo.getCompletedRemindersWithTagsAndChecklist()
-        .map { noteCompleteList ->
-            noteCompleteList.map { noteComplete ->
+    val completedReminders = combine(
+        repo.getCompletedRemindersWithTagsAndChecklist(),
+        _uiState.map { it.searchQuery }
+    ) { noteCompleteList, query ->
+        noteCompleteList
+            .map { noteComplete ->
                 NoteWithTagsAndChecklist(
                     note = noteComplete.note,
                     tags = noteComplete.tags,
                     checklistItems = noteComplete.checklistItems
                 )
             }
-        }
+            .filter { it.note.matchesSearch(query) } // Apply search filter
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyList())
 
-    val archivedNotes = repo.getArchivedNotesWithTagsAndChecklist()
-        .map { noteCompleteList ->
-            noteCompleteList.map { noteComplete ->
+
+    val archivedNotes = combine(
+        repo.getArchivedNotesWithTagsAndChecklist(),
+        _uiState.map { it.searchQuery }
+    ) { noteCompleteList, query ->
+        noteCompleteList
+            .map { noteComplete ->
                 NoteWithTagsAndChecklist(
                     note = noteComplete.note,
                     tags = noteComplete.tags,
                     checklistItems = noteComplete.checklistItems
                 )
             }
-        }
+            .filter { query.isEmpty() || it.note.matchesSearch(query) } // Apply search filter
+    }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), emptyList())
 
 
     init {
         initializeNotes()
-        viewModelScope.launch {
-            loadSampleDataUseCase()
-        }
+//        viewModelScope.launch {
+//            loadSampleDataUseCase()
+//        }
     }
 
     private fun initializeNotes() {
@@ -422,14 +435,12 @@ class NoteListViewModel(
     }
 
 
+    // Update this function to make it clear it affects all screens
     fun updateSearchQuery(query: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(searchQuery = query) }
+            // No need to call initializeNotes() here as we're now using combine flows
         }
-    }
-
-    fun updateTheme(theme: Theme) {
-        viewModelScope.launch { settingsRepo.setTheme(theme) }
     }
 
 
@@ -537,6 +548,11 @@ class NoteListViewModel(
             repo.deleteTag(tag)
         }
     }
+
+    fun updateTheme(theme: Theme) {
+        viewModelScope.launch { settingsRepo.setTheme(theme) }
+    }
+
 
     override fun onCleared() {
         super.onCleared()

@@ -3,6 +3,7 @@ package com.despicable.core.data.repository
 import android.content.Context
 import android.net.Uri
 import com.despicable.core.database.NoteDatabase
+import com.despicable.core.database.dao.ChecklistDao
 import com.despicable.core.database.dao.NoteDao
 import com.despicable.core.database.dao.TagDao
 import com.despicable.core.database.model.BackupData
@@ -28,7 +29,8 @@ class BackupRepositoryImpl @Inject constructor(
     private val context: Context,
     private val database: NoteDatabase,
     private val noteDao: NoteDao,
-    private val tagDao: TagDao
+    private val tagDao: TagDao,
+    private val checklistDao: ChecklistDao
 ) : BackupRepository {
 
     private val bufferSize = 16384 // 16KB buffer for better performance
@@ -54,7 +56,7 @@ class BackupRepositoryImpl @Inject constructor(
                 send(BackupResults.Progress(60))
 
                 // Get checklist items for ALL notes
-                val checklistItems = noteDao.getAllChecklistItems().first()
+                val checklistItems = checklistDao.getAllChecklistItems().first()
                 send(BackupResults.Progress(75))
 
                 // Create backup data
@@ -223,7 +225,7 @@ class BackupRepositoryImpl @Inject constructor(
 
         // Insert in batches for better performance
         if (processedItems.isNotEmpty()) {
-            noteDao.insertChecklistItems(processedItems)
+            checklistDao.insertChecklistItems(processedItems)
         }
     }
 

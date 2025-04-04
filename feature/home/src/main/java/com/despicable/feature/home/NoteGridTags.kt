@@ -9,13 +9,11 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDp
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -117,6 +115,7 @@ fun NoteGridTags(
         columns = columns,
         modifier = modifier
             .fillMaxSize(),
+//            .animateContentSize(animationSpec = tween(durationMillis = 300)),
         horizontalArrangement = Arrangement.spacedBy(spacing),
         contentPadding = PaddingValues(
             start = start + startWindowInsetsPadding(),
@@ -141,7 +140,7 @@ fun NoteGridTags(
             key = { it.note.id }
         ) { noteWithTags ->
             NoteItemTag(
-                modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
+                modifier = Modifier.animateItem(),
                 noteWithTags = noteWithTags,
                 isSelected = noteWithTags.note in selectedNotes,
                 onClick = { onNoteClick(noteWithTags.note) },
@@ -164,7 +163,7 @@ fun NoteGridTags(
             key = { it.note.id }
         ) { noteWithTags ->
             NoteItemTag(
-                modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
+                modifier = Modifier.animateItem(),
                 noteWithTags = noteWithTags,
                 isSelected = noteWithTags.note in selectedNotes,
                 onClick = { onNoteClick(noteWithTags.note) },
@@ -223,95 +222,6 @@ fun NoteItemTag(
         if (it == EnterExitState.Visible) 12.dp else 0.dp
 
     }
-
-
-
-
-
-
-    val boundsKey = remember(note.id) {
-        NoteSharedElementKey(note.id, NoteSharedElementType.Bounds)
-    }
-
-    val contentKey = remember(note.id) {
-        NoteSharedElementKey(note.id, NoteSharedElementType.Content)
-    }
-
-
-    with(sharedTransitionScope) {
-        Box(
-            modifier = Modifier
-                .padding(4.dp)
-                .sharedBounds(
-                    sharedContentState = rememberSharedContentState(boundsKey),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    enter = EnterTransition.None,
-                    exit = ExitTransition.None,
-                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                    clipInOverlayDuringTransition = OverlayClip(
-                        RoundedCornerShape(roundedCornerAnimation)
-                    )
-                )
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onLongPress()
-                    }
-                )
-        ) {
-
-                NoteContent(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .sharedBounds(
-                        sharedContentState = rememberSharedContentState(contentKey),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                        clipInOverlayDuringTransition = OverlayClip(
-                            RoundedCornerShape(roundedCornerAnimation)
-                        ),
-                    ),
-                    note = note,
-                    tags = tags,
-                    checkList = noteWithTags.checklistItems,
-                    gridLayout = gridLayout,
-                    titleSize = titleSize,
-                    contentSize = contentSize,
-                    isSelected = isSelected
-                )
-            }
-        }
-    }
-
-
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-@Composable
-private fun SharedTransitionScope.NoteContent(
-    modifier: Modifier = Modifier,
-    note: Note,
-    tags: List<Tag>,
-    checkList: List<Checklist>,
-    gridLayout: GridLayout,
-    titleSize: TextUnit,
-    contentSize: TextUnit,
-    isSelected: Boolean
-) {
-
-    val shapeAnimationSpec = remember {
-        spring<Dp>(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessLow
-        )
-    }
-
-    val shape by animateDpAsState(
-        targetValue = if (isSelected) 16.dp else 12.dp,
-        label = "shape",
-        animationSpec = shapeAnimationSpec
-    )
-
     val borderAnimationSpec = remember {
         spring<Color>(
             dampingRatio = Spring.DampingRatioLowBouncy,
@@ -341,75 +251,139 @@ private fun SharedTransitionScope.NoteContent(
     }
 
 
-    OutlinedCard(
-        border = border,
-        modifier = modifier,
-        colors = CardDefaults.cardColors(
-            containerColor = surfaceColor
-        ),
-        elevation = CardDefaults.cardElevation(if (isSelected) 2.dp else 1.dp),
-        shape = RoundedCornerShape(shape)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(14.dp)
+    val boundsKey = remember(note.id) {
+        NoteSharedElementKey(note.id, NoteSharedElementType.Bounds)
+    }
+
+    val contentKey = remember(note.id) {
+        NoteSharedElementKey(note.id, NoteSharedElementType.Content)
+    }
+
+
+    with(sharedTransitionScope) {
+
+        OutlinedCard(
+            modifier = modifier
+                .padding(4.dp)
+                .skipToLookaheadSize()
+                .sharedBounds(
+                    sharedContentState = rememberSharedContentState(boundsKey),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    enter = EnterTransition.None,
+                    exit = ExitTransition.None,
+                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                    clipInOverlayDuringTransition = OverlayClip(
+                        RoundedCornerShape(12.dp)
+                    )
+                )
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onLongPress()
+                    }
+                ),
+            border = border,
+            colors = CardDefaults.outlinedCardColors(containerColor = surfaceColor),
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.outlinedCardElevation(if (isSelected) 2.dp else 1.dp),
         ) {
-            // Title Section
-            if (note.title.isNotBlank()) {
-                Text(
-                    modifier = Modifier.skipToLookaheadSize(),
-                    text = note.title,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold
+
+            NoteContent(
+                skipModifier = Modifier.skipToLookaheadSize(),
+                modifier = Modifier
+                    .sharedBounds(
+                        sharedContentState = rememberSharedContentState(contentKey),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                        clipInOverlayDuringTransition = OverlayClip(
+                            RoundedCornerShape(roundedCornerAnimation)
+                        ),
                     ),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = if (gridLayout == GridLayout.OneColumn) 1 else 3,
-                    overflow = TextOverflow.Ellipsis,
-                    fontSize = titleSize
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp).skipToLookaheadSize())
-
-
-            // Content Section with max lines based on grid
-            if (note.isChecklist) {
-                ChecklistContent(
-                    modifier = Modifier.skipToLookaheadSize(),
-                    list = checkList,
-                    contentSize = contentSize,
-                    gridLayout = gridLayout
-                )
-            } else if (note.content.isNotBlank()) {
-                Text(
-                    modifier = Modifier.skipToLookaheadSize(),
-                    text = note.content,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        lineHeight = 20.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    overflow = TextOverflow.Ellipsis,
-                    maxLines = when (gridLayout) {
-                        GridLayout.OneColumn -> 8
-                        GridLayout.TwoColumns -> 14
-                        GridLayout.ThreeColumns -> 12
-                    },
-                    fontSize = contentSize,
-                )
-            }
-
-            // Bottom Section
-            BottomSection(
-                modifier = Modifier.skipToLookaheadSize(),
-                reminderDate = note.reminderDate,
-                isDone = note.isDone,
+                note = note,
                 tags = tags,
-                noteColor = note.lightColor
+                checkList = noteWithTags.checklistItems,
+                gridLayout = gridLayout,
+                titleSize = titleSize,
+                contentSize = contentSize
+            )
+        }
+    }
+
+
+}
+
+
+@Composable
+private fun NoteContent(
+    skipModifier: Modifier = Modifier,
+    modifier: Modifier = Modifier,
+    note: Note,
+    tags: List<Tag>,
+    checkList: List<Checklist>,
+    gridLayout: GridLayout,
+    titleSize: TextUnit,
+    contentSize: TextUnit
+) {
+
+
+    Column(
+        modifier = modifier.padding(14.dp)
+    ) {
+        // Title Section
+        if (note.title.isNotBlank()) {
+            Text(
+                modifier = skipModifier,
+                text = note.title,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = if (gridLayout == GridLayout.OneColumn) 1 else 3,
+                overflow = TextOverflow.Ellipsis,
+                fontSize = titleSize
             )
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
+
+        // Content Section with max lines based on grid
+        if (note.isChecklist) {
+            ChecklistContent(
+                modifier = skipModifier,
+                list = checkList,
+                contentSize = contentSize,
+                gridLayout = gridLayout
+            )
+        } else if (note.content.isNotBlank()) {
+            Text(
+                modifier = skipModifier,
+                text = note.content,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    lineHeight = 20.sp
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+                overflow = TextOverflow.Ellipsis,
+                maxLines = when (gridLayout) {
+                    GridLayout.OneColumn -> 8
+                    GridLayout.TwoColumns -> 14
+                    GridLayout.ThreeColumns -> 12
+                },
+                fontSize = contentSize,
+            )
+        }
+
+        // Bottom Section
+        BottomSection(
+            modifier = skipModifier,
+            reminderDate = note.reminderDate,
+            isDone = note.isDone,
+            tags = tags,
+            noteColor = note.lightColor
+        )
     }
+
 }
 
 
@@ -421,8 +395,8 @@ private fun ChecklistContent(
     gridLayout: GridLayout
 ) {
     val maxItems = when (gridLayout) {
-        GridLayout.OneColumn -> 3
-        GridLayout.TwoColumns -> 14
+        GridLayout.OneColumn -> 8
+        GridLayout.TwoColumns -> 10
         GridLayout.ThreeColumns -> 5
     }
 

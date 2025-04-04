@@ -82,7 +82,8 @@ interface NoteDao {
     suspend fun insertNoteWithTagsAndChecklist(
         note: NoteEntity,
         tagIds: List<Long>,
-        checklistItems: List<ChecklistEntity>
+        checklistItems: List<ChecklistEntity>,
+        checklistDao: ChecklistDao
     ): Long {
         val noteId = insertNote(note)
 
@@ -93,7 +94,7 @@ interface NoteDao {
 
         // Insert checklist items
         checklistItems.forEachIndexed { index, item ->
-            insertChecklistItem(item.copy(noteId = noteId, position = index))
+            checklistDao.insertChecklistItem(item.copy(noteId = noteId, position = index))
         }
 
         return noteId
@@ -103,7 +104,8 @@ interface NoteDao {
     suspend fun updateNoteWithTagsAndChecklist(
         note: NoteEntity,
         tagIds: List<Long>,
-        checklistItems: List<ChecklistEntity>
+        checklistItems: List<ChecklistEntity>,
+        checklistDao: ChecklistDao
     ) {
         updateNote(note)
 
@@ -114,9 +116,9 @@ interface NoteDao {
         }
 
         // Update checklist items
-        deleteAllChecklistItemsForNote(note.id)
+        checklistDao.deleteAllChecklistItemsForNote(note.id)
         checklistItems.forEachIndexed { index, item ->
-            insertChecklistItem(item.copy(noteId = note.id, position = index))
+            checklistDao.insertChecklistItem(item.copy(noteId = note.id, position = index))
         }
     }
 
@@ -139,28 +141,11 @@ interface NoteDao {
     @Query("DELETE FROM note_tag_cross_ref WHERE noteId = :noteId")
     suspend fun deleteAllTagsForNote(noteId: Long)
 
-    // Checklist Operations
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertChecklistItem(item: ChecklistEntity): Long
 
-    @Update
-    suspend fun updateChecklistItem(item: ChecklistEntity)
-
-    @Update
-    suspend fun updateChecklistItems(items: List<ChecklistEntity>)
-
-    @Query("DELETE FROM checklist_items WHERE noteId = :noteId")
-    suspend fun deleteAllChecklistItemsForNote(noteId: Long)
-
-    @Query("DELETE FROM checklist_items WHERE id = :itemId")
-    suspend fun deleteChecklistItem(itemId: Long)
 
     // Status Updates
     @Query("UPDATE notes SET isDone = :isDone WHERE id = :noteId")
     suspend fun updateNoteStatus(noteId: Long, isDone: Boolean)
-
-    @Query("UPDATE notes SET isChecklist = :isChecklist WHERE id = :noteId")
-    suspend fun updateNoteChecklist(noteId: Long, isChecklist: Boolean)
 
     @Query("UPDATE notes SET reminderDate = :reminderDate WHERE id = :noteId")
     suspend fun updateNoteReminder(noteId: Long, reminderDate: Long?)
@@ -303,11 +288,7 @@ interface NoteDao {
                 existingNote.isChecklist != backupNote.isChecklist
     }
 
-    @Query("SELECT * FROM checklist_items")
-    fun getAllChecklistItems(): Flow<List<ChecklistEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertChecklistItems(items: List<ChecklistEntity>)
 
     @Query("SELECT * FROM note_tag_cross_ref")
     fun getAllCrossRefs(): Flow<List<NoteTagRefEntity>>

@@ -11,7 +11,6 @@ interface NoteRepository {
 
     // Note Operations
     fun getAllNotes(): Flow<List<Note>>
-    fun getNoteById(id: Long): Flow<Note?>
     fun getAllNotesWithTags(): Flow<List<NoteWithTags>>
     fun getNoteWithTagsById(id: Long): Flow<NoteWithTags?>
     suspend fun insertNoteWithTagsChecklist(
@@ -26,7 +25,6 @@ interface NoteRepository {
 
     suspend fun updateNotes(notes: List<Note>)
     suspend fun deleteNote(note: Note)
-    suspend fun emptyTrash()
     suspend fun emptyTrashWithTags()
 
 
@@ -59,15 +57,17 @@ interface NoteRepository {
     // Notification Operations
     suspend fun updateNoteStatus(noteId: Long, isDone: Boolean)
 
-    // Add these to your NoteRepository interface
-    fun getNoteCompleteById(id: Long): Flow<NoteComplete?>
+    // method: 1
     fun searchNotes(query: String): Flow<List<NoteWithTags>>
     fun getPinnedNotes(): Flow<List<NoteWithTags>>
     fun getArchivedNotes(): Flow<List<NoteWithTags>>
     fun getTrashedNotes(): Flow<List<NoteWithTags>>
+    fun getNoteById(id: Long): Flow<Note?>
 
 
-    // Add these specialized methods
+
+    // method: 2
+    fun getNoteCompleteById(id: Long): Flow<NoteComplete?>
     fun getArchivedNotesWithTagsAndChecklist(): Flow<List<NoteComplete>>
     fun getTrashedNotesWithTagsAndChecklist(): Flow<List<NoteComplete>>
     fun getUpcomingRemindersWithTagsAndChecklist(): Flow<List<NoteComplete>>

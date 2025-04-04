@@ -69,8 +69,12 @@ fun ReminderScreen(
 
     var isSearchMode by rememberSaveable { mutableStateOf(false) }
 
+    // Make sure this reflects the current search query state
+    val searchQuery by remember(uiState.searchQuery) { mutableStateOf(uiState.searchQuery) }
 
-    var isSearchExpanded by remember { mutableStateOf(false) }
+    // Handle search visibility properly
+    var isSearchBarVisible = rememberSaveable { mutableStateOf(isSearchMode || searchQuery.isNotEmpty()) }
+
     var selectedNotes by remember { mutableStateOf(setOf<Note>()) }
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val scope = rememberCoroutineScope()
@@ -112,8 +116,8 @@ fun ReminderScreen(
         actionType = actionType,
         viewModel = viewModel,
         clearAction = { clearNoteAction() },
-        isSearchExpanded = isSearchExpanded,
-        setSearchExpanded = { isSearchExpanded = it },
+        isSearchExpanded = isSearchBarVisible.value,
+        setSearchExpanded = { isSearchBarVisible.value = it },
         selectedNotes = selectedNotes,
         clearSelectedNotes = { selectedNotes = emptySet() },
         isSearchMode = isSearchMode,
@@ -133,29 +137,28 @@ fun ReminderScreen(
             AnimatedTopBar(
                 title = stringResource(R.string.reminder_topbar_title),
                 selectedNotes = selectedNotes,
-                isSearchActive = isSearchExpanded,
-                onSearchActiveChange = { isSearchExpanded = it },
+                isSearchActive = isSearchBarVisible.value,
+                onSearchActiveChange = { isSearchBarVisible.value = it },
                 onClearSelection = { selectedNotes = emptySet() },
                 onSetReminder = { showReminderDialog = true },
                 onPinNotes = {
                     handleAction(
                         viewModel::pinAndUnarchiveNotes,
-                        stringResource(R.string.snackbar_notes_pinned)
+                        "Notes pinned"
                     )
                 },
                 onUnarchiveNotes = {
+
                     handleAction(
                         viewModel::unarchiveNotes,
-                        stringResource(R.string.snackbar_notes_unarchived)
+                        "Notes unarchived"
                     )
                 },
                 onDeleteNotes = {
+
                     handleAction(
                         viewModel::trashNotes,
-                        stringResource(
-                            R.string.snackbar_notes_moved_to_trash,
-                            selectedNotes.size
-                        )
+                        "${selectedNotes.size} notes moved to trash"
                     )
                 },
                 onMenuClick = onMenuClick,
@@ -272,7 +275,7 @@ fun NoteGridTagsReminder(
             key = { it.note.id }
         ) { noteWithTags ->
             NoteItemTag(
-                modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
+                modifier = Modifier.animateItem(),
                 noteWithTags = noteWithTags,
                 gridLayout = gridLayout,
                 isSelected = noteWithTags.note in selectedNotes,
@@ -295,7 +298,7 @@ fun NoteGridTagsReminder(
             key = { it.note.id }
         ) { noteWithTags ->
             NoteItemTag(
-                modifier = Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
+                modifier = Modifier.animateItem(),
                 noteWithTags = noteWithTags,
                 gridLayout = gridLayout,
                 isSelected = noteWithTags.note in selectedNotes,

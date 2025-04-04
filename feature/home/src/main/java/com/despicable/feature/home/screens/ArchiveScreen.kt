@@ -78,7 +78,14 @@ fun ArchivedScreen(
 
     val snackbarMessage by viewModel.snackBarMessage.collectAsStateWithLifecycle()
 
-    val isSearchBarVisible = rememberSaveable { mutableStateOf(false) }
+    var isSearchMode by rememberSaveable { mutableStateOf(false) }
+
+    // Make sure this reflects the current search query state
+    val searchQuery by remember(uiState.searchQuery) { mutableStateOf(uiState.searchQuery) }
+
+    // Handle search visibility properly
+    var isSearchBarVisible = rememberSaveable { mutableStateOf(isSearchMode || searchQuery.isNotEmpty()) }
+
     val snackBarHostState = remember { SnackbarHostState() }
     var selectedNotes by remember { mutableStateOf(setOf<Note>()) }
 
@@ -86,7 +93,6 @@ fun ArchivedScreen(
     val scope = rememberCoroutineScope()
     var showReminderDialog by remember { mutableStateOf(false) }
 
-    var isSearchMode by rememberSaveable { mutableStateOf(false) }
 
 
     fun toggleSelection(note: Note) {
@@ -158,22 +164,19 @@ fun ArchivedScreen(
                 onPinNotes = {
                     handleAction(
                         viewModel::pinAndUnarchiveNotes,
-                        stringResource(
-                            R.string.snackbar_notes_pinned_and_un_archived,
-                            selectedNotes.size
-                        )
+                        "${selectedNotes.size} notes pinned and un-archived"
                     )
                 },
                 onUnarchiveNotes = {
                     handleAction(
                         viewModel::unarchiveNotes,
-                        stringResource(R.string.snackbar_notes_un_archived, selectedNotes.size)
+                        "${selectedNotes.size} notes un-archived"
                     )
                 },
                 onDeleteNotes = {
                     handleAction(
                         viewModel::trashNotes,
-                        stringResource(R.string.snackbar_notes_moved_to_trashed, selectedNotes.size)
+                        "${selectedNotes.size} notes moved to trash"
                     )
                 },
                 onMenuClick = onMenuClick,
@@ -247,11 +250,11 @@ fun AnimatedTopBar(
     isSearchActive: Boolean,
     onSearchActiveChange: (Boolean) -> Unit,
     onSetReminder: () -> Unit,
-    onPinNotes: @Composable () -> Unit,
-    onDeleteNotes: @Composable () -> Unit,
+    onPinNotes: () -> Unit,
+    onDeleteNotes: () -> Unit,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    onUnarchiveNotes: @Composable () -> Unit,
+    onUnarchiveNotes:() -> Unit,
     scrollBehavior: TopAppBarScrollBehavior
 ) {
     val isFocused = remember { mutableStateOf(true) }
@@ -324,11 +327,11 @@ fun AnimatedTopBar(
                 selectedNotes.isNotEmpty() -> {
                     SelectionTopBar(
                         onClearSelection = onClearSelection,
-                        onPinNotes = { onPinNotes },
-                        onUnpinNotes = { onPinNotes },
+                        onPinNotes = onPinNotes,
+                        onUnpinNotes = onPinNotes,
                         onSetReminder = onSetReminder,
-                        onUnarchiveNotes = { onUnarchiveNotes },
-                        onDeleteNotes = { onDeleteNotes },
+                        onUnarchiveNotes = onUnarchiveNotes,
+                        onDeleteNotes = onDeleteNotes,
                         selectedNotes = selectedNotes,
                         screenType = ScreenType.Archive,
                     )
