@@ -7,7 +7,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.lifecycleScope
-import com.despicable.widgets.mapper.toDomainChecklist
+import com.despicable.core.model.NoteContent
 import com.despicable.widgets.mapper.toDomainNote
 import com.despicable.widgets.model.WidgetConstants
 import com.despicable.widgets.model.WidgetNote
@@ -100,16 +100,23 @@ class ConfigWidgetActivity : ComponentActivity() {
     private suspend fun updateWidget(note: WidgetNote) {
         val glanceId = GlanceAppWidgetManager(applicationContext).getGlanceIdBy(widgetId)
 
-        // Convert WidgetNote to domain Note and include checklist items
+        // Convert WidgetNote to domain Note
         val domainNote = note.toDomainNote()
 
-        // Use widgetUpdater instead of direct update
+        // Extract checklist items if they exist
+        val checklistItems = when (note.content) {
+            is NoteContent.ChecklistItems -> {
+                note.content.items
+            }
+
+            else -> emptyList()
+        }
+
+        // Use widgetUpdater to update the widget
         widgetUpdater.updateWidgetFromConfig(
             glanceId,
             domainNote,
-            note.checklistItems.map {
-                it.toDomainChecklist(note.id.toLong())
-            }
+            checklistItems
         )
     }
 }

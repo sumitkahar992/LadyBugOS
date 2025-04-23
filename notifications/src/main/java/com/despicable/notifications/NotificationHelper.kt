@@ -11,7 +11,7 @@ class NotificationHelper(private val context: Context) {
                 context,
                 note.id,
                 note.title,
-                note.content,
+                "note.content",
                 reminderDate
             )
         }

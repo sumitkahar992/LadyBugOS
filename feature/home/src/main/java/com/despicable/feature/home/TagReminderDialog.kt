@@ -38,8 +38,11 @@ import com.despicable.core.designsystem.component.ReminderDialog
 import com.despicable.core.designsystem.component.TimePickerContent
 import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.designsystem.theme.LadyBugOSTheme
-import java.time.LocalDate
-import java.time.LocalTime
+import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
 
 @Composable
@@ -138,7 +141,7 @@ private fun ReminderDialogPreview() {
         ) {
             ReminderDialog(
                 showDialog = showDialog,
-                initialDate = System.currentTimeMillis(),
+                initialDate = Clock.System.now(),
                 onDismiss = { showDialog = false },
                 onSetReminder = { },
                 onDeleteReminder = { }
@@ -179,4 +182,12 @@ private fun DatePickerPreview() {
             )
         }
     }
+}
+
+fun LocalTime.Companion.now(timeZone: TimeZone = TimeZone.currentSystemDefault()): LocalTime {
+    return Clock.System.now().toLocalDateTime(timeZone).time
+}
+
+fun LocalDate.Companion.now(timeZone: TimeZone = TimeZone.currentSystemDefault()): LocalDate {
+    return Clock.System.now().toLocalDateTime(timeZone).date
 }

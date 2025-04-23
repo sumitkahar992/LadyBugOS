@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.datastore.preferences.core.Preferences
 import androidx.glance.Button
+import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
@@ -22,6 +23,8 @@ import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.action.ActionCallback
+import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
@@ -51,10 +54,19 @@ import com.despicable.core.designsystem.LightNoteColors
 import com.despicable.core.model.getRelativeTimeAgo
 import com.despicable.widgets.R
 import com.despicable.widgets.data.ConfigWidgetActivity
+import com.despicable.widgets.data.NoteWidgetRepository
+import com.despicable.widgets.data.WidgetUpdater
 import com.despicable.widgets.model.WidgetChecklistItem
 import com.despicable.widgets.model.WidgetKeys
+import com.despicable.widgets.ui.ToggleChecklistItemCallback.Companion.itemIdKey
+import com.despicable.widgets.ui.ToggleChecklistItemCallback.Companion.noteIdKey
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import timber.log.Timber
+
 
 class NoteWidget : GlanceAppWidget() {
     override var stateDefinition = PreferencesGlanceStateDefinition
@@ -71,17 +83,17 @@ class NoteWidget : GlanceAppWidget() {
     }
 }
 
-
 @Composable
 fun NoteWidgetContent(
     prefs: Preferences,
     context: Context,
-    widgetId: Int
-) {
+    widgetId: Int,
+
+    ) {
     val noteId = prefs[WidgetKeys.Prefs.noteId]?.toLongOrNull()
     val noteHeader = prefs[WidgetKeys.Prefs.noteHeader]
     val noteBody = prefs[WidgetKeys.Prefs.noteBody]
-    val updatedAt = prefs[WidgetKeys.Prefs.noteLastUpdate]
+    val updatedAtString = prefs[WidgetKeys.Prefs.noteLastUpdate]
     // Get the color index directly instead of creating a Color
     val colorId = prefs[WidgetKeys.Prefs.noteColor] ?: 0
     val isDeleted = prefs[WidgetKeys.Prefs.isDeleted] ?: false
@@ -92,7 +104,7 @@ fun NoteWidgetContent(
             // First try to decode as WidgetChecklistItem and convert to ChecklistItem
             val widgetItems = Json.decodeFromString<List<WidgetChecklistItem>>(it)
             widgetItems.map { item ->
-                ChecklistItem(
+                WidgetChecklistItem(
                     id = item.id,
                     content = item.content,
                     isChecked = item.isChecked,
@@ -130,6 +142,14 @@ fun NoteWidgetContent(
     Timber.tag("DEBUG").d("[ WIDGEET ] isCheckList = $isChecklist")
     Timber.tag("DEBUG").d("[ WIDGEET ] checklistItems = $checklistItems")
 
+// Parse updatedAtString into an Instant
+    val formattedDate = updatedAtString?.let {
+        try {
+            Instant.parse(it) // Converts the string to an Instant
+        } catch (e: Exception) {
+            null // Parsing failed
+        }
+    } ?: Instant.DISTANT_PAST // Default value if null or invalid
 
 
 
@@ -146,15 +166,15 @@ fun NoteWidgetContent(
                 ChecklistNote(
                     noteHeader = noteHeader,
                     checklistItems = checklistItems,
-                    updatedAt = "$updatedAt",
+                    updatedAt = formattedDate,
                     noteId = noteId,
-                    widgetId = widgetId
+                    widgetId = widgetId,
                 )
             } else {
                 SelectedNote(
                     noteHeader = noteHeader,
                     noteBody = "$noteBody",
-                    updatedAt = "$updatedAt",
+                    updatedAt = formattedDate,
                     noteId = noteId,
                     widgetId = widgetId
                 )
@@ -165,24 +185,17 @@ fun NoteWidgetContent(
     }
 }
 
-// Update the ChecklistItem class to match WidgetChecklistItem structure
-data class ChecklistItem(
-    val id: Long,  // Changed from String to Long to match WidgetChecklistItem
-    val content: String,  // Changed from text to content to match WidgetChecklistItem
-    val isChecked: Boolean,
-    val position: Int  // Added position field to match WidgetChecklistItem
-)
-
 
 @Composable
 fun ChecklistNote(
     noteHeader: String,
-    checklistItems: List<ChecklistItem>,
-    updatedAt: String,
+    checklistItems: List<WidgetChecklistItem>,
+    updatedAt: Instant,
     noteId: Long,
     widgetId: Int
+
 ) {
-    val formattedUpdateAt = getRelativeTimeAgo(updatedAt.toLong())
+    val formattedUpdateAt = getRelativeTimeAgo(updatedAt)
 
     Box(
         modifier = GlanceModifier.fillMaxSize()
@@ -238,9 +251,10 @@ fun ChecklistNote(
 
 @Composable
 fun ChecklistItemRow(
-    item: ChecklistItem,
+    item: WidgetChecklistItem,
     noteId: Long,
     widgetId: Int
+
 ) {
 
     Row(
@@ -252,7 +266,15 @@ fun ChecklistItemRow(
         // Checkbox
         Image(
             modifier = GlanceModifier
-                .size(20.dp),
+                .size(20.dp)
+                .clickable(
+                    actionRunCallback<ToggleChecklistItemCallback>(
+                        parameters = actionParametersOf(
+                            noteIdKey to noteId,
+                            itemIdKey to item.id,
+                        )
+                    )
+                ),
             /*       .clickable(
                        actionStartActivity(
                            AndroidDestinations.toggleChecklistItem(
@@ -266,7 +288,13 @@ fun ChecklistItemRow(
                 if (item.isChecked) R.drawable.check_box
                 else R.drawable.uncheck_box
             ),
-            contentDescription = if (item.isChecked) "Checked" else "Unchecked"
+            contentDescription = if (item.isChecked) "Checked" else "Unchecked",
+            colorFilter = ColorFilter.tint(
+                ColorProvider(
+                    day = Color.DarkGray,
+                    night = Color.LightGray
+                )
+            )
         )
 
         // Item text
@@ -288,15 +316,58 @@ fun ChecklistItemRow(
 }
 
 
+class ToggleChecklistItemCallback : ActionCallback, KoinComponent {
+
+    private val repository: NoteWidgetRepository by inject()
+    private val widgetUpdater: WidgetUpdater by inject() // Inject WidgetUpdater
+
+    override suspend fun onAction(
+        context: Context,
+        glanceId: GlanceId,
+        parameters: ActionParameters
+    ) {
+        val noteId = parameters[noteIdKey]
+        val itemId = parameters[itemIdKey]
+
+        if (noteId == null || itemId == null) {
+            return
+        }
+
+        // Toggle the checklist item in the database
+        repository.toggleChecklistItem(noteId, itemId)
+
+        // Fetch the updated note and checklist items
+        val updatedNote = repository.getNoteById(noteId).firstOrNull()
+        val checklistItems = repository.getChecklistItems(noteId) // Ensure this method exists
+
+        if (updatedNote != null && checklistItems != null) {
+            // Update the widget state with the full note and checklist data
+            widgetUpdater.updateWidgetFromConfig(glanceId, updatedNote, checklistItems)
+        } else if (checklistItems != null) {
+            // Fallback: update only the checklist items if the note fetch fails
+            widgetUpdater.updateWidgetStateWithChecklist(glanceId, noteId, checklistItems)
+        } else {
+            // Log an error if data can't be fetched
+            Timber.e("Failed to fetch updated data for note #$noteId after toggling checklist item")
+        }
+    }
+
+    companion object {
+        val noteIdKey = ActionParameters.Key<Long>("noteId")
+        val itemIdKey = ActionParameters.Key<Long>("itemId")
+    }
+}
+
+/*
 @Composable
 fun SelectedNote(
     noteHeader: String,
     noteBody: String,
-    updatedAt: String,
+    updatedAt: Instant,
     noteId: Long,
     widgetId: Int
 ) {
-    val formattedUpdateAt = getRelativeTimeAgo(updatedAt.toLong())
+    val formattedUpdateAt = getRelativeTimeAgo(updatedAt)
 
     Box(
         modifier = GlanceModifier
@@ -386,6 +457,7 @@ fun SelectedNote(
     }
 
 }
+*/
 
 
 @Composable
@@ -415,12 +487,12 @@ fun ZeroState(widgetId: Int) {
     }
 }
 
-/*@Composable
+@Composable
 fun SelectedNote(
-    noteId: String,
     noteHeader: String,
     noteBody: String,
-    updatedAt: String,
+    updatedAt: Instant,
+    noteId: Long,
     widgetId: Int
 ) {
 
@@ -431,8 +503,9 @@ fun SelectedNote(
     Column(
         modifier = GlanceModifier
             .fillMaxSize()
-            .clickable(actionOpenNote(noteId, widgetId))
-
+            .clickable {
+                actionStartActivity(AndroidDestinations.homeIntent(noteId))
+            }
     ) {
         Text(
             text = noteHeader,
@@ -469,8 +542,7 @@ fun SelectedNote(
             )
         )
     }
-}*/
-
+}
 
 
 object AndroidDestinations {

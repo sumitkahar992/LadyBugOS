@@ -11,6 +11,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ChecklistDao {
 
+    // Widgets
+    @Query("SELECT * FROM checklist_items WHERE noteid = :noteId AND id = :itemId")
+    suspend fun getChecklistItem(noteId: Long, itemId: Long): ChecklistEntity?
+
 
     // Checklist Operations
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -29,8 +33,8 @@ interface ChecklistDao {
     suspend fun deleteChecklistItem(itemId: Long)
 
 
-    @Query("UPDATE notes SET isChecklist = :isChecklist WHERE id = :noteId")
-    suspend fun updateNoteChecklist(noteId: Long, isChecklist: Boolean)
+//    @Query("UPDATE notes SET isChecklist = :isChecklist WHERE id = :noteId")
+//    suspend fun updateNoteChecklist(noteId: Long, isChecklist: Boolean)
 
     // BACK- UP
     @Query("SELECT * FROM checklist_items")

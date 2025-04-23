@@ -16,10 +16,13 @@ import androidx.work.workDataOf
 import com.despicable.core.data.repository.NoteRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
 
 class NotificationWorker(
     private val context: Context,
@@ -111,17 +114,17 @@ class NotificationWorker(
             noteId: Long,
             noteTitle: String,
             noteContent: String,
-            reminderTime: Long
+            reminderTime: Instant
         ) {
-            val delay = reminderTime - System.currentTimeMillis()
-            if (delay > 0) {
+            val delayDuration = reminderTime - Clock.System.now()
+            if (delayDuration > 0.milliseconds) {
                 val inputData = workDataOf(
                     KEY_NOTE_ID to noteId,
                     KEY_NOTE_TITLE to noteTitle,
                     KEY_NOTE_CONTENT to noteContent
                 )
                 val notificationWork = OneTimeWorkRequestBuilder<NotificationWorker>()
-                    .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+                    .setInitialDelay(delayDuration.inWholeMilliseconds, TimeUnit.MILLISECONDS)
                     .setInputData(inputData)
                     .build()
 

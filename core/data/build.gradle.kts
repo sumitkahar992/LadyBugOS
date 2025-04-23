@@ -23,4 +23,7 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
 
+    implementation (libs.androidx.paging.runtime.ktx)
+    implementation (libs.androidx.room.paging)
+
 }

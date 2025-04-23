@@ -9,6 +9,9 @@ import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
+import com.despicable.core.model.NoteContent
+import com.despicable.core.model.NoteType
+import com.despicable.widgets.mapper.toWidgetChecklistItem
 import com.despicable.widgets.model.WidgetChecklistItem
 import com.despicable.widgets.model.WidgetKeys
 import com.despicable.widgets.ui.NoteWidget
@@ -200,9 +203,35 @@ class WidgetUpdater(
     }
 
     // Public API methods
-/*    suspend fun updateWidgetFromConfig(glanceId: GlanceId, note: Note) =
-        executeUpdate(UpdateOperation.Configuration(glanceId, note))
-        */
+    /*    suspend fun updateWidgetFromConfig(glanceId: GlanceId, note: Note) =
+            executeUpdate(UpdateOperation.Configuration(glanceId, note))
+            */
+
+    /*    suspend fun updateWidgetFromConfig(
+            glanceId: GlanceId,
+            note: Note,
+            checklistItems: List<Checklist> = emptyList()
+        ) {
+            // Update basic note info
+            updateAppWidgetState(context, glanceId) { prefs ->
+                setNotePreferences(prefs, note)
+
+                // Also update checklist items if this is a checklist note
+                if (note.noteType == NoteType.CHECKLIST && checklistItems.isNotEmpty()) {
+                    val widgetItems = checklistItems.map { item ->
+                        WidgetChecklistItem(
+                            id = item.id,
+                            content = item.content,
+                            isChecked = item.isChecked,
+                            position = item.position
+                        )
+                    }
+                    prefs[WidgetKeys.Prefs.checklistItems] = Json.encodeToString(widgetItems)
+                }
+            }
+
+            NoteWidget().update(context, glanceId)
+        }*/
 
     suspend fun updateWidgetFromConfig(
         glanceId: GlanceId,
@@ -213,16 +242,21 @@ class WidgetUpdater(
         updateAppWidgetState(context, glanceId) { prefs ->
             setNotePreferences(prefs, note)
 
-            // Also update checklist items if this is a checklist note
-            if (note.isChecklist && checklistItems.isNotEmpty()) {
-                val widgetItems = checklistItems.map { item ->
-                    WidgetChecklistItem(
-                        id = item.id,
-                        content = item.content,
-                        isChecked = item.isChecked,
-                        position = item.position
-                    )
+            // Set note body based on content type
+            when (note.content) {
+                is NoteContent.Text -> {
+                    prefs[WidgetKeys.Prefs.noteBody] = (note.content as NoteContent.Text).text
                 }
+
+                is NoteContent.ChecklistItems -> {
+                    // Empty string for text content since we're using checklist items
+                    prefs[WidgetKeys.Prefs.noteBody] = ""
+                }
+            }
+
+            // Update checklist items if this is a checklist note
+            if (note.noteType == NoteType.CHECKLIST && checklistItems.isNotEmpty()) {
+                val widgetItems = checklistItems.map { it.toWidgetChecklistItem() }
                 prefs[WidgetKeys.Prefs.checklistItems] = Json.encodeToString(widgetItems)
             }
         }
@@ -275,7 +309,7 @@ class WidgetUpdater(
     )[WidgetKeys.Prefs.noteId]?.toLongOrNull()
 
 
-    private suspend fun updateWidgetStateWithChecklist(
+    suspend fun updateWidgetStateWithChecklist(
         glanceId: GlanceId,
         noteId: Long,
         checklistItems: List<Checklist>
@@ -294,7 +328,8 @@ class WidgetUpdater(
                 }
 
             // Log the checklist items for debugging
-            Timber.tag("DEBUG").d("updateWidgetStateWithChecklist: Encoding ${widgetChecklist.size} items for note $noteId")
+            Timber.tag("DEBUG")
+                .d("updateWidgetStateWithChecklist: Encoding ${widgetChecklist.size} items for note $noteId")
 
             // Store the encoded items
             prefs[WidgetKeys.Prefs.checklistItems] = Json.encodeToString(widgetChecklist)
@@ -325,7 +360,7 @@ class WidgetUpdater(
         with(prefs) {
             set(WidgetKeys.Prefs.noteId, note.id.toString())
             set(WidgetKeys.Prefs.noteHeader, note.title)
-            set(WidgetKeys.Prefs.noteBody, note.content)
+//            set(WidgetKeys.Prefs.noteBody, note.content)
             set(WidgetKeys.Prefs.noteLastUpdate, note.updateDate.toString())
 
             // Log color ID to verify it's being set correctly
@@ -335,14 +370,16 @@ class WidgetUpdater(
             set(WidgetKeys.Prefs.isDeleted, false)
 
             // Make sure to set the isChecklist flag correctly
-            prefs[WidgetKeys.Prefs.isChecklist] = note.isChecklist
+            prefs[WidgetKeys.Prefs.isChecklist] = note.noteType == NoteType.CHECKLIST
 
             // If it's not a checklist, clear any existing checklist items
-            if (!note.isChecklist) {
-                prefs[WidgetKeys.Prefs.checklistItems] = Json.encodeToString<List<WidgetChecklistItem>>(emptyList())
+            if (note.noteType != NoteType.CHECKLIST) {
+                prefs[WidgetKeys.Prefs.checklistItems] =
+                    Json.encodeToString<List<WidgetChecklistItem>>(emptyList())
             }
 
-            Timber.tag("DEBUG").d("setNotePreferences: Set isChecklist=${note.isChecklist} for note ${note.id}")
+            Timber.tag("DEBUG")
+                .d("setNotePreferences: Set isChecklist=${note.noteType == NoteType.CHECKLIST} for note ${note.id}")
 
         }
     }

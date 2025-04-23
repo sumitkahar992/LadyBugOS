@@ -174,6 +174,8 @@ fun SettingsScreen(
                 )
             }
 
+
+
             SettingsSection(title = "Miscellaneous") {
                 SettingsItem(
                     title = "License & Acknowledgement",

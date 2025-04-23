@@ -11,6 +11,9 @@ android {
 
 dependencies {
 
+    api(projects.core.model)
+
+
 
     implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.androidx.compose)
@@ -23,6 +26,8 @@ dependencies {
 
 
 
+    implementation (libs.androidx.paging.runtime.ktx)
+    implementation (libs.androidx.room.paging)
 
 
 }

@@ -3,14 +3,13 @@ package com.despicable.widgets.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.despicable.core.data.repository.NoteRepository
-import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
-import com.despicable.core.model.NoteWithTags
+import com.despicable.core.model.NoteType
 import com.despicable.core.model.Tag
 import com.despicable.widgets.data.CoroutineDispatchers
 import com.despicable.widgets.data.NoteWidgetRepository
+import com.despicable.widgets.mapper.toWidgetChecklistItem
 import com.despicable.widgets.model.WidgetChecklistItem
-import com.despicable.widgets.model.WidgetNote
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -91,16 +90,17 @@ class NoteSelectionViewModel(
                 coroutineScope {
                     val notesWithChecklist = allNotes.map { noteWithTags ->
                         async {
-                            val checklistItems = if (noteWithTags.note.isChecklist) {
-                                try {
-                                    repo.getChecklistItemsByNoteId(noteWithTags.note.id).first()
-                                } catch (e: Exception) {
-                                    Timber.e(e, "Error loading checklist items")
+                            val checklistItems =
+                                if (noteWithTags.note.noteType == NoteType.CHECKLIST) {
+                                    try {
+                                        repo.getChecklistItemsByNoteId(noteWithTags.note.id).first()
+                                    } catch (e: Exception) {
+                                        Timber.e(e, "Error loading checklist items")
+                                        emptyList()
+                                    }
+                                } else {
                                     emptyList()
                                 }
-                            } else {
-                                emptyList()
-                            }
                             NotesTagsChecklist(
                                 note = noteWithTags.note,
                                 tags = noteWithTags.tags,
@@ -127,32 +127,9 @@ class NoteSelectionViewModel(
         }
     }
 
-    private fun List<NoteWithTags>.filterActive() =
-        filter { !it.note.isTrashed && !it.note.isArchived }
+
 }
 
-// Extension function to convert NoteWithTags to WidgetNote
-fun NotesTagsChecklist.toWidgetNote(): WidgetNote {
-    return WidgetNote(
-        id = note.id.toString(),
-        title = note.title,
-        content = note.content,
-        lastUpdate = note.updateDate.toString(),
-        reminderDate = note.reminderDate.toString(),
-        color = note.lightColor,
-        isChecklist = note.isChecklist,
-        checklistItems = checklistItems
-    )
-}
-
-fun Checklist.toWidgetChecklistItem(): WidgetChecklistItem {
-    return WidgetChecklistItem(
-        id = id,
-        content = content,
-        isChecked = isChecked,
-        position = position
-    )
-}
 
 
 

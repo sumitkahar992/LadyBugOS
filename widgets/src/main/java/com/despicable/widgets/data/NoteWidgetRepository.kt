@@ -10,8 +10,12 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.despicable.core.data.repository.NoteRepository
+import com.despicable.core.model.Checklist
+import com.despicable.core.model.Note
+import com.despicable.widgets.model.WidgetChecklistItem
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
@@ -176,4 +180,29 @@ class NoteWidgetRepository @Inject constructor(
             WidgetResult.Error(e)
         }
     }
+
+    suspend fun toggleChecklistItem(noteId: Long, itemId: Long) {
+        withContext(dispatchers.io) {
+            val item = repo.getChecklistItem(noteId, itemId)
+            if (item != null) {
+                val updatedItem = item.copy(isChecked = !item.isChecked)
+                repo.updateChecklistItem(updatedItem)
+            }
+
+
+        }
+    }
+
+    // Add this method
+    suspend fun getChecklistItems(noteId: Long): List<Checklist> {
+        return repo.getChecklistItemsByNoteId(noteId).first()
+
+    }
+
+    // Existing method
+    suspend fun getNoteById(noteId: Long): Flow<Note?> {
+        return repo.getNoteById(noteId)
+    }
+
+
 }

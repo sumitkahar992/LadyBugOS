@@ -10,7 +10,6 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import kotlinx.serialization.Serializable
 
-@SuppressLint("UnsafeOptInUsageError")
 @Serializable
 @Entity(
     tableName = "tags",
@@ -22,7 +21,6 @@ data class TagEntity(
     val name: String,
 )
 
-@SuppressLint("UnsafeOptInUsageError")
 @Serializable
 @Entity(
     tableName = "note_tag_cross_ref",
@@ -50,7 +48,6 @@ data class NoteTagRefEntity(
 )
 
 
-@SuppressLint("UnsafeOptInUsageError")
 @Serializable
 data class NoteWithTagsEntity(
     @Embedded val note: NoteEntity,

@@ -40,7 +40,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.despicable.core.designsystem.DarkNoteColors
 import com.despicable.core.designsystem.LightNoteColors
+import com.despicable.core.model.NoteContent
 import com.despicable.core.model.getRelativeTimeAgo
+import com.despicable.widgets.mapper.toWidgetNote
 import com.despicable.widgets.model.WidgetNote
 import org.koin.androidx.compose.koinViewModel
 
@@ -193,65 +195,70 @@ fun NotePreview(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Content - either checklist or regular note
-            if (note.isChecklist) {
-                // Show checklist items
-                note.checklistItems.take(6).forEach { item ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = if (item.isChecked)
-                                Icons.Filled.CheckBox
-                            else
-                                Icons.Filled.CheckBoxOutlineBlank,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
 
-                        Spacer(modifier = Modifier.width(8.dp))
+            when (val content = note.content) {
+                is NoteContent.ChecklistItems -> {
+                    // Show checklist items
 
+                    content.items.take(6).forEach { item ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (item.isChecked)
+                                    Icons.Filled.CheckBox
+                                else
+                                    Icons.Filled.CheckBoxOutlineBlank,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Text(
+                                text = item.content,
+                                style = MaterialTheme.typography.bodyMedium,
+                                textDecoration = if (item.isChecked)
+                                    TextDecoration.LineThrough
+                                else
+                                    null,
+                                color = if (item.isChecked)
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                else
+                                    MaterialTheme.colorScheme.onSurface,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+
+                    // Show "more items" if there are more than 3
+                    if (content.items.size > 6) {
                         Text(
-                            text = item.content,
-                            style = MaterialTheme.typography.bodyMedium,
-                            textDecoration = if (item.isChecked)
-                                TextDecoration.LineThrough
-                            else
-                                null,
-                            color = if (item.isChecked)
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                            else
-                                MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            text = "+ ${content.items.size - 6} more items",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontStyle = FontStyle.Italic,
+                            modifier = Modifier.padding(top = 4.dp)
                         )
                     }
                 }
 
-                // Show "more items" if there are more than 3
-                if (note.checklistItems.size > 6) {
+                is NoteContent.Text -> {
+                    // Regular note content
                     Text(
-                        text = "+ ${note.checklistItems.size - 6} more items",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontStyle = FontStyle.Italic,
-                        modifier = Modifier.padding(top = 4.dp)
+                        text = content.text,
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-            } else {
-                // Regular note content
-                Text(
-                    text = note.content,
-                    style = MaterialTheme.typography.bodyMedium,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
             }
-
             // Last updated
             Text(
-                text = "Last updated: ${getRelativeTimeAgo(note.lastUpdate.toLong())}",
+                text = "Last updated: ${getRelativeTimeAgo(note.lastUpdate)}",
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -262,6 +269,7 @@ fun NotePreview(
     }
 }
 
+/*
 
 @Composable
 fun NoteListItem(
@@ -287,16 +295,21 @@ fun NoteListItem(
             Spacer(modifier = Modifier.height(4.dp))
 
 
-            /*       note.reminderDate?.let { reminderDate ->
+            */
+/*       note.reminderDate?.let { reminderDate ->
                        Spacer(modifier = Modifier.height(8.dp))
                        ReminderInfo(
                            reminderDate = reminderDate,
                            isDone = note.isDone,
                            onClick = {}
                        )
-                   }*/
+                   }*//*
+
         }
     }
 }
+
+
+*/
 
 

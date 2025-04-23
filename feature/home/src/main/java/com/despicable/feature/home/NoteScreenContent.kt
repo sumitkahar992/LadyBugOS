@@ -8,12 +8,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.despicable.core.designsystem.component.EmptyStateContent
+import com.despicable.core.model.NoteComplete
 
 @Composable
 fun NoteScreenContent(
     modifier: Modifier = Modifier,
     paddingValues: PaddingValues,
-    notes: List<NoteWithTagsAndChecklist>,
+    notes: List<NoteComplete>,
     isInitialized: Boolean,
     searchQuery: String,
     emptyIcon: Int,
@@ -59,7 +60,7 @@ enum class NoteScreenState {
 
 // Helper function to determine the screen state
 fun getNoteScreenState(
-    notes: List<NoteWithTagsAndChecklist>,
+    notes: List<NoteComplete>,
     isInitialized: Boolean,
     searchQuery: String,
 ): NoteScreenState {

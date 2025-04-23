@@ -10,17 +10,33 @@ import androidx.room.Update
 import androidx.room.withTransaction
 import com.despicable.core.database.NoteDatabase
 import com.despicable.core.database.model.ChecklistEntity
-import com.despicable.core.database.model.NoteComplete
+import com.despicable.core.database.model.HabitEntity
+import com.despicable.core.database.model.NoteCompleteEntity
 import com.despicable.core.database.model.NoteEntity
 import com.despicable.core.database.model.NoteTagRefEntity
 import com.despicable.core.database.model.NoteWithTagsEntity
 import com.despicable.core.database.model.TagEntity
+import com.despicable.core.model.NoteComplete
+import com.despicable.core.model.NoteType
+import com.despicable.core.model.Tag
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 
 
 @Dao
 interface NoteDao {
+
+
+    // Fetch all notes with their checklist items
+    @Transaction
+    @Query("SELECT * FROM notes")
+    suspend fun getAllNotesData(): List<NoteCompleteEntity>
+
+    // Fetch all tags
+    @Query("SELECT * FROM tags")
+    suspend fun getAllTagsData(): List<TagEntity>
+
+
     // Basic Note Operations
     @Query("SELECT * FROM notes WHERE isArchived = 0 AND isTrashed = 0 ORDER BY isPinned DESC, updateDate DESC")
     fun getAllActiveNotes(): Flow<List<NoteEntity>>
@@ -43,36 +59,36 @@ interface NoteDao {
     // Relationship Queries
     @Transaction
     @Query("SELECT * FROM notes WHERE isArchived = 0 AND isTrashed = 0 ORDER BY isPinned DESC, updateDate DESC")
-    fun getAllActiveNotesWithTags(): Flow<List<NoteWithTagsEntity>>
+    fun getAllActiveNotesWithTags(): Flow<List<NoteCompleteEntity>>
 
     @Transaction
     @Query("SELECT * FROM notes WHERE id = :id")
-    fun getNoteWithTagsById(id: Long): Flow<NoteWithTagsEntity?>
+    fun getNoteWithTagsById(id: Long): Flow<NoteCompleteEntity?>
 
     @Transaction
     @Query("SELECT * FROM notes WHERE id = :id")
-    fun getNoteCompleteById(id: Long): Flow<NoteComplete?>
+    fun getNoteCompleteById(id: Long): Flow<NoteCompleteEntity?>
 
     // Filtered Queries
     @Transaction
     @Query("SELECT * FROM notes WHERE isPinned = 1 AND isArchived = 0 AND isTrashed = 0 ORDER BY pinnedDate DESC")
-    fun getPinnedNotes(): Flow<List<NoteWithTagsEntity>>
+    fun getPinnedNotes(): Flow<List<NoteCompleteEntity>>
 
     @Transaction
     @Query("SELECT * FROM notes WHERE isArchived = 1 AND isTrashed = 0 ORDER BY updateDate DESC")
-    fun getArchivedNotes(): Flow<List<NoteWithTagsEntity>>
+    fun getArchivedNotes(): Flow<List<NoteCompleteEntity>>
 
     @Transaction
     @Query("SELECT * FROM notes WHERE isTrashed = 1 ORDER BY updateDate DESC")
-    fun getTrashedNotes(): Flow<List<NoteWithTagsEntity>>
+    fun getTrashedNotes(): Flow<List<NoteCompleteEntity>>
 
     @Transaction
     @Query("SELECT * FROM notes WHERE reminderDate IS NOT NULL AND reminderDate > :currentTime AND isDone = 0 AND isTrashed = 0 ORDER BY reminderDate ASC")
-    fun getUpcomingReminders(currentTime: Long = System.currentTimeMillis()): Flow<List<NoteWithTagsEntity>>
+    fun getUpcomingReminders(currentTime: Long = System.currentTimeMillis()): Flow<List<NoteCompleteEntity>>
 
     @Transaction
     @Query("SELECT * FROM notes WHERE reminderDate IS NOT NULL AND isDone = 1 AND isTrashed = 0 ORDER BY reminderDate DESC")
-    fun getCompletedReminders(): Flow<List<NoteWithTagsEntity>>
+    fun getCompletedReminders(): Flow<List<NoteCompleteEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCrossRefs(crossRefs: List<NoteTagRefEntity>)
@@ -82,9 +98,12 @@ interface NoteDao {
     suspend fun insertNoteWithTagsAndChecklist(
         note: NoteEntity,
         tagIds: List<Long>,
-        checklistItems: List<ChecklistEntity>,
-        checklistDao: ChecklistDao
+        checklistItems: List<ChecklistEntity> = emptyList(),
+        habitItems: List<HabitEntity> = emptyList(),
+        checklistDao: ChecklistDao,
+        habitDao: HabitDao
     ): Long {
+        // Insert the base note
         val noteId = insertNote(note)
 
         // Insert tag cross-references
@@ -92,12 +111,45 @@ interface NoteDao {
             insertNoteTagCrossRef(NoteTagRefEntity(noteId, tagId))
         }
 
-        // Insert checklist items
+        // Insert checklist items  &  habit items
+        when(note.noteType) {
+            NoteType.TEXT -> {}
+            NoteType.CHECKLIST -> insertChecklistItems(noteId, checklistItems, checklistDao)
+        }
+
+
         checklistItems.forEachIndexed { index, item ->
             checklistDao.insertChecklistItem(item.copy(noteId = noteId, position = index))
         }
 
         return noteId
+    }
+
+
+    /**
+     * Helper to insert checklist items
+     */
+    private suspend fun insertChecklistItems(
+        noteId: Long,
+        checklistItems: List<ChecklistEntity>,
+        checklistDao: ChecklistDao
+    ) {
+        checklistItems.forEachIndexed { index, item ->
+            checklistDao.insertChecklistItem(item.copy(noteId = noteId, position = index))
+        }
+    }
+
+    /**
+     * Helper to insert habit tracker items
+     */
+    private suspend fun insertHabitItems(
+        noteId: Long,
+        habitItems: List<HabitEntity>,
+        habitDao: HabitDao
+    ) {
+        habitItems.forEachIndexed { index, item ->
+            habitDao.insertHabitItem(item.copy(noteId = noteId))
+        }
     }
 
     @Transaction
@@ -153,7 +205,7 @@ interface NoteDao {
     // Search
     @Transaction
     @Query("SELECT * FROM notes WHERE (title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%') AND isTrashed = 0 ORDER BY updateDate DESC")
-    fun searchNotes(query: String): Flow<List<NoteWithTagsEntity>>
+    fun searchNotes(query: String): Flow<List<NoteCompleteEntity>>
 
 
     // Add this if it doesn't exist
@@ -241,7 +293,7 @@ interface NoteDao {
                             isTrashed = backupNote.isTrashed,
                             reminderDate = backupNote.reminderDate,
                             isDone = backupNote.isDone,
-                            isChecklist = backupNote.isChecklist
+//                            isChecklist = backupNote.isChecklist
                         )
                     )
                 }
@@ -284,8 +336,8 @@ interface NoteDao {
                 existingNote.isArchived != backupNote.isArchived ||
                 existingNote.isTrashed != backupNote.isTrashed ||
                 existingNote.reminderDate != backupNote.reminderDate ||
-                existingNote.isDone != backupNote.isDone ||
-                existingNote.isChecklist != backupNote.isChecklist
+                existingNote.isDone != backupNote.isDone
+//                existingNote.isChecklist != backupNote.isChecklist
     }
 
 

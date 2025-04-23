@@ -17,6 +17,7 @@ val databaseModule = module {
     single { get<NoteDatabase>().noteDao() }
     single { get<NoteDatabase>().tagDao() }
     single { get<NoteDatabase>().checklistDao() }
+    single { get<NoteDatabase>().habitDao() }
 
 
 }

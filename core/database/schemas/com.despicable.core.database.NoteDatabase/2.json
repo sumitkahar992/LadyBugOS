@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "4facd042d77a8ef1325932595babd8e6",
+    "identityHash": "bb3d7d76eb5665a152af3257e4576493",
     "entities": [
       {
         "tableName": "notes",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `content` TEXT NOT NULL, `updateDate` INTEGER NOT NULL, `lightColor` INTEGER NOT NULL, `isPinned` INTEGER NOT NULL, `pinnedDate` INTEGER, `isArchived` INTEGER NOT NULL, `isTrashed` INTEGER NOT NULL, `reminderDate` INTEGER, `isDone` INTEGER NOT NULL, `isChecklist` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `content` TEXT NOT NULL, `creationDate` INTEGER NOT NULL, `updateDate` INTEGER NOT NULL, `lightColor` INTEGER NOT NULL, `isPinned` INTEGER NOT NULL, `pinnedDate` INTEGER, `isArchived` INTEGER NOT NULL, `isTrashed` INTEGER NOT NULL, `reminderDate` INTEGER, `isDone` INTEGER NOT NULL, `noteType` TEXT NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -24,6 +24,12 @@
             "fieldPath": "content",
             "columnName": "content",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "creationDate",
+            "columnName": "creationDate",
+            "affinity": "INTEGER",
             "notNull": true
           },
           {
@@ -75,9 +81,9 @@
             "notNull": true
           },
           {
-            "fieldPath": "isChecklist",
-            "columnName": "isChecklist",
-            "affinity": "INTEGER",
+            "fieldPath": "noteType",
+            "columnName": "noteType",
+            "affinity": "TEXT",
             "notNull": true
           }
         ],
@@ -291,12 +297,96 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "habit_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `noteId` INTEGER NOT NULL, `habitName` TEXT NOT NULL, `targetDays` INTEGER NOT NULL, `completedDays` INTEGER NOT NULL, `startDate` INTEGER NOT NULL, `lastUpdated` INTEGER NOT NULL, `completions` TEXT NOT NULL, FOREIGN KEY(`noteId`) REFERENCES `notes`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "noteId",
+            "columnName": "noteId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "habitName",
+            "columnName": "habitName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetDays",
+            "columnName": "targetDays",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completedDays",
+            "columnName": "completedDays",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startDate",
+            "columnName": "startDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUpdated",
+            "columnName": "lastUpdated",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "completions",
+            "columnName": "completions",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_habit_items_noteId",
+            "unique": false,
+            "columnNames": [
+              "noteId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_habit_items_noteId` ON `${TABLE_NAME}` (`noteId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "notes",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "noteId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4facd042d77a8ef1325932595babd8e6')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bb3d7d76eb5665a152af3257e4576493')"
     ]
   }
 }

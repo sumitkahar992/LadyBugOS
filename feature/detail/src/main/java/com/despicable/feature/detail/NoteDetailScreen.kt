@@ -79,7 +79,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -121,6 +120,7 @@ import com.despicable.core.designsystem.component.ReminderInfo
 import com.despicable.core.designsystem.component.TagChip
 import com.despicable.core.designsystem.component.rememberTagColors
 import com.despicable.core.designsystem.rememberNoteColor
+import com.despicable.core.model.NoteType
 import com.despicable.core.model.getRelativeTimeAgo
 import com.despicable.feature.detail.components.AddItemButton
 import com.despicable.feature.detail.components.ChecklistItem
@@ -215,20 +215,25 @@ fun NoteDetailScreen(
 
     BackHandler(true) {
         Timber.tag("DEBUG").d("[]BackHandler[]")
-        onBack()
+//        onBack()
+        viewModel.deleteNoteIfEmpty()
+        viewModel.saveNote(
+            onComplete = onBack,
+            onSkip = onBack
+        )
     }
 
 
-    // Note Detail screen
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.deleteNoteIfEmpty()
-            viewModel.saveNote(
-                onComplete = onBack,
-                onSkip = onBack
-            )
-        }
-    }
+    /*    // Note Detail screen
+        DisposableEffect(Unit) {
+            onDispose {
+                viewModel.deleteNoteIfEmpty()
+                viewModel.saveNote(
+                    onComplete = onBack,
+                    onSkip = onBack
+                )
+            }
+        }*/
 
     val sharedTransitionScope = LocalSharedTransitionScope.current
         ?: throw IllegalStateException("No Scope found")
@@ -412,7 +417,14 @@ fun NoteDetailScreen(
             containerColor = containerColor
         ) {
             LeftBottomSheetContent(
-                containerColor = containerColor
+                containerColor = containerColor,
+                copyNote = {
+                    viewModel.makeNoteCopy(
+                        note = uiState.toNote(),
+                        onCopySuccess = onBack
+                    )
+                    showLeftBottomSheet = false
+                },
             )
         }
     }
@@ -443,7 +455,7 @@ fun NoteDetailScreen(
                 },
                 onDeleteForever = { showDeleteDialog = true },
                 containerColor = containerColor,
-                isChecklist = uiState.isCheckList,
+                isChecklist = uiState.noteType == NoteType.CHECKLIST,
                 onToggleChecklist = {
                     viewModel.onEvent(CheckListEvent.ToggleChecklist)
                     showRightBottomSheet = false
@@ -537,12 +549,12 @@ fun EditNoteContent(
                 keyboardActions = KeyboardActions(
                     onNext = {
                         when {
-                            uiState.isCheckList && list.isEmpty() -> {
+                            uiState.noteType == NoteType.CHECKLIST && list.isEmpty() -> {
                                 // When checklist is empty, add first item and focus it
                                 viewModel.onEvent(CheckListEvent.AddChecklistItemAt(0))
                             }
 
-                            uiState.isCheckList -> {
+                            uiState.noteType == NoteType.CHECKLIST -> {
                                 // Focus first item if checklist exists
                                 viewModel.onEvent(CheckListEvent.UpdateFocusedPosition(0))
                             }
@@ -554,11 +566,14 @@ fun EditNoteContent(
                         }
 
                         // Move cursor to end of content
-                        onContentChange(
-                            uiState.contentFieldValue.copy(
-                                selection = TextRange(uiState.contentFieldValue.text.length)
+                        // Get current content field value and move cursor to end
+                        uiState.getContentFieldValue()?.let { fieldValue ->
+                            onContentChange(
+                                fieldValue.copy(
+                                    selection = TextRange(fieldValue.text.length)
+                                )
                             )
-                        )
+                        }
                     }
                 )
             )
@@ -568,88 +583,89 @@ fun EditNoteContent(
 
         // Content section
 
-        Timber.tag("DEBUG").d("[(uiState.isCheckList]-[${uiState.isCheckList}]")
+
+        when (uiState.noteType) {
+            NoteType.TEXT -> {
+                item("Content") {
+                    NoteContentSection(
+                        modifier = skipModifier.focusRequester(contentFocusRequester),
+                        uiState = uiState,
+                        onContentChange = onContentChange,
+                        enabled = enabled,
+                        onDisabledClick = onDisabledClick,
+                    )
+                }
+            }
+
+            NoteType.CHECKLIST -> {
+
+                itemsIndexed(
+                    items = list,
+                    key = { _, item -> item.id }
+                ) { index, item ->
+
+                    val shouldFocus = index == uiState.focusedItemPosition
+                    val itemFocusRequester = remember(item.id) { FocusRequester() }
 
 
-        if (uiState.isCheckList) {
+                    ReorderableItem(
+                        state = reorderableState,
+                        key = item.id
+                    ) { isDragging ->
 
-            itemsIndexed(
-                items = list,
-                key = { _, item -> item.id }
-            ) { index, item ->
-
-                val shouldFocus = index == uiState.focusedItemPosition
-                val itemFocusRequester = remember(item.id) { FocusRequester() }
-
-
-                ReorderableItem(
-                    state = reorderableState,
-                    key = item.id
-                ) { isDragging ->
-
-                    ChecklistItem(
-                        modifier = Modifier
-                            .draggableHandle(
-                                onDragStarted = {
-                                    focusManager.clearFocus()
-                                    viewModel.onEvent(CheckListEvent.UpdateFocusedPosition(-1))
-                                },
-                                onDragStopped = {}
-                            ),
-                        item = item,
-                        onCheckedChange = {
-                            viewModel.onEvent(CheckListEvent.ChecklistItemChecked(item))
-                        },
-                        onContentChange = { content ->
-                            viewModel.onEvent(
-                                CheckListEvent.UpdateChecklistItemContent(
-                                    item,
-                                    content
+                        ChecklistItem(
+                            modifier = Modifier
+                                .draggableHandle(
+                                    onDragStarted = {
+                                        focusManager.clearFocus()
+                                        viewModel.onEvent(CheckListEvent.UpdateFocusedPosition(-1))
+                                    },
+                                    onDragStopped = {}
+                                ),
+                            item = item,
+                            onCheckedChange = {
+                                viewModel.onEvent(CheckListEvent.ChecklistItemChecked(item))
+                            },
+                            onContentChange = { content ->
+                                viewModel.onEvent(
+                                    CheckListEvent.UpdateChecklistItemContent(
+                                        item,
+                                        content
+                                    )
                                 )
-                            )
-                        },
-                        onDelete = {
-                            viewModel.onEvent(CheckListEvent.RemoveChecklistItem(index))
-                        },
-                        onNext = {
-                            viewModel.onEvent(CheckListEvent.AddChecklistItemAt(index + 1))
-                        },
-                        focusRequester = itemFocusRequester,
-                        shouldFocus = shouldFocus,
-                        isDragging = isDragging,
-                        onFocusChange = { focused ->
-                            if (focused) {
-                                keyboardController?.show()
+                            },
+                            onDelete = {
+                                viewModel.onEvent(CheckListEvent.RemoveChecklistItem(index))
+                            },
+                            onNext = {
+                                viewModel.onEvent(CheckListEvent.AddChecklistItemAt(index + 1))
+                            },
+                            focusRequester = itemFocusRequester,
+                            shouldFocus = shouldFocus,
+                            isDragging = isDragging,
+                            onFocusChange = { focused ->
+                                if (focused) {
+                                    keyboardController?.show()
+                                }
                             }
+                        )
+                    }
+
+                    LaunchedEffect(list.isEmpty()) {
+                        if (list.isEmpty()) {
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        }
+                    }
+                }
+
+                item {
+                    AddItemButton(
+                        onAddClick = {
+                            viewModel.onEvent(CheckListEvent.AddChecklistItemAt(list.size))
                         }
                     )
                 }
-
-                LaunchedEffect(list.isEmpty()) {
-                    if (list.isEmpty()) {
-                        focusManager.clearFocus()
-                        keyboardController?.hide()
-                    }
-                }
-            }
-
-            item {
-                AddItemButton(
-                    onAddClick = {
-                        viewModel.onEvent(CheckListEvent.AddChecklistItemAt(list.size))
-                    }
-                )
-            }
-
-        } else {
-            item("Content") {
-                NoteContentSection(
-                    modifier = skipModifier.focusRequester(contentFocusRequester),
-                    uiState = uiState,
-                    onContentChange = onContentChange,
-                    enabled = enabled,
-                    onDisabledClick = onDisabledClick,
-                )
             }
         }
 
@@ -782,6 +798,7 @@ fun NoteTitleSection(
     onDisabledClick: () -> Unit,
     keyboardActions: KeyboardActions
 ) {
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -818,6 +835,12 @@ fun NoteContentSection(
     enabled: Boolean = true,
     onDisabledClick: () -> Unit,
 ) {
+    // Get content field value based on the note type
+    val contentFieldValue = uiState.getContentFieldValue() ?: TextFieldValue("")
+
+    Timber.tag("DEBUG").d("contentFieldValue = {$contentFieldValue}")
+
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -825,7 +848,7 @@ fun NoteContentSection(
     ) {
 
         NoteTextField(
-            value = uiState.contentFieldValue,
+            value = contentFieldValue,
             onValueChange = onContentChange,
             type = NoteFieldType.Content,
             modifier = Modifier.fillMaxWidth(),
@@ -1212,6 +1235,7 @@ private fun NoteDetailBottomBar(
 @Composable
 private fun LeftBottomSheetContent(
     containerColor: Color = MaterialTheme.colorScheme.surface,
+    copyNote: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -1229,7 +1253,7 @@ private fun LeftBottomSheetContent(
         BottomSheetItem(
             icon = Icons.Default.ContentCopy,
             text = "Make a copy",
-            onClick = { /* Handle copy */ }
+            onClick = copyNote
         )
         BottomSheetItem(
             icon = Icons.Default.Share,

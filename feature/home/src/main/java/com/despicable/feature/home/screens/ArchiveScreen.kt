@@ -84,7 +84,7 @@ fun ArchivedScreen(
     val searchQuery by remember(uiState.searchQuery) { mutableStateOf(uiState.searchQuery) }
 
     // Handle search visibility properly
-    var isSearchBarVisible = rememberSaveable { mutableStateOf(isSearchMode || searchQuery.isNotEmpty()) }
+    val isSearchBarVisible = rememberSaveable { mutableStateOf(isSearchMode || searchQuery.isNotEmpty()) }
 
     val snackBarHostState = remember { SnackbarHostState() }
     var selectedNotes by remember { mutableStateOf(setOf<Note>()) }

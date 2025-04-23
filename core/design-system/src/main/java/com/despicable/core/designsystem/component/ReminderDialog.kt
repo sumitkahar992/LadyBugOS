@@ -32,17 +32,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.todayIn
+
 
 @Composable
 fun ReminderDialog(
     showDialog: Boolean,
-    initialDate: Long? = null,
+    initialDate: Instant? = null,
     onDismiss: () -> Unit,
     onSetReminder: (Long?) -> Unit,
     onDeleteReminder: () -> Unit
@@ -55,11 +61,9 @@ fun ReminderDialog(
     var showTimePicker by remember { mutableStateOf(false) }
     var showPastDateError by remember { mutableStateOf(false) }
 
-    // Initialize with initial date if provided
+// Convert initial Instant to LocalDateTime if provided
     val initialDateTime = remember(initialDate) {
-        initialDate?.let {
-            Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault())
-        }
+        initialDate?.toLocalDateTime(TimeZone.currentSystemDefault())
     }
 
     var selectedTime by remember {
@@ -71,11 +75,7 @@ fun ReminderDialog(
             }
         )
     }
-    var customTime by remember {
-        mutableStateOf(
-            initialDateTime?.toLocalTime()
-        )
-    }
+    var customTime by remember { mutableStateOf(initialDateTime?.time) }
 
     var selectedDate by remember {
         mutableStateOf(
@@ -86,21 +86,18 @@ fun ReminderDialog(
             }
         )
     }
-    var customDate by remember {
-        mutableStateOf(
-            initialDateTime?.toLocalDate()
-        )
-    }
+    var customDate by remember { mutableStateOf(initialDateTime?.date) }
 
     var selectedRepeat by remember { mutableStateOf(RepeatOption.DOES_NOT_REPEAT) }
 
     // Calculate if selected date/time is in the past
+// Calculate selected DateTime as Instant
     val selectedDateTime = remember(selectedDate, selectedTime, customDate, customTime) {
         val date = customDate ?: selectedDate.getLocalDate()
         val time = customTime ?: selectedTime.getLocalTime()
-        date.atTime(time).atZone(ZoneId.systemDefault())
+        LocalDateTime(date, time).toInstant(TimeZone.currentSystemDefault())
     }
-    val isInPast = selectedDateTime.toInstant().toEpochMilli() < System.currentTimeMillis()
+    val isInPast = selectedDateTime < Clock.System.now()
 
     if (showDialog) {
         AlertDialog(
@@ -143,17 +140,10 @@ fun ReminderDialog(
                             Box {
                                 Column {
                                     MenuButton(
-                                        text = when {
-                                            customTime != null -> customTime!!.format(
-                                                DateTimeFormatter.ofPattern("h:mm a")
-                                            )
-
-                                            else -> selectedTime.label
-                                        },
-                                        secondaryText = when {
-                                            customTime != null -> null
-                                            else -> selectedTime.timeString
-                                        },
+                                        text = customTime?.let { formatTime(it) }
+                                            ?: selectedTime.label,
+                                        secondaryText = customTime?.let { null }
+                                            ?: selectedTime.timeString,
                                         onClick = { showTimeMenu = true }
                                     )
                                     MenuButton(
@@ -245,13 +235,8 @@ fun ReminderDialog(
                         ReminderTab.DATE -> {
                             Box {
                                 MenuButton(
-                                    text = when {
-                                        customDate != null -> customDate!!.format(
-                                            DateTimeFormatter.ofPattern("MMMM dd")
-                                        )
-
-                                        else -> selectedDate.getDisplayText()
-                                    },
+                                    text = customDate?.let { formatDate(it) }
+                                        ?: selectedDate.getDisplayText(),
                                     onClick = { showDateMenu = true }
                                 )
 
@@ -322,12 +307,7 @@ fun ReminderDialog(
                                 if (isInPast) {
                                     showPastDateError = true
                                 } else {
-                                    val time = customTime ?: selectedTime.getLocalTime()
-                                    val date = customDate ?: selectedDate.getLocalDate()
-                                    val reminderMillis = date.atTime(time)
-                                        .atZone(ZoneId.systemDefault())
-                                        .toInstant().toEpochMilli()
-                                    onSetReminder(reminderMillis)
+                                    onSetReminder(selectedDateTime.toEpochMilliseconds())
                                     onDismiss()
                                 }
                             }
@@ -362,12 +342,14 @@ fun ReminderDialog(
                 showTimePicker = false
             },
             onBack = { showTimePicker = false },
-            isCurrentDate = (customDate ?: selectedDate.getLocalDate()).isEqual(LocalDate.now())
+            isCurrentDate = (customDate ?: selectedDate.getLocalDate()) == Clock.System.todayIn(
+                TimeZone.currentSystemDefault()
+            )
         )
     }
 }
 
-private enum class TimeOption(val label: String, val timeString: String) {
+enum class TimeOption(val label: String, val timeString: String) {
     MORNING("Morning", "8:00 AM"),
     AFTERNOON("Afternoon", "1:00 PM"),
     EVENING("Evening", "6:00 PM"),
@@ -375,36 +357,34 @@ private enum class TimeOption(val label: String, val timeString: String) {
     PICK_TIME("Pick a time...", "");
 
     fun getLocalTime(): LocalTime = when (this) {
-        MORNING -> LocalTime.of(8, 0)
-        AFTERNOON -> LocalTime.of(13, 0)
-        EVENING -> LocalTime.of(18, 0)
-        NIGHT -> LocalTime.of(20, 0)
-        PICK_TIME -> LocalTime.now()
+        MORNING -> LocalTime(8, 0)
+        AFTERNOON -> LocalTime(13, 0)
+        EVENING -> LocalTime(18, 0)
+        NIGHT -> LocalTime(20, 0)
+        PICK_TIME -> Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
     }
 }
 
-private enum class DateOption {
-    TODAY,
-    TOMORROW,
-    NEXT_WEEK,
-    PICK_DATE;
+enum class DateOption {
+    TODAY, TOMORROW, NEXT_WEEK, PICK_DATE;
 
     fun getDisplayText(): String = when (this) {
         TODAY -> "Today"
         TOMORROW -> "Tomorrow"
-        NEXT_WEEK -> "Next ${
-            LocalDate.now().plusWeeks(1).dayOfWeek.name.lowercase()
-                .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-        }"
+        NEXT_WEEK -> {
+            val nextWeek =
+                Clock.System.todayIn(TimeZone.currentSystemDefault()).plus(7, DateTimeUnit.DAY)
+            "Next ${nextWeek.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }}"
+        }
 
         PICK_DATE -> "Pick a date..."
     }
 
     fun getLocalDate(): LocalDate = when (this) {
-        TODAY -> LocalDate.now()
-        TOMORROW -> LocalDate.now().plusDays(1)
-        NEXT_WEEK -> LocalDate.now().plusWeeks(1)
-        PICK_DATE -> LocalDate.now()
+        TODAY -> Clock.System.todayIn(TimeZone.currentSystemDefault())
+        TOMORROW -> Clock.System.todayIn(TimeZone.currentSystemDefault()).plus(1, DateTimeUnit.DAY)
+        NEXT_WEEK -> Clock.System.todayIn(TimeZone.currentSystemDefault()).plus(7, DateTimeUnit.DAY)
+        PICK_DATE -> Clock.System.todayIn(TimeZone.currentSystemDefault())
     }
 }
 
@@ -414,6 +394,20 @@ private enum class RepeatOption(val label: String) {
     WEEKLY("Weekly"),
     MONTHLY("Monthly"),
     YEARLY("Yearly")
+}
+
+// Formatting Helpers
+fun formatTime(time: LocalTime): String {
+    val hour = if (time.hour > 12) time.hour - 12 else if (time.hour == 0) 12 else time.hour
+    val minute = time.minute.toString().padStart(2, '0')
+    val period = if (time.hour >= 12) "PM" else "AM"
+    return "$hour:$minute $period"
+}
+
+fun formatDate(date: LocalDate): String {
+    val month = date.month.name.lowercase().replaceFirstChar { it.uppercase() }
+    val day = date.dayOfMonth
+    return "$month $day"
 }
 
 @Composable

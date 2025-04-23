@@ -10,6 +10,8 @@ dependencies {
 
     api(projects.core.model)
     api(projects.core.designSystem)
+    //
+    api(projects.core.data)
 
 
     implementation(project.dependencies.platform(libs.koin.bom))

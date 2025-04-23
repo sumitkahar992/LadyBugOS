@@ -9,7 +9,7 @@ import org.koin.dsl.module
 
 val dataModule = module {
     // Use Cases
-    single<NoteRepository> { NoteRepositoryImpl(get(), get(), get(), get()) }
+    single<NoteRepository> { NoteRepositoryImpl(get(), get(), get(), get(), get()) }
 
     single<BackupRepository> { BackupRepositoryImpl(get(), get(), get(), get(), get()) }
 

@@ -30,15 +30,18 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
+
 
 @Composable
 fun ReminderInfo(
     modifier: Modifier = Modifier,
-    reminderDate: Long,
+    reminderDate: Instant,
     isDone: Boolean,
     onClick: () -> Unit = {},
     isClickable: Boolean = false,
@@ -117,33 +120,30 @@ fun ReminderInfo(
     }
 }
 
-private fun formatReminderDate(reminderDate: Long): String {
-    val now = LocalDateTime.now()
-    val reminderDateTime = LocalDateTime.ofInstant(
-        Instant.ofEpochMilli(reminderDate),
-        ZoneId.systemDefault()
-    )
-
-    val timeFormatter = DateTimeFormatter.ofPattern("h:mm a")
-    val dateFormatter = DateTimeFormatter.ofPattern("MMM d")
+private fun formatReminderDate(reminderDate: Instant): String {
+    val now = Clock.System.now()
+    val reminderDateTime = reminderDate.toLocalDateTime(TimeZone.currentSystemDefault())
+    val nowDateTime = now.toLocalDateTime(TimeZone.currentSystemDefault())
 
     return when {
         // Same day
-        reminderDateTime.toLocalDate() == now.toLocalDate() ->
-            "Today, ${reminderDateTime.format(timeFormatter)}"
+        reminderDateTime.date == nowDateTime.date ->
+            "Today, ${formatTime(reminderDateTime.time)}"
 
         // Next day
-        reminderDateTime.toLocalDate() == now.toLocalDate().plusDays(1) ->
-            "Tomorrow, ${reminderDateTime.format(timeFormatter)}"
+        reminderDateTime.date == nowDateTime.date.plus(1, DateTimeUnit.DAY) ->
+            "Tomorrow, ${formatTime(reminderDateTime.time)}"
 
         // Same year - don't show year
-        reminderDateTime.year == now.year ->
-            "${reminderDateTime.format(dateFormatter)}, ${reminderDateTime.format(timeFormatter)}"
+        reminderDateTime.year == nowDateTime.year ->
+            "${formatDate(reminderDateTime.date)}, ${formatTime(reminderDateTime.time)}"
 
         // Different year - show year
         else ->
-            "${reminderDateTime.format(dateFormatter)}, ${reminderDateTime.year}, ${
-                reminderDateTime.format(timeFormatter)
+            "${formatDate(reminderDateTime.date)}, ${reminderDateTime.year}, ${
+                formatTime(
+                    reminderDateTime.time
+                )
             }"
     }
 }

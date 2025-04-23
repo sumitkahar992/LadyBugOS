@@ -31,6 +31,8 @@ dependencies {
     debugImplementation(libs.ui.tooling)
     debugRuntimeOnly(libs.androidx.ui.test.manifest)
 
+    implementation(libs.kotlinx.datetime)
+
 
 
 

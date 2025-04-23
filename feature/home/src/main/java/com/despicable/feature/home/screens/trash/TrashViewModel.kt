@@ -6,7 +6,7 @@ import com.despicable.core.data.repository.NoteRepository
 import com.despicable.core.datastore.SettingsRepo
 import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.model.Note
-import com.despicable.feature.home.NoteWithTagsAndChecklist
+import com.despicable.core.model.NoteComplete
 import com.despicable.widgets.data.WidgetUpdater
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -94,7 +94,7 @@ class TrashViewModel(
     val trashedNotes = repo.getTrashedNotesWithTagsAndChecklist()
         .map { noteCompleteList ->
             noteCompleteList.map { noteComplete ->
-                NoteWithTagsAndChecklist(
+                NoteComplete(
                     note = noteComplete.note,
                     tags = noteComplete.tags,
                     checklistItems = noteComplete.checklistItems

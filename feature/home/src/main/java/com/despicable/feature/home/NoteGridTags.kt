@@ -75,13 +75,16 @@ import com.despicable.core.designsystem.rememberNoteColor
 import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
+import com.despicable.core.model.NoteComplete
+import com.despicable.core.model.NoteContent
 import com.despicable.core.model.Tag
+import kotlinx.datetime.Instant
 
 
 @Composable
 fun NoteGridTags(
     modifier: Modifier = Modifier,
-    notes: List<NoteWithTagsAndChecklist>,
+    notes: List<NoteComplete>,
     selectedNotes: Set<Note>,
     onNoteClick: (Note) -> Unit,
     onNoteLongPress: (Note) -> Unit,
@@ -189,7 +192,7 @@ fun SectionHeader(text: String) {
 @Composable
 fun NoteItemTag(
     modifier: Modifier = Modifier,
-    noteWithTags: NoteWithTagsAndChecklist,
+    noteWithTags: NoteComplete,
     gridLayout: GridLayout,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -316,8 +319,8 @@ fun NoteItemTag(
 
 @Composable
 private fun NoteContent(
-    skipModifier: Modifier = Modifier,
     modifier: Modifier = Modifier,
+    skipModifier: Modifier = Modifier,
     note: Note,
     tags: List<Tag>,
     checkList: List<Checklist>,
@@ -349,31 +352,37 @@ private fun NoteContent(
 
 
         // Content Section with max lines based on grid
-        if (note.isChecklist) {
-            ChecklistContent(
-                modifier = skipModifier,
-                list = checkList,
-                contentSize = contentSize,
-                gridLayout = gridLayout
-            )
-        } else if (note.content.isNotBlank()) {
-            Text(
-                modifier = skipModifier,
-                text = note.content,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    lineHeight = 20.sp
-                ),
-                color = MaterialTheme.colorScheme.onSurface,
-                overflow = TextOverflow.Ellipsis,
-                maxLines = when (gridLayout) {
-                    GridLayout.OneColumn -> 8
-                    GridLayout.TwoColumns -> 14
-                    GridLayout.ThreeColumns -> 12
-                },
-                fontSize = contentSize,
-            )
-        }
 
+        when (val content = note.content) {
+            is NoteContent.ChecklistItems -> {
+                ChecklistContent(
+                    modifier = skipModifier,
+                    list = checkList,
+                    contentSize = contentSize,
+                    gridLayout = gridLayout
+                )
+            }
+
+            is NoteContent.Text -> {
+                if (content.text.isNotBlank()) { // Check for non-empty text
+                    Text(
+                        modifier = skipModifier,
+                        text = content.text,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            lineHeight = 20.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = when (gridLayout) {
+                            GridLayout.OneColumn -> 8
+                            GridLayout.TwoColumns -> 10
+                            GridLayout.ThreeColumns -> 6
+                        },
+                        fontSize = contentSize,
+                    )
+                }
+            }
+        }
         // Bottom Section
         BottomSection(
             modifier = skipModifier,
@@ -450,7 +459,7 @@ private fun ChecklistContent(
 @Composable
 private fun BottomSection(
     modifier: Modifier = Modifier,
-    reminderDate: Long?,
+    reminderDate: Instant?,
     isDone: Boolean,
     tags: List<Tag>,
     noteColor: Int

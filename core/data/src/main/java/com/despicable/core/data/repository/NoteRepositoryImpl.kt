@@ -2,35 +2,42 @@ package com.despicable.core.data.repository
 
 import com.despicable.core.data.model.toDomain
 import com.despicable.core.data.model.toEntity
-import com.despicable.core.data.model.toNoteTagsDomainList
+import com.despicable.core.data.model.toNoteCompleteDomainList
 import com.despicable.core.data.model.toTagDomainList
 import com.despicable.core.database.dao.ChecklistDao
+import com.despicable.core.database.dao.HabitDao
 import com.despicable.core.database.dao.NoteDao
 import com.despicable.core.database.dao.TagDao
 import com.despicable.core.model.Checklist
+import com.despicable.core.model.HabitItem
 import com.despicable.core.model.Note
 import com.despicable.core.model.NoteComplete
-import com.despicable.core.model.NoteWithTags
 import com.despicable.core.model.Tag
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 import javax.inject.Inject
 
 class NoteRepositoryImpl @Inject constructor(
     private val noteDao: NoteDao,
     private val tagDao: TagDao,
     private val checklistDao: ChecklistDao,
+    private val habitDao: HabitDao,
     private val reminderScheduler: ReminderScheduler
 ) : NoteRepository {
+
+    override suspend fun getAllNotesData(): List<NoteComplete> {
+        return noteDao.getAllNotesData().toNoteCompleteDomainList()
+    }
+
+    override suspend fun getAllTagsData(): List<Tag> {
+        return noteDao.getAllTagsData().toTagDomainList()
+    }
 
     // Note Operations
     override fun getAllNotes(): Flow<List<Note>> =
@@ -39,10 +46,8 @@ class NoteRepositoryImpl @Inject constructor(
     override fun getNoteById(id: Long): Flow<Note?> =
         noteDao.getNoteById(id).map { it?.toDomain() }
 
-    override fun getAllNotesWithTags(): Flow<List<NoteWithTags>> =
-        noteDao.getAllActiveNotesWithTags().map { it.toNoteTagsDomainList() }
 
-    override fun getNoteWithTagsById(id: Long): Flow<NoteWithTags?> =
+    override fun getNoteWithTagsById(id: Long): Flow<NoteComplete?> =
         noteDao.getNoteWithTagsById(id).map { it?.toDomain() }
 
     override fun getNoteCompleteById(id: Long): Flow<NoteComplete?> =
@@ -51,17 +56,24 @@ class NoteRepositoryImpl @Inject constructor(
     override suspend fun insertNoteWithTagsChecklist(
         note: Note,
         tagIds: List<Long>,
-        checklistItems: List<Checklist>
+        checklistItems: List<Checklist>,
+        habitItems: List<HabitItem>
     ): Long = withContext(Dispatchers.IO) {
 
         // Always ensure a current timestamp when inserting
-        val noteWithCurrentTime = note.copy(updateDate = System.currentTimeMillis())
+        val noteWithCurrentTime = note.copy(
+            creationDate = Clock.System.now(),
+            updateDate = Clock.System.now()
+        )
 
         noteDao.insertNoteWithTagsAndChecklist(
-            noteWithCurrentTime.toEntity(),
-            tagIds,
-            checklistItems.map { it.toEntity() },
-            checklistDao
+            note = noteWithCurrentTime.toEntity(),
+            tagIds = tagIds,
+            checklistItems = checklistItems.map { it.toEntity() },
+            habitItems = habitItems.map { it.toEntity() },
+            checklistDao = checklistDao,
+            habitDao = habitDao
+
         )
     }
 
@@ -74,7 +86,7 @@ class NoteRepositoryImpl @Inject constructor(
 
         // Only update timestamp when appropriate
         val noteToSave = if (updateTimestamp) {
-            note.copy(updateDate = System.currentTimeMillis())
+            note.copy(updateDate = Clock.System.now())
         } else {
             note
         }
@@ -103,6 +115,14 @@ class NoteRepositoryImpl @Inject constructor(
     // Tag Operations
     override fun getAllTags(): Flow<List<Tag>> =
         tagDao.getAllTags().map { it.toTagDomainList() }
+
+    override fun getAllNotesWithTags(): Flow<List<NoteComplete>> =
+        noteDao.getAllActiveNotesWithTags().map { it.toNoteCompleteDomainList() }
+
+    override fun getChecklistItemsByNoteId(noteId: Long): Flow<List<Checklist>> =
+        noteDao.getChecklistItemsByNoteId(noteId).map { entities ->
+            entities.map { it.toDomain() }
+        }
 
     override suspend fun insertTag(tag: Tag): Long = withContext(Dispatchers.IO) {
         tagDao.insertTag(tag.toEntity())
@@ -141,26 +161,35 @@ class NoteRepositoryImpl @Inject constructor(
         reminderScheduler.cancelReminder(noteId)
     }
 
-    override fun getUpcomingReminders(): Flow<List<NoteWithTags>> =
-        noteDao.getUpcomingReminders().map { it.toNoteTagsDomainList() }
+    override fun getUpcomingReminders(): Flow<List<NoteComplete>> =
+        noteDao.getUpcomingReminders().map { it.toNoteCompleteDomainList() }
 
-    override fun getCompletedReminders(): Flow<List<NoteWithTags>> =
-        noteDao.getCompletedReminders().map { it.toNoteTagsDomainList() }
+    override fun getCompletedReminders(): Flow<List<NoteComplete>> =
+        noteDao.getCompletedReminders().map { it.toNoteCompleteDomainList() }
 
     // Checklist Operations
     override suspend fun updateNoteChecklist(noteId: Long, isChecklist: Boolean) =
         withContext(Dispatchers.IO) {
-            checklistDao.updateNoteChecklist(noteId, isChecklist)
+//            checklistDao.updateNoteChecklist(noteId, isChecklist)
         }
+
+    override suspend fun getChecklistItem(noteId: Long, itemId: Long): Checklist? =
+        withContext(Dispatchers.IO) {
+            checklistDao.getChecklistItem(noteId, itemId)?.toDomain()
+        }
+
+    override suspend fun toggleChecklistItem(noteId: Long, itemId: Long) = withContext(Dispatchers.IO) {
+        val item = getChecklistItem(noteId, itemId)
+        if (item != null) {
+            val updatedItem = item.copy(isChecked = !item.isChecked)
+            updateChecklistItem(updatedItem)
+        }
+    }
 
     override suspend fun insertChecklistItem(item: Checklist): Long = withContext(Dispatchers.IO) {
         checklistDao.insertChecklistItem(item.toEntity())
     }
 
-    override fun getChecklistItemsByNoteId(noteId: Long): Flow<List<Checklist>> =
-        noteDao.getChecklistItemsByNoteId(noteId).map { entities ->
-            entities.map { it.toDomain() }
-        }
 
     override suspend fun updateChecklistItem(item: Checklist) = withContext(Dispatchers.IO) {
         checklistDao.updateChecklistItem(item.toEntity())
@@ -186,40 +215,22 @@ class NoteRepositoryImpl @Inject constructor(
         }
 
     // Search Operations
-    override fun searchNotes(query: String): Flow<List<NoteWithTags>> =
-        noteDao.searchNotes(query).map { it.toNoteTagsDomainList() }
+    override fun searchNotes(query: String): Flow<List<NoteComplete>> =
+        noteDao.searchNotes(query).map { it.toNoteCompleteDomainList() }
 
     // Filtered Note Operations
-    override fun getPinnedNotes(): Flow<List<NoteWithTags>> =
-        noteDao.getPinnedNotes().map { it.toNoteTagsDomainList() }
+    override fun getPinnedNotes(): Flow<List<NoteComplete>> =
+        noteDao.getPinnedNotes().map { it.toNoteCompleteDomainList() }
 
-    override fun getArchivedNotes(): Flow<List<NoteWithTags>> =
-        noteDao.getArchivedNotes().map { it.toNoteTagsDomainList() }
+    override fun getArchivedNotes(): Flow<List<NoteComplete>> =
+        noteDao.getArchivedNotes().map { it.toNoteCompleteDomainList() }
 
-    override fun getTrashedNotes(): Flow<List<NoteWithTags>> =
-        noteDao.getTrashedNotes().map { it.toNoteTagsDomainList() }
+    override fun getTrashedNotes(): Flow<List<NoteComplete>> =
+        noteDao.getTrashedNotes().map { it.toNoteCompleteDomainList() }
 
     override fun getArchivedNotesWithTagsAndChecklist(): Flow<List<NoteComplete>> =
-        noteDao.getArchivedNotes().mapLatest { notes ->
-            coroutineScope {
-                notes.map { noteWithTags ->
-                    async {
-                        val checklistItems = if (noteWithTags.note.isChecklist) {
-                            try {
-                                noteDao.getChecklistItemsByNoteId(noteWithTags.note.id).first()
-                            } catch (e: Exception) {
-                                emptyList()
-                            }
-                        } else emptyList()
-
-                        NoteComplete(
-                            note = noteWithTags.note.toDomain(),
-                            tags = noteWithTags.tags.map { it.toDomain() },
-                            checklistItems = checklistItems.map { it.toDomain() }
-                        )
-                    }
-                }.awaitAll()
-            }
+        noteDao.getArchivedNotes().map {
+            it.toNoteCompleteDomainList()
         }
 
     override fun getTrashedNotesWithTagsAndChecklist(): Flow<List<NoteComplete>> =
@@ -230,24 +241,10 @@ class NoteRepositoryImpl @Inject constructor(
                 return@flatMapLatest flowOf(emptyList())
             }
 
-            noteDao.getChecklistItemsByNoteIds(noteIds).map { allChecklistItems ->
-                // Group checklist items by noteId
-                val checklistItemsByNoteId = allChecklistItems.groupBy { it.noteId }
+            flowOf(notes.toNoteCompleteDomainList())
 
-                // Map notes with their checklist items
-                notes.map { noteWithTags ->
-                    val items = if (noteWithTags.note.isChecklist) {
-                        checklistItemsByNoteId[noteWithTags.note.id] ?: emptyList()
-                    } else emptyList()
-
-                    NoteComplete(
-                        note = noteWithTags.note.toDomain(),
-                        tags = noteWithTags.tags.map { it.toDomain() },
-                        checklistItems = items.map { it.toDomain() }
-                    )
-                }
-            }
         }
+
 
     override fun getUpcomingRemindersWithTagsAndChecklist(): Flow<List<NoteComplete>> =
         noteDao.getUpcomingReminders().flatMapLatest { notes ->
@@ -255,28 +252,7 @@ class NoteRepositoryImpl @Inject constructor(
                 return@flatMapLatest flowOf(emptyList())
             }
 
-            val noteIds = notes.map { it.note.id }
-
-            // Combine with checklist items for all notes at once
-            noteDao.getChecklistItemsByNoteIds(noteIds).map { allChecklistItems ->
-                // Group checklist items by noteId for efficient lookup
-                val checklistItemsByNoteId = allChecklistItems.groupBy { it.noteId }
-
-                // Map each note to NoteComplete
-                notes.map { noteWithTags ->
-                    val checklistItems = if (noteWithTags.note.isChecklist) {
-                        checklistItemsByNoteId[noteWithTags.note.id] ?: emptyList()
-                    } else {
-                        emptyList()
-                    }
-
-                    NoteComplete(
-                        note = noteWithTags.note.toDomain(),
-                        checklistItems = checklistItems.map { it.toDomain() },
-                        tags = noteWithTags.tags.map { it.toDomain() }
-                    )
-                }
-            }
+            flowOf(notes.toNoteCompleteDomainList())
         }
 
     override fun getCompletedRemindersWithTagsAndChecklist(): Flow<List<NoteComplete>> =
@@ -285,183 +261,162 @@ class NoteRepositoryImpl @Inject constructor(
                 return@flatMapLatest flowOf(emptyList())
             }
 
-            val noteIds = notes.map { it.note.id }
-
-            // Combine with checklist items for all notes at once
-            noteDao.getChecklistItemsByNoteIds(noteIds).map { allChecklistItems ->
-                // Group checklist items by noteId for efficient lookup
-                val checklistItemsByNoteId = allChecklistItems.groupBy { it.noteId }
-
-                // Map each note to NoteComplete
-                notes.map { noteWithTags ->
-                    val checklistItems = if (noteWithTags.note.isChecklist) {
-                        checklistItemsByNoteId[noteWithTags.note.id] ?: emptyList()
-                    } else {
-                        emptyList()
-                    }
-
-                    NoteComplete(
-                        note = noteWithTags.note.toDomain(),
-                        checklistItems = checklistItems.map { it.toDomain() },
-                        tags = noteWithTags.tags.map { it.toDomain() }
-                    )
-                }
-            }
+            flowOf(notes.toNoteCompleteDomainList())
         }
-
-    /*    override suspend fun addChecklistItem(
-            noteId: Long,
-            content: String,
-            position: Int
-        ): Checklist = withContext(Dispatchers.IO) {
-            withMutexTimeout(checklistMutex) {
-                // Create new item
-                val newItem = Checklist(
-                    noteId = noteId,
-                    content = content,
-                    position = position
-                )
-
-                // Get existing items
-                val existingItems = getChecklistItemsByNoteId(noteId).firstOrNull() ?: emptyList()
-
-                // Shift positions of existing items
-                for (i in existingItems.indices.reversed()) {
-                    if (i >= position) {
-                        val item = existingItems[i]
-                        updateChecklistItem(item.copy(position = i + 1))
-                    }
-                }
-
-                // Insert new item
-                val insertedId = insertChecklistItem(newItem)
-                return@withMutexTimeout newItem.copy(id = insertedId)
-            }
-        }
-
-        override suspend fun reorderChecklistItems(
-            noteId: Long,
-            fromPosition: Int,
-            toPosition: Int
-        ): List<Checklist> = withContext(Dispatchers.IO) {
-            withMutexTimeout(checklistMutex) {
-                val items = getChecklistItemsByNoteId(noteId).firstOrNull() ?: return@withMutexTimeout emptyList()
-
-                if (fromPosition >= items.size || toPosition >= items.size) {
-                    return@withMutexTimeout items
-                }
-
-                val mutableItems = items.toMutableList()
-                val item = mutableItems.removeAt(fromPosition)
-                mutableItems.add(toPosition, item)
-
-                // Update only affected positions for better performance
-                val startIdx = minOf(fromPosition, toPosition)
-                val endIdx = maxOf(fromPosition, toPosition)
-
-                for (i in startIdx..endIdx) {
-                    if (mutableItems[i].position != i) {
-                        updateChecklistItem(mutableItems[i].copy(position = i))
-                    }
-                }
-
-                return@withMutexTimeout mutableItems
-            }
-        }
-
-        override suspend fun toggleChecklistItem(
-            noteId: Long,
-            itemId: Long
-        ): Checklist = withContext(Dispatchers.IO) {
-            withMutexTimeout(checklistMutex) {
-                val items = getChecklistItemsByNoteId(noteId).firstOrNull() ?: emptyList()
-                val item = items.find { it.id == itemId } ?: throw IllegalArgumentException("Item not found")
-
-                val updatedItem = item.copy(isChecked = !item.isChecked)
-                updateChecklistItem(updatedItem)
-
-                return@withMutexTimeout updatedItem
-            }
-        }
-
-        override suspend fun removeChecklistItem(
-            noteId: Long,
-            position: Int
-        ): List<Checklist> = withContext(Dispatchers.IO) {
-            withMutexTimeout(checklistMutex) {
-                val items = getChecklistItemsByNoteId(noteId).firstOrNull() ?: return@withMutexTimeout emptyList()
-
-                if (position >= items.size) return@withMutexTimeout items
-
-                val itemToRemove = items[position]
-                deleteChecklistItem(itemToRemove.id)
-
-                // Update positions for remaining items
-                val remainingItems = items.filterIndexed { i, _ -> i != position }
-                    .mapIndexed { index, item ->
-                        if (item.position != index) {
-                            updateChecklistItem(item.copy(position = index))
-                            item.copy(position = index)
-                        } else item
-                    }
-
-                return@withMutexTimeout remainingItems
-            }
-        }
-
-        override suspend fun updateChecklistItemContent(
-            noteId: Long,
-            itemId: Long,
-            content: String
-        ): Checklist = withContext(Dispatchers.IO) {
-            withMutexTimeout(checklistMutex) {
-                val items = getChecklistItemsByNoteId(noteId).firstOrNull() ?: emptyList()
-                val item = items.find { it.id == itemId } ?: throw IllegalArgumentException("Item not found")
-
-                val updatedItem = item.copy(content = content)
-                updateChecklistItem(updatedItem)
-
-                return@withMutexTimeout updatedItem
-            }
-        }
-
-
-        // Add a smart note update method that handles change detection
-        override suspend fun smartUpdateNoteWithTagsChecklist(
-            note: Note,
-            tagIds: List<Long>,
-            checklistItems: List<Checklist>
-        ): Boolean = withContext(Dispatchers.IO) {
-            withMutexTimeout(noteMutex) {
-                // Check if there are actual changes
-                val originalNote = getNoteById(note.id).firstOrNull()
-                val hasChanges = originalNote?.let { original ->
-                    note.title != original.title ||
-                            note.content != original.content ||
-                            note.isChecklist != original.isChecklist ||
-                            note.lightColor != original.lightColor
-                } ?: true // If note doesn't exist yet, treat as changed
-
-                if (hasChanges) {
-                    // Update with timestamp change
-                    updateNoteWithTagsChecklist(
-                        note.copy(updateDate = System.currentTimeMillis()),
-                        tagIds,
-                        checklistItems,
-                        true
-                    )
-                    true
-                } else {
-                    // No changes, just update without changing timestamp
-                    updateNoteWithTagsChecklist(note, tagIds, checklistItems, false)
-                    false
-                }
-            }
-        }*/
 
 
 }
 
+
+/*    override suspend fun addChecklistItem(
+          noteId: Long,
+          content: String,
+          position: Int
+      ): Checklist = withContext(Dispatchers.IO) {
+          withMutexTimeout(checklistMutex) {
+              // Create new item
+              val newItem = Checklist(
+                  noteId = noteId,
+                  content = content,
+                  position = position
+              )
+
+              // Get existing items
+              val existingItems = getChecklistItemsByNoteId(noteId).firstOrNull() ?: emptyList()
+
+              // Shift positions of existing items
+              for (i in existingItems.indices.reversed()) {
+                  if (i >= position) {
+                      val item = existingItems[i]
+                      updateChecklistItem(item.copy(position = i + 1))
+                  }
+              }
+
+              // Insert new item
+              val insertedId = insertChecklistItem(newItem)
+              return@withMutexTimeout newItem.copy(id = insertedId)
+          }
+      }
+
+      override suspend fun reorderChecklistItems(
+          noteId: Long,
+          fromPosition: Int,
+          toPosition: Int
+      ): List<Checklist> = withContext(Dispatchers.IO) {
+          withMutexTimeout(checklistMutex) {
+              val items = getChecklistItemsByNoteId(noteId).firstOrNull() ?: return@withMutexTimeout emptyList()
+
+              if (fromPosition >= items.size || toPosition >= items.size) {
+                  return@withMutexTimeout items
+              }
+
+              val mutableItems = items.toMutableList()
+              val item = mutableItems.removeAt(fromPosition)
+              mutableItems.add(toPosition, item)
+
+              // Update only affected positions for better performance
+              val startIdx = minOf(fromPosition, toPosition)
+              val endIdx = maxOf(fromPosition, toPosition)
+
+              for (i in startIdx..endIdx) {
+                  if (mutableItems[i].position != i) {
+                      updateChecklistItem(mutableItems[i].copy(position = i))
+                  }
+              }
+
+              return@withMutexTimeout mutableItems
+          }
+      }
+
+      override suspend fun toggleChecklistItem(
+          noteId: Long,
+          itemId: Long
+      ): Checklist = withContext(Dispatchers.IO) {
+          withMutexTimeout(checklistMutex) {
+              val items = getChecklistItemsByNoteId(noteId).firstOrNull() ?: emptyList()
+              val item = items.find { it.id == itemId } ?: throw IllegalArgumentException("Item not found")
+
+              val updatedItem = item.copy(isChecked = !item.isChecked)
+              updateChecklistItem(updatedItem)
+
+              return@withMutexTimeout updatedItem
+          }
+      }
+
+      override suspend fun removeChecklistItem(
+          noteId: Long,
+          position: Int
+      ): List<Checklist> = withContext(Dispatchers.IO) {
+          withMutexTimeout(checklistMutex) {
+              val items = getChecklistItemsByNoteId(noteId).firstOrNull() ?: return@withMutexTimeout emptyList()
+
+              if (position >= items.size) return@withMutexTimeout items
+
+              val itemToRemove = items[position]
+              deleteChecklistItem(itemToRemove.id)
+
+              // Update positions for remaining items
+              val remainingItems = items.filterIndexed { i, _ -> i != position }
+                  .mapIndexed { index, item ->
+                      if (item.position != index) {
+                          updateChecklistItem(item.copy(position = index))
+                          item.copy(position = index)
+                      } else item
+                  }
+
+              return@withMutexTimeout remainingItems
+          }
+      }
+
+      override suspend fun updateChecklistItemContent(
+          noteId: Long,
+          itemId: Long,
+          content: String
+      ): Checklist = withContext(Dispatchers.IO) {
+          withMutexTimeout(checklistMutex) {
+              val items = getChecklistItemsByNoteId(noteId).firstOrNull() ?: emptyList()
+              val item = items.find { it.id == itemId } ?: throw IllegalArgumentException("Item not found")
+
+              val updatedItem = item.copy(content = content)
+              updateChecklistItem(updatedItem)
+
+              return@withMutexTimeout updatedItem
+          }
+      }
+
+
+      // Add a smart note update method that handles change detection
+      override suspend fun smartUpdateNoteWithTagsChecklist(
+          note: Note,
+          tagIds: List<Long>,
+          checklistItems: List<Checklist>
+      ): Boolean = withContext(Dispatchers.IO) {
+          withMutexTimeout(noteMutex) {
+              // Check if there are actual changes
+              val originalNote = getNoteById(note.id).firstOrNull()
+              val hasChanges = originalNote?.let { original ->
+                  note.title != original.title ||
+                          note.content != original.content ||
+                          note.isChecklist != original.isChecklist ||
+                          note.lightColor != original.lightColor
+              } ?: true // If note doesn't exist yet, treat as changed
+
+              if (hasChanges) {
+                  // Update with timestamp change
+                  updateNoteWithTagsChecklist(
+                      note.copy(updateDate = System.currentTimeMillis()),
+                      tagIds,
+                      checklistItems,
+                      true
+                  )
+                  true
+              } else {
+                  // No changes, just update without changing timestamp
+                  updateNoteWithTagsChecklist(note, tagIds, checklistItems, false)
+                  false
+              }
+          }
+      }*/
 
 /*
 

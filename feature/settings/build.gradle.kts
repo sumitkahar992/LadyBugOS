@@ -14,6 +14,8 @@ dependencies {
 
     api(projects.core.datastore)
     implementation(projects.feature.backup)
+    implementation(projects.core.data)
+
 
 
 

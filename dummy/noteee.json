@@ -2,1141 +2,2330 @@
   {
     "id": 1,
     "title": "Welcome to Note App",
-    "content": "Thank you for installing Note App! This is a sample note to help you get started. Feel free to edit or delete it.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Thank you for installing Note App! This is a sample note to help you get started. Feel free to edit or delete it."
+    },
+    "updateDate": 1743920133183,
     "lightColor": 16777215,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": 1743920133183,
+    "noteType": "TEXT"
   },
   {
     "id": 2,
     "title": "Shopping List",
-    "content": "- Milk\n- Eggs\n- Bread\n- Cheese\n- Apples\n- Chicken",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 2,
+          "content": "Milk",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 2,
+          "content": "Eggs",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 2,
+          "content": "Bread",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 2,
+          "content": "Cheese",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 2,
+          "content": "Apples",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 2,
+          "content": "Chicken",
+          "position": 5,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133184,
     "lightColor": 16776960,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": 1698105600000,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 3,
     "title": "Project Ideas",
-    "content": "1. Develop a fitness tracking app\n2. Create a recipe sharing platform\n3. Design a personal finance manager\n4. Build a language learning game\n5. Invent a smart home automation system",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 3,
+          "content": "Develop a fitness tracking app",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 3,
+          "content": "Create a recipe sharing platform",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 3,
+          "content": "Design a personal finance manager",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 3,
+          "content": "Build a language learning game",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 3,
+          "content": "Invent a smart home automation system",
+          "position": 4,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133185,
     "lightColor": 16711935,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": 1743920133185,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 4,
     "title": "Birthday Party Planning",
-    "content": "Date: November 15\nVenue: Home\nGuest List:\n- John and family\n- Sarah and kids\n- Mike and Lisa\n- Grandma and Grandpa\n\nMenu:\n- Pizza\n- Salad\n- Birthday Cake\n- Ice Cream\n\nActivities:\n- Board games\n- Karaoke\n- Gift opening",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 4,
+          "content": "Date: November 15",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Venue: Home",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Guest List: John and family",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Sarah and kids",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Mike and Lisa",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Grandma and Grandpa",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Menu: Pizza",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Salad",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Birthday Cake",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Ice Cream",
+          "position": 9,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Activities: Board games",
+          "position": 10,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Karaoke",
+          "position": 11,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Gift opening",
+          "position": 12,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133186,
     "lightColor": 65535,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": 1699574400000,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 5,
     "title": "Workout Routine",
-    "content": "Monday: Chest and Triceps\n- Bench Press: 3 sets of 10 reps\n- Incline Dumbbell Press: 3 sets of 12 reps\n- Tricep Pushdowns: 3 sets of 15 reps\n- Dips: 3 sets to failure\n\nWednesday: Back and Biceps\n- Deadlifts: 3 sets of 8 reps\n- Pull-ups: 3 sets to failure\n- Barbell Rows: 3 sets of 10 reps\n- Hammer Curls: 3 sets of 12 reps\n\nFriday: Legs and Shoulders\n- Squats: 3 sets of 10 reps\n- Leg Press: 3 sets of 12 reps\n- Military Press: 3 sets of 10 reps\n- Lateral Raises: 3 sets of 15 reps",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 5,
+          "content": "Monday: Chest and Triceps",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Bench Press: 3 sets of 10 reps",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Incline Dumbbell Press: 3 sets of 12 reps",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Tricep Pushdowns: 3 sets of 15 reps",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Dips: 3 sets to failure",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Wednesday: Back and Biceps",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Deadlifts: 3 sets of 8 reps",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Pull-ups: 3 sets to failure",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Barbell Rows: 3 sets of 10 reps",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Hammer Curls: 3 sets of 12 reps",
+          "position": 9,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Friday: Legs and Shoulders",
+          "position": 10,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Squats: 3 sets of 10 reps",
+          "position": 11,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Leg Press: 3 sets of 12 reps",
+          "position": 12,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Military Press: 3 sets of 10 reps",
+          "position": 13,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Lateral Raises: 3 sets of 15 reps",
+          "position": 14,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133187,
     "lightColor": 65280,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 6,
     "title": "Book Recommendations",
-    "content": "1. 'The Alchemist' by Paulo Coelho\n2. '1984' by George Orwell\n3. 'To Kill a Mockingbird' by Harper Lee\n4. 'The Great Gatsby' by F. Scott Fitzgerald\n5. 'Pride and Prejudice' by Jane Austen\n6. 'The Catcher in the Rye' by J.D. Salinger\n7. 'The Hobbit' by J.R.R. Tolkien\n8. 'Brave New World' by Aldous Huxley\n9. 'The Hunger Games' by Suzanne Collins\n10. 'The Da Vinci Code' by Dan Brown",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 6,
+          "content": "'The Alchemist' by Paulo Coelho",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'1984' by George Orwell",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'To Kill a Mockingbird' by Harper Lee",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'The Great Gatsby' by F. Scott Fitzgerald",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'Pride and Prejudice' by Jane Austen",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'The Catcher in the Rye' by J.D. Salinger",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'The Hobbit' by J.R.R. Tolkien",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'Brave New World' by Aldous Huxley",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'The Hunger Games' by Suzanne Collins",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'The Da Vinci Code' by Dan Brown",
+          "position": 9,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133188,
     "lightColor": 16711680,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 7,
     "title": "Travel Bucket List",
-    "content": "1. Visit the Great Wall of China\n2. See the Northern Lights in Iceland\n3. Explore the ancient ruins of Machu Picchu\n4. Go on a safari in Tanzania\n5. Take a gondola ride in Venice\n6. Watch the sunset at Santorini\n7. Visit the Taj Mahal in India\n8. Hike to Everest Base Camp\n9. Swim in the Dead Sea\n10. See the cherry blossoms in Japan",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 7,
+          "content": "Visit the Great Wall of China",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "See the Northern Lights in Iceland",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Explore Machu Picchu",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Go on a safari in Tanzania",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Take a gondola ride in Venice",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Watch the sunset at Santorini",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Visit the Taj Mahal in India",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Hike to Everest Base Camp",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Swim in the Dead Sea",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "See cherry blossoms in Japan",
+          "position": 9,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133189,
     "lightColor": 16777215,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": 1743920133189,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 8,
     "title": "Recipe: Chocolate Chip Cookies",
-    "content": "Ingredients:\n- 2 1/4 cups all-purpose flour\n- 1 tsp baking soda\n- 1 tsp salt\n- 1 cup unsalted butter, softened\n- 3/4 cup granulated sugar\n- 3/4 cup brown sugar\n- 2 large eggs\n- 2 tsp vanilla extract\n- 2 cups semisweet chocolate chips\n\nInstructions:\n1. Preheat oven to 375°F (190°C).\n2. Mix flour, baking soda, and salt in a bowl.\n3. In another bowl, cream butter and sugars until light and fluffy.\n4. Beat in eggs and vanilla.\n5. Gradually stir in flour mixture.\n6. Fold in chocolate chips.\n7. Drop spoonfuls onto ungreased baking sheets.\n8. Bake for 9-11 minutes or until golden brown.\n9. Cool on wire racks.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 8,
+          "content": "Ingredients:",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "2 1/4 cups all-purpose flour",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "1 tsp baking soda",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "1 tsp salt",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "1 cup unsalted butter, softened",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "3/4 cup granulated sugar",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "3/4 cup brown sugar",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "2 large eggs",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "2 tsp vanilla extract",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "2 cups semisweet chocolate chips",
+          "position": 9,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Instructions:",
+          "position": 10,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Preheat oven to 375°F (190°C)",
+          "position": 11,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Mix flour, baking soda, and salt",
+          "position": 12,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Cream butter and sugars",
+          "position": 13,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Beat in eggs and vanilla",
+          "position": 14,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Stir in flour mixture",
+          "position": 15,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Fold in chocolate chips",
+          "position": 16,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Drop spoonfuls onto baking sheets",
+          "position": 17,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Bake for 9-11 minutes",
+          "position": 18,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Cool on wire racks",
+          "position": 19,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133190,
     "lightColor": 16776960,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 9,
     "title": "Daily Affirmations",
-    "content": "1. I am capable of achieving great things.\n2. I choose to be positive and optimistic.\n3. I am worthy of love and respect.\n4. I trust in my abilities and decisions.\n5. I embrace challenges as opportunities for growth.\n6. I am grateful for all that I have in my life.\n7. I radiate confidence and self-assurance.\n8. I am constantly improving and becoming better.\n9. I attract positivity and success.\n10. I am in control of my own happiness.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 9,
+          "content": "I am capable of achieving great things",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I choose to be positive and optimistic",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I am worthy of love and respect",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I trust in my abilities and decisions",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I embrace challenges as opportunities",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I am grateful for all that I have",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I radiate confidence and self-assurance",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I am constantly improving and becoming better",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I attract positivity and success",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I am in control of my own happiness",
+          "position": 9,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133191,
     "lightColor": 16711935,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 10,
     "title": "Home Improvement Ideas",
-    "content": "1. Paint the living room walls\n2. Install new kitchen backsplash\n3. Replace old light fixtures\n4. Add a kitchen island\n5. Create a vertical garden on the patio\n6. Refinish hardwood floors\n7. Update bathroom fixtures\n8. Build a fire pit in the backyard\n9. Install smart home devices\n10. Organize and declutter the garage",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 10,
+          "content": "Paint the living room walls",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Install new kitchen backsplash",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Replace old light fixtures",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Add a kitchen island",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Create a vertical garden on the patio",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Refinish hardwood floors",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Update bathroom fixtures",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Build a fire pit in the backyard",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Install smart home devices",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Organize and declutter the garage",
+          "position": 9,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133192,
     "lightColor": 65535,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 11,
     "title": "Weekly Goals",
-    "content": "1. Complete project proposal\n2. Exercise for 30 minutes daily\n3. Read two chapters of current book\n4. Call parents\n5. Meal prep for the week\n6. Declutter workspace\n7. Practice meditation for 10 minutes daily",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 11,
+          "content": "Complete project proposal",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 11,
+          "content": "Exercise for 30 minutes daily",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 11,
+          "content": "Read two chapters of current book",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 11,
+          "content": "Call parents",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 11,
+          "content": "Meal prep for the week",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 11,
+          "content": "Declutter workspace",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 11,
+          "content": "Practice meditation for 10 minutes daily",
+          "position": 6,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1697932800000,
     "lightColor": 65280,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": 1697932800000,
-    "isDone": false
+    "pinnedDate": 1697932800000,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 12,
     "title": "Favorite Quotes",
-    "content": "1. 'Be the change you wish to see in the world.' - Mahatma Gandhi\n2. 'I have not failed. I've just found 10,000 ways that won't work.' - Thomas A. Edison\n3. 'The only way to do great work is to love what you do.' - Steve Jobs\n4. 'In the middle of difficulty lies opportunity.' - Albert Einstein\n5. 'The future belongs to those who believe in the beauty of their dreams.' - Eleanor Roosevelt",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 12,
+          "content": "'Be the change you wish to see in the world.' - Mahatma Gandhi",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 12,
+          "content": "'I have not failed. I've just found 10,000 ways that won't work.' - Thomas A. Edison",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 12,
+          "content": "'The only way to do great work is to love what you do.' - Steve Jobs",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 12,
+          "content": "'In the middle of difficulty lies opportunity.' - Albert Einstein",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 12,
+          "content": "'The future belongs to those who believe in the beauty of their dreams.' - Eleanor Roosevelt",
+          "position": 4,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133193,
     "lightColor": 16711680,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 13,
     "title": "Archived: Old Project Notes",
-    "content": "This note contains old project ideas and brainstorming sessions from previous years. Keeping it for reference, but it's no longer actively used.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "This note contains old project ideas and brainstorming sessions from previous years. Keeping it for reference, but it's no longer actively used."
+    },
+    "updateDate": 1743920133194,
     "lightColor": 16777215,
     "isPinned": false,
-    "isArchived": true,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT",
+    "isArchived": true
   },
   {
     "id": 14,
     "title": "Trashed: Outdated Contact List",
-    "content": "This note contained an old contact list that is no longer relevant. It has been moved to the trash.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "This note contained an old contact list that is no longer relevant. It has been moved to the trash."
+    },
+    "updateDate": 1743920133195,
     "lightColor": 16776960,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": true,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT",
+    "isTrashed": true
   },
   {
     "id": 15,
     "title": "Language Learning Progress",
-    "content": "Spanish:\n- Completed Duolingo tree\n- Can hold basic conversations\n- Need to improve vocabulary\n\nFrench:\n- Started basics on Babbel\n- Learning common phrases\n- Practice pronunciation daily\n\nGoal: Achieve B1 level in Spanish and A2 in French by the end of the year.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Spanish:\n- Completed Duolingo tree\n- Can hold basic conversations\n- Need to improve vocabulary\n\nFrench:\n- Started basics on Babbel\n- Learning common phrases\n- Practice pronunciation daily\n\nGoal: Achieve B1 level in Spanish and A2 in French by the end of the year."
+    },
+    "updateDate": 1704067200000,
     "lightColor": 16711935,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": 1704067200000,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 16,
     "title": "Meeting Notes",
-    "content": "Discuss project milestones and upcoming tasks for next sprint.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Discuss project milestones and upcoming tasks for next sprint."
+    },
+    "updateDate": 1696377600000,
     "lightColor": 123456,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": 1696377600000,
-    "isDone": false
+    "pinnedDate": 1696377600000,
+    "noteType": "TEXT"
   },
   {
     "id": 17,
     "title": "Grocery List",
-    "content": "Milk, Bread, Eggs, Butter, Cheese, Pasta, Tomatoes, Chicken.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Milk, Bread, Eggs, Butter, Cheese, Pasta, Tomatoes, Chicken."
+    },
+    "updateDate": 1743920133196,
     "lightColor": 654321,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 18,
     "title": "Travel Itinerary",
-    "content": "Flight to New York on Monday at 9am. Hotel check-in at 3pm. Dinner at 7pm.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Flight to New York on Monday at 9am. Hotel check-in at 3pm. Dinner at 7pm."
+    },
+    "updateDate": 1696540800000,
     "lightColor": 111111,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": 1696540800000,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 19,
     "title": "Ideas for Blog",
-    "content": "Write about Kotlin Coroutines and how to use them efficiently in modern Android apps.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Write about Kotlin Coroutines and how to use them efficiently in modern Android apps."
+    },
+    "updateDate": 1743920133197,
     "lightColor": 999999,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": 1743920133197,
+    "noteType": "TEXT"
   },
   {
     "id": 20,
     "title": "Household Chores",
-    "content": "Vacuum the living room, clean the kitchen, take out the trash.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Vacuum the living room, clean the kitchen, take out the trash."
+    },
+    "updateDate": 1743920133198,
     "lightColor": 222222,
     "isPinned": false,
+    "pinnedDate": null,
+    "noteType": "TEXT",
     "isArchived": true,
-    "isTrashed": false,
-    "reminderDate": null,
     "isDone": true
   },
   {
     "id": 21,
     "title": "Exercise Plan",
-    "content": "Monday: Cardio, Tuesday: Weightlifting, Wednesday: Yoga.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Monday: Cardio, Tuesday: Weightlifting, Wednesday: Yoga."
+    },
+    "updateDate": 1743920133199,
     "lightColor": 333333,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 22,
     "title": "Weekly Goals",
-    "content": "1. Finish app prototype. 2. Test new features. 3. Write documentation.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. Finish app prototype. 2. Test new features. 3. Write documentation."
+    },
+    "updateDate": 1743920133200,
     "lightColor": 444444,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": 1743920133200,
+    "noteType": "TEXT"
   },
   {
     "id": 23,
     "title": "Important Dates",
-    "content": "Birthday party on Friday, Wedding on Saturday, Conference on Sunday.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Birthday party on Friday, Wedding on Saturday, Conference on Sunday."
+    },
+    "updateDate": 1743920133201,
     "lightColor": 555555,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": true,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT",
+    "isTrashed": true
   },
   {
     "id": 24,
     "title": "Books to Read",
-    "content": "1. Atomic Habits. 2. The Pragmatic Programmer. 3. Clean Code.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 24,
+          "content": "Atomic Habits",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 24,
+          "content": "The Pragmatic Programmer",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 24,
+          "content": "Clean Code",
+          "position": 2,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133202,
     "lightColor": 666666,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 25,
     "title": "Shopping List",
-    "content": "New phone, Laptop sleeve, Wireless mouse, Portable charger.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 25,
+          "content": "New phone",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 25,
+          "content": "Laptop sleeve",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 25,
+          "content": "Wireless mouse",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 25,
+          "content": "Portable charger",
+          "position": 3,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133203,
     "lightColor": 777777,
     "isPinned": false,
-    "isArchived": true,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST",
+    "isArchived": true
   },
   {
     "id": 26,
     "title": "Personal Finance",
-    "content": "Track expenses for groceries, utilities, and entertainment this month.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Track expenses for groceries, utilities, and entertainment this month."
+    },
+    "updateDate": 1743920133204,
     "lightColor": 888888,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
+    "pinnedDate": null,
+    "noteType": "TEXT",
     "isDone": true
   },
   {
     "id": 27,
     "title": "Reminder for Presentation",
-    "content": "Prepare slides for the team meeting next Thursday.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Prepare slides for the team meeting next Thursday."
+    },
+    "updateDate": 1696723200000,
     "lightColor": 123123,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": 1696723200000,
-    "isDone": false
+    "pinnedDate": 1696723200000,
+    "noteType": "TEXT"
   },
   {
     "id": 28,
     "title": "Work Tasks",
-    "content": "Finish report by Wednesday, Email client about project update, Schedule a team meeting for Friday.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 28,
+          "content": "Finish report by Wednesday",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 28,
+          "content": "Email client about project update",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 28,
+          "content": "Schedule a team meeting for Friday",
+          "position": 2,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133205,
     "lightColor": 232323,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": 1743920133205,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 29,
     "title": "Weekend Plans",
-    "content": "Go hiking, Visit family, Watch a movie.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 29,
+          "content": "Go hiking",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 29,
+          "content": "Visit family",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 29,
+          "content": "Watch a movie",
+          "position": 2,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133206,
     "lightColor": 434343,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 30,
     "title": "Long-term Goals",
-    "content": "1. Learn advanced Kotlin. 2. Build an open-source project. 3. Travel to Europe.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 30,
+          "content": "Learn advanced Kotlin",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 30,
+          "content": "Build an open-source project",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 30,
+          "content": "Travel to Europe",
+          "position": 2,
+          "isChecked": false
+        }
+      ]
+    },
+    "updateDate": 1743920133207,
     "lightColor": 131313,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": true,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST",
+    "isTrashed": true
   },
   {
     "id": 31,
     "title": "Welcome to Note App",
-    "content": "Thank you for installing Note App! This is a sample note to help you get started. Feel free to edit or delete it.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Thank you for installing Note App! This is a sample note to help you get started. Feel free to edit or delete it."
+    },
     "lightColor": 16777215,
     "isPinned": true,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 32,
     "title": "Shopping List",
-    "content": "- Milk\n- Eggs\n- Bread\n- Cheese\n- Apples\n- Chicken",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "- Milk\n- Eggs\n- Bread\n- Cheese\n- Apples\n- Chicken"
+    },
     "lightColor": 16776960,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": 1698105600000,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 33,
     "title": "Project Ideas",
-    "content": "1. Develop a fitness tracking app\n2. Create a recipe sharing platform\n3. Design a personal finance manager\n4. Build a language learning game\n5. Invent a smart home automation system",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. Develop a fitness tracking app\n2. Create a recipe sharing platform\n3. Design a personal finance manager\n4. Build a language learning game\n5. Invent a smart home automation system"
+    },
     "lightColor": 16711935,
     "isPinned": true,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 34,
     "title": "Birthday Party Planning",
-    "content": "Date: November 15\nVenue: Home\nGuest List:\n- John and family\n- Sarah and kids\n- Mike and Lisa\n- Grandma and Grandpa\n\nMenu:\n- Pizza\n- Salad\n- Birthday Cake\n- Ice Cream\n\nActivities:\n- Board games\n- Karaoke\n- Gift opening",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Date: November 15\nVenue: Home\nGuest List:\n- John and family\n- Sarah and kids\n- Mike and Lisa\n- Grandma and Grandpa\nMenu:\n- Pizza\n- Salad\n- Birthday Cake\n- Ice Cream\nActivities:\n- Board games\n- Karaoke\n- Gift opening"
+    },
     "lightColor": 65535,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": 1699574400000,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 35,
     "title": "Workout Routine",
-    "content": "Monday: Chest and Triceps\n- Bench Press: 3 sets of 10 reps\n- Incline Dumbbell Press: 3 sets of 12 reps\n- Tricep Pushdowns: 3 sets of 15 reps\n- Dips: 3 sets to failure\n\nWednesday: Back and Biceps\n- Deadlifts: 3 sets of 8 reps\n- Pull-ups: 3 sets to failure\n- Barbell Rows: 3 sets of 10 reps\n- Hammer Curls: 3 sets of 12 reps\n\nFriday: Legs and Shoulders\n- Squats: 3 sets of 10 reps\n- Leg Press: 3 sets of 12 reps\n- Military Press: 3 sets of 10 reps\n- Lateral Raises: 3 sets of 15 reps",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Monday: Chest and Triceps\n- Bench Press: 3 sets of 10 reps\n- Incline Dumbbell Press: 3 sets of 12 reps\n- Tricep Pushdowns: 3 sets of 15 reps\n- Dips: 3 sets to failure\nWednesday: Back and Biceps\n- Deadlifts: 3 sets of 8 reps\n- Pull-ups: 3 sets to failure\n- Barbell Rows: 3 sets of 10 reps\n- Hammer Curls: 3 sets of 12 reps\nFriday: Legs and Shoulders\n- Squats: 3 sets of 10 reps\n- Leg Press: 3 sets of 12 reps\n- Military Press: 3 sets of 10 reps\n- Lateral Raises: 3 sets of 15 reps"
+    },
     "lightColor": 65280,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 36,
     "title": "Book Recommendations",
-    "content": "1. 'The Alchemist' by Paulo Coelho\n2. '1984' by George Orwell\n3. 'To Kill a Mockingbird' by Harper Lee\n4. 'The Great Gatsby' by F. Scott Fitzgerald\n5. 'Pride and Prejudice' by Jane Austen\n6. 'The Catcher in the Rye' by J.D. Salinger\n7. 'The Hobbit' by J.R.R. Tolkien\n8. 'Brave New World' by Aldous Huxley\n9. 'The Hunger Games' by Suzanne Collins\n10. 'The Da Vinci Code' by Dan Brown",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. 'The Alchemist' by Paulo Coelho\n2. '1984' by George Orwell\n3. 'To Kill a Mockingbird' by Harper Lee\n4. 'The Great Gatsby' by F. Scott Fitzgerald\n5. 'Pride and Prejudice' by Jane Austen\n6. 'The Catcher in the Rye' by J.D. Salinger\n7. 'The Hobbit' by J.R.R. Tolkien\n8. 'Brave New World' by Aldous Huxley\n9. 'The Hunger Games' by Suzanne Collins\n10. 'The Da Vinci Code' by Dan Brown"
+    },
     "lightColor": 16711680,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 37,
     "title": "Travel Bucket List",
-    "content": "1. Visit the Great Wall of China\n2. See the Northern Lights in Iceland\n3. Explore the ancient ruins of Machu Picchu\n4. Go on a safari in Tanzania\n5. Take a gondola ride in Venice\n6. Watch the sunset at Santorini\n7. Visit the Taj Mahal in India\n8. Hike to Everest Base Camp\n9. Swim in the Dead Sea\n10. See the cherry blossoms in Japan",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. Visit the Great Wall of China\n2. See the Northern Lights in Iceland\n3. Explore the ancient ruins of Machu Picchu\n4. Go on a safari in Tanzania\n5. Take a gondola ride in Venice\n6. Watch the sunset at Santorini\n7. Visit the Taj Mahal in India\n8. Hike to Everest Base Camp\n9. Swim in the Dead Sea\n10. See the cherry blossoms in Japan"
+    },
     "lightColor": 16777215,
     "isPinned": true,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 38,
     "title": "Recipe: Chocolate Chip Cookies",
-    "content": "Ingredients:\n- 2 1/4 cups all-purpose flour\n- 1 tsp baking soda\n- 1 tsp salt\n- 1 cup unsalted butter, softened\n- 3/4 cup granulated sugar\n- 3/4 cup brown sugar\n- 2 large eggs\n- 2 tsp vanilla extract\n- 2 cups semisweet chocolate chips\n\nInstructions:\n1. Preheat oven to 375°F (190°C).\n2. Mix flour, baking soda, and salt in a bowl.\n3. In another bowl, cream butter and sugars until light and fluffy.\n4. Beat in eggs and vanilla.\n5. Gradually stir in flour mixture.\n6. Fold in chocolate chips.\n7. Drop spoonfuls onto ungreased baking sheets.\n8. Bake for 9-11 minutes or until golden brown.\n9. Cool on wire racks.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Ingredients:\n- 2 1/4 cups all-purpose flour\n- 1 tsp baking soda\n- 1 tsp salt\n- 1 cup unsalted butter, softened\n- 3/4 cup granulated sugar\n- 3/4 cup brown sugar\n- 2 large eggs\n- 2 tsp vanilla extract\n- 2 cups semisweet chocolate chips\nInstructions:\n1. Preheat oven to 375°F (190°C).\n2. Mix flour, baking soda, and salt in a bowl.\n3. In another bowl, cream butter and sugars until light and fluffy.\n4. Beat in eggs and vanilla.\n5. Gradually stir in flour mixture.\n6. Fold in chocolate chips.\n7. Drop spoonfuls onto ungreased baking sheets.\n8. Bake for 9-11 minutes or until golden brown.\n9. Cool on wire racks."
+    },
     "lightColor": 16776960,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 39,
     "title": "Daily Affirmations",
-    "content": "1. I am capable of achieving great things.\n2. I choose to be positive and optimistic.\n3. I am worthy of love and respect.\n4. I trust in my abilities and decisions.\n5. I embrace challenges as opportunities for growth.\n6. I am grateful for all that I have in my life.\n7. I radiate confidence and self-assurance.\n8. I am constantly improving and becoming better.\n9. I attract positivity and success.\n10. I am in control of my own happiness.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. I am capable of achieving great things.\n2. I choose to be positive and optimistic.\n3. I am worthy of love and respect.\n4. I trust in my abilities and decisions.\n5. I embrace challenges as opportunities for growth.\n6. I am grateful for all that I have in my life.\n7. I radiate confidence and self-assurance.\n8. I am constantly improving and becoming better.\n9. I attract positivity and success.\n10. I am in control of my own happiness."
+    },
     "lightColor": 16711935,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 40,
     "title": "Home Improvement Ideas",
-    "content": "1. Paint the living room walls\n2. Install new kitchen backsplash\n3. Replace old light fixtures\n4. Add a kitchen island\n5. Create a vertical garden on the patio\n6. Refinish hardwood floors\n7. Update bathroom fixtures\n8. Build a fire pit in the backyard\n9. Install smart home devices\n10. Organize and declutter the garage",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. Paint the living room walls\n2. Install new kitchen backsplash\n3. Replace old light fixtures\n4. Add a kitchen island\n5. Create a vertical garden on the patio\n6. Refinish hardwood floors\n7. Update bathroom fixtures\n8. Build a fire pit in the backyard\n9. Install smart home devices\n10. Organize and declutter the garage"
+    },
     "lightColor": 65535,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 41,
     "title": "Weekly Goals",
-    "content": "1. Complete project proposal\n2. Exercise for 30 minutes daily\n3. Read two chapters of current book\n4. Call parents\n5. Meal prep for the week\n6. Declutter workspace\n7. Practice meditation for 10 minutes daily",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. Complete project proposal\n2. Exercise for 30 minutes daily\n3. Read two chapters of current book\n4. Call parents\n5. Meal prep for the week\n6. Declutter workspace\n7. Practice meditation for 10 minutes daily"
+    },
     "lightColor": 65280,
     "isPinned": true,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": 1697932800000,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 42,
     "title": "Favorite Quotes",
-    "content": "1. 'Be the change you wish to see in the world.' - Mahatma Gandhi\n2. 'I have not failed. I've just found 10,000 ways that won't work.' - Thomas A. Edison\n3. 'The only way to do great work is to love what you do.' - Steve Jobs\n4. 'In the middle of difficulty lies opportunity.' - Albert Einstein\n5. 'The future belongs to those who believe in the beauty of their dreams.' - Eleanor Roosevelt",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. 'Be the change you wish to see in the world.' - Mahatma Gandhi\n2. 'I have not failed. I've just found 10,000 ways that won't work.' - Thomas A. Edison\n3. 'The only way to do great work is to love what you do.' - Steve Jobs\n4. 'In the middle of difficulty lies opportunity.' - Albert Einstein\n5. 'The future belongs to those who believe in the beauty of their dreams.' - Eleanor Roosevelt"
+    },
     "lightColor": 16711680,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 43,
     "title": "Archived: Old Project Notes",
-    "content": "This note contains old project ideas and brainstorming sessions from previous years. Keeping it for reference, but it's no longer actively used.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "This note contains old project ideas and brainstorming sessions from previous years. Keeping it for reference, but it's no longer actively used."
+    },
     "lightColor": 16777215,
     "isPinned": false,
     "isArchived": true,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 44,
     "title": "Trashed: Outdated Contact List",
-    "content": "This note contained an old contact list that is no longer relevant. It has been moved to the trash.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "This note contained an old contact list that is no longer relevant. It has been moved to the trash."
+    },
     "lightColor": 16776960,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": true,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 45,
     "title": "Language Learning Progress",
-    "content": "Spanish:\n- Completed Duolingo tree\n- Can hold basic conversations\n- Need to improve vocabulary\n\nFrench:\n- Started basics on Babbel\n- Learning common phrases\n- Practice pronunciation daily\n\nGoal: Achieve B1 level in Spanish and A2 in French by the end of the year.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Spanish:\n- Completed Duolingo tree\n- Can hold basic conversations\n- Need to improve vocabulary\nFrench:\n- Started basics on Babbel\n- Learning common phrases\n- Practice pronunciation daily\nGoal: Achieve B1 level in Spanish and A2 in French by the end of the year."
+    },
     "lightColor": 16711935,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": 1704067200000,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 46,
     "title": "Meeting Notes",
-    "content": "Discuss project milestones and upcoming tasks for next sprint.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Discuss project milestones and upcoming tasks for next sprint."
+    },
     "lightColor": 123456,
     "isPinned": true,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": 1696377600000,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 47,
     "title": "Grocery List",
-    "content": "Milk, Bread, Eggs, Butter, Cheese, Pasta, Tomatoes, Chicken.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Milk, Bread, Eggs, Butter, Cheese, Pasta, Tomatoes, Chicken."
+    },
     "lightColor": 654321,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 48,
     "title": "Travel Itinerary",
-    "content": "Flight to New York on Monday at 9am. Hotel check-in at 3pm. Dinner at 7pm.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Flight to New York on Monday at 9am. Hotel check-in at 3pm. Dinner at 7pm."
+    },
     "lightColor": 111111,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": 1696540800000,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 49,
     "title": "Ideas for Blog",
-    "content": "Write about Kotlin Coroutines and how to use them efficiently in modern Android apps.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Write about Kotlin Coroutines and how to use them efficiently in modern Android apps."
+    },
     "lightColor": 999999,
     "isPinned": true,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 50,
     "title": "Household Chores",
-    "content": "Vacuum the living room, clean the kitchen, take out the trash.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Vacuum the living room, clean the kitchen, take out the trash."
+    },
     "lightColor": 222222,
     "isPinned": false,
     "isArchived": true,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": true
+    "isDone": true,
+    "noteType": "TEXT"
   },
   {
     "id": 51,
     "title": "Exercise Plan",
-    "content": "Monday: Cardio, Tuesday: Weightlifting, Wednesday: Yoga.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Monday: Cardio, Tuesday: Weightlifting, Wednesday: Yoga."
+    },
     "lightColor": 333333,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 52,
     "title": "Weekly Goals",
-    "content": "1. Finish app prototype. 2. Test new features. 3. Write documentation.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. Finish app prototype. 2. Test new features. 3. Write documentation."
+    },
     "lightColor": 444444,
     "isPinned": true,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 53,
     "title": "Important Dates",
-    "content": "Birthday party on Friday, Wedding on Saturday, Conference on Sunday.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Birthday party on Friday, Wedding on Saturday, Conference on Sunday."
+    },
     "lightColor": 555555,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": true,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 54,
     "title": "Books to Read",
-    "content": "1. Atomic Habits. 2. The Pragmatic Programmer. 3. Clean Code.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. Atomic Habits. 2. The Pragmatic Programmer. 3. Clean Code."
+    },
     "lightColor": 666666,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 55,
     "title": "Shopping List",
-    "content": "New phone, Laptop sleeve, Wireless mouse, Portable charger.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "New phone, Laptop sleeve, Wireless mouse, Portable charger."
+    },
     "lightColor": 777777,
     "isPinned": false,
     "isArchived": true,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 56,
     "title": "Personal Finance",
-    "content": "Track expenses for groceries, utilities, and entertainment this month.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Track expenses for groceries, utilities, and entertainment this month."
+    },
     "lightColor": 888888,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": true
+    "isDone": true,
+    "noteType": "TEXT"
   },
   {
     "id": 57,
     "title": "Reminder for Presentation",
-    "content": "Prepare slides for the team meeting next Thursday.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Prepare slides for the team meeting next Thursday."
+    },
     "lightColor": 123123,
     "isPinned": true,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": 1696723200000,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 58,
     "title": "CODEE",
-    "content": "Finish report by Wednesday, Email client about project update, Schedule a team meeting for Friday.\n 1. Learn advanced Kotlin. 2. Build an open-source project. 3. Travel to Europe. \n 1. Learn advanced Kotlin. 2. Build an open-source project. 3. Travel to Europe.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Finish report by Wednesday, Email client about project update, Schedule a team meeting for Friday.\n1. Learn advanced Kotlin. 2. Build an open-source project. 3. Travel to Europe. \n1. Learn advanced Kotlin. 2. Build an open-source project. 3. Travel to Europe."
+    },
     "lightColor": 232323,
     "isPinned": true,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 59,
     "title": "Weekend Plans",
-    "content": "Go hiking, Visit family, Watch a movie.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Go hiking, Visit family, Watch a movie."
+    },
     "lightColor": 434343,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 60,
     "title": "Long-term Goals",
-    "content": "1. Learn advanced Kotlin. 2. Build an open-source project. 3. Travel to Europe.",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. Learn advanced Kotlin. 2. Build an open-source project. 3. Travel to Europe."
+    },
     "lightColor": 131313,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": true,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 61,
     "title": "App Feature Ideas",
-    "content": "1. Dark mode implementation\n2. Offline sync functionality\n3. Cloud backup integration\n4. Voice notes capability\n5. Advanced search filters",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. Dark mode implementation\n2. Offline sync functionality\n3. Cloud backup integration\n4. Voice notes capability\n5. Advanced search filters"
+    },
     "lightColor": 657483,
     "isPinned": true,
     "isArchived": false,
     "isTrashed": false,
     "updateDate": 1689542760000,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 62,
     "title": "Monthly Budget",
-    "content": "Rent: $1200\nUtilities: $150\nGroceries: $400\nTransportation: $200\nEntertainment: $150\nSavings: $300",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Rent: $1200\nUtilities: $150\nGroceries: $400\nTransportation: $200\nEntertainment: $150\nSavings: $300"
+    },
     "lightColor": 984512,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "updateDate": 1692394861000,
     "reminderDate": 1698278400000,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 63,
     "title": "Gardening Plan",
-    "content": "Spring: Plant tomatoes, peppers, and herbs\nSummer: Maintain and harvest vegetables\nFall: Plant bulbs for next spring\nWinter: Plan next year's garden layout",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Spring: Plant tomatoes, peppers, and herbs\nSummer: Maintain and harvest vegetables\nFall: Plant bulbs for next spring\nWinter: Plan next year's garden layout"
+    },
     "lightColor": 345982,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "updateDate": 1688652349000,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 64,
     "title": "Product Launch Checklist",
-    "content": "✅ Finalize product features\n✅ Complete QA testing\n☐ Prepare marketing materials\n☐ Brief sales team\n☐ Set up analytics tracking\n☐ Schedule social media posts",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "✅ Finalize product features\n✅ Complete QA testing\n☐ Prepare marketing materials\n☐ Brief sales team\n☐ Set up analytics tracking\n☐ Schedule social media posts"
+    },
     "lightColor": 772345,
     "isPinned": true,
     "isArchived": false,
     "isTrashed": false,
     "updateDate": 1694237523000,
     "reminderDate": 1697068800000,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 65,
     "title": "Home Office Setup",
-    "content": "1. Ergonomic chair\n2. Standing desk\n3. Monitor arm\n4. Keyboard and mouse\n5. Desk lamp\n6. Cable management system\n7. Webcam and microphone",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. Ergonomic chair\n2. Standing desk\n3. Monitor arm\n4. Keyboard and mouse\n5. Desk lamp\n6. Cable management system\n7. Webcam and microphone"
+    },
     "lightColor": 546372,
     "isPinned": false,
     "isArchived": true,
     "isTrashed": false,
     "updateDate": 1685647892000,
     "reminderDate": null,
-    "isDone": true
+    "isDone": true,
+    "noteType": "TEXT"
   },
   {
     "id": 66,
     "title": "UI Design Resources",
-    "content": "- Material Design guidelines\n- iOS Human Interface Guidelines\n- Figma UI kits\n- Color palette generator\n- Typography resources\n- Icon libraries",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "- Material Design guidelines\n- iOS Human Interface Guidelines\n- Figma UI kits\n- Color palette generator\n- Typography resources\n- Icon libraries"
+    },
     "lightColor": 873465,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "updateDate": 1691489273000,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 67,
     "title": "Film Watchlist",
-    "content": "1. The Shawshank Redemption\n2. The Godfather\n3. Pulp Fiction\n4. The Dark Knight\n5. Schindler's List\n6. Inception\n7. Fight Club\n8. Forrest Gump",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "1. The Shawshank Redemption\n2. The Godfather\n3. Pulp Fiction\n4. The Dark Knight\n5. Schindler's List\n6. Inception\n7. Fight Club\n8. Forrest Gump"
+    },
     "lightColor": 234987,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "updateDate": 1693257834000,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 68,
     "title": "Summer Vacation Planning",
-    "content": "Destination options:\n- Beach resort in Hawaii\n- European tour (Italy, France, Spain)\n- National parks road trip\n- Cruise to Caribbean\n\nBudget: $3000-$5000\nDuration: 10-14 days\nPreferred dates: July-August",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Destination options:\n- Beach resort in Hawaii\n- European tour (Italy, France, Spain)\n- National parks road trip\n- Cruise to Caribbean\n\nBudget: $3000-$5000\nDuration: 10-14 days\nPreferred dates: July-August"
+    },
     "lightColor": 654321,
     "isPinned": true,
     "isArchived": false,
     "isTrashed": false,
     "updateDate": 1690375462000,
     "reminderDate": 1701907200000,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 69,
     "title": "Learning Resources for Kotlin",
-    "content": "Books:\n- Kotlin in Action\n- Programming Kotlin\n- Atomic Kotlin\n\nCourses:\n- Kotlin for Android Developers\n- Kotlin Bootcamp for Programmers\n- Advanced Kotlin Programming\n\nWebsites:\n- kotlinlang.org\n- Kotlin Academy\n- Ray Wenderlich tutorials",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Books:\n- Kotlin in Action\n- Programming Kotlin\n- Atomic Kotlin\n\nCourses:\n- Kotlin for Android Developers\n- Kotlin Bootcamp for Programmers\n- Advanced Kotlin Programming\n\nWebsites:\n- kotlinlang.org\n- Kotlin Academy\n- Ray Wenderlich tutorials"
+    },
     "lightColor": 765432,
     "isPinned": false,
     "isArchived": false,
     "isTrashed": false,
     "updateDate": 1687583927000,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 70,
     "title": "Networking Contacts",
-    "content": "Jane Smith - Marketing Director at ABC Inc.\nEmail: jane@example.com\nLast met: Industry conference\n\nJohn Doe - Senior Developer at XYZ Corp\nEmail: john@example.com\nLast met: Hackathon event\n\nSarah Johnson - UX Designer at Design Studio\nEmail: sarah@example.com\nLast met: Workshop",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Jane Smith - Marketing Director at ABC Inc.\nEmail: jane@example.com\nLast met: Industry conference\n\nJohn Doe - Senior Developer at XYZ Corp\nEmail: john@example.com\nLast met: Hackathon event\n\nSarah Johnson - UX Designer at Design Studio\nEmail: sarah@example.com\nLast met: Workshop"
+    },
     "lightColor": 432198,
     "isPinned": false,
     "isArchived": true,
     "isTrashed": false,
     "updateDate": 1684936574000,
     "reminderDate": null,
-    "isDone": false
+    "isDone": false,
+    "noteType": "TEXT"
   },
   {
     "id": 71,
     "title": "Team Building Activities",
-    "content": "1. Escape room challenge\n2. Cooking class\n3. Outdoor adventure day\n4. Board game tournament\n5. Volunteer project\n6. Virtual reality experience\n7. Sports competition",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 71,
+          "content": "Escape room challenge",
+          "position": 0
+        },
+        {
+          "noteId": 71,
+          "content": "Cooking class",
+          "position": 1
+        },
+        {
+          "noteId": 71,
+          "content": "Outdoor adventure day",
+          "position": 2
+        },
+        {
+          "noteId": 71,
+          "content": "Board game tournament",
+          "position": 3
+        },
+        {
+          "noteId": 71,
+          "content": "Volunteer project",
+          "position": 4
+        },
+        {
+          "noteId": 71,
+          "content": "Virtual reality experience",
+          "position": 5
+        },
+        {
+          "noteId": 71,
+          "content": "Sports competition",
+          "position": 6
+        }
+      ]
+    },
+    "updateDate": 1695842763000,
     "lightColor": 987123,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1695842763000,
-    "reminderDate": 1697500800000,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 72,
     "title": "Diet Plan",
-    "content": "Breakfast:\n- Oatmeal with fruits\n- Greek yogurt with honey\n- Whole grain toast with avocado\n\nLunch:\n- Grilled chicken salad\n- Quinoa bowl with vegetables\n- Lentil soup with bread\n\nDinner:\n- Baked salmon with roasted vegetables\n- Stir-fry with brown rice\n- Vegetable pasta\n\nSnacks:\n- Nuts and dried fruits\n- Apple with peanut butter\n- Vegetable sticks with hummus",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Breakfast:\n- Oatmeal with fruits\n- Greek yogurt with honey\n- Whole grain toast with avocado\nLunch:\n- Grilled chicken salad\n- Quinoa bowl with vegetables\n- Lentil soup with bread\nDinner:\n- Baked salmon with roasted vegetables\n- Stir-fry with brown rice\n- Vegetable pasta\nSnacks:\n- Nuts and dried fruits\n- Apple with peanut butter\n- Vegetable sticks with hummus"
+    },
+    "updateDate": 1689132687000,
     "lightColor": 321987,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1689132687000,
-    "reminderDate": null,
-    "isDone": false
-  },
-  {
-    "id": 73,
-    "title": "Apartment Hunting Criteria",
-    "content": "Must have:\n- 2 bedrooms minimum\n- In-unit laundry\n- Pet-friendly\n- Under $2000/month\n- Close to public transportation\n\nNice to have:\n- Fitness center\n- Outdoor space\n- Parking spot\n- Modern kitchen\n- Good natural light",
-    "lightColor": 567890,
-    "isPinned": false,
-    "isArchived": false,
-    "isTrashed": true,
-    "updateDate": 1692873645000,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": 1689132687000,
+    "noteType": "TEXT"
   },
   {
     "id": 74,
     "title": "Photography Tips",
-    "content": "1. Rule of thirds for composition\n2. Golden hour lighting (after sunrise/before sunset)\n3. Use leading lines to draw attention\n4. Pay attention to background elements\n5. Experiment with different angles\n6. Use aperture for depth of field control\n7. Practice manual focus for precise results\n8. Edit photos to enhance, not transform",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 74,
+          "content": "Rule of thirds for composition",
+          "position": 0
+        },
+        {
+          "noteId": 74,
+          "content": "Golden hour lighting (after sunrise/before sunset)",
+          "position": 1
+        },
+        {
+          "noteId": 74,
+          "content": "Use leading lines to draw attention",
+          "position": 2
+        },
+        {
+          "noteId": 74,
+          "content": "Pay attention to background elements",
+          "position": 3
+        },
+        {
+          "noteId": 74,
+          "content": "Experiment with different angles",
+          "position": 4
+        },
+        {
+          "noteId": 74,
+          "content": "Use aperture for depth of field control",
+          "position": 5
+        },
+        {
+          "noteId": 74,
+          "content": "Practice manual focus for precise results",
+          "position": 6
+        },
+        {
+          "noteId": 74,
+          "content": "Edit photos to enhance, not transform",
+          "position": 7
+        }
+      ]
+    },
+    "updateDate": 1688234987000,
     "lightColor": 678543,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1688234987000,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 75,
     "title": "Quarterly Goals Q3",
-    "content": "Professional:\n- Complete certification course\n- Lead project to completion\n- Mentor junior team member\n\nPersonal:\n- Read 3 books\n- Exercise 3 times per week\n- Learn basics of new language\n\nFinancial:\n- Increase savings rate to 20%\n- Review investment portfolio\n- Set up automatic bill payments",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Professional:\n- Complete certification course\n- Lead project to completion\n- Mentor junior team member\nPersonal:\n- Read 3 books\n- Exercise 3 times per week\n- Learn basics of new language\nFinancial:\n- Increase savings rate to 20%\n- Review investment portfolio\n- Set up automatic bill payments"
+    },
+    "updateDate": 1691763584000,
     "lightColor": 456789,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1691763584000,
-    "reminderDate": 1700438400000,
-    "isDone": false
+    "pinnedDate": 1691763584000,
+    "noteType": "TEXT"
   },
   {
     "id": 76,
     "title": "Gift Ideas",
-    "content": "Mom:\n- Cooking gadget\n- Gardening set\n- Spa gift certificate\n\nDad:\n- History book\n- Grilling accessories\n- Tech gadget\n\nSister:\n- Jewelry\n- Art supplies\n- Concert tickets\n\nBrother:\n- Video game\n- Sports equipment\n- Subscription box",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Mom:\n- Cooking gadget\n- Gardening set\n- Spa gift certificate\nDad:\n- History book\n- Grilling accessories\n- Tech gadget\nSister:\n- Jewelry\n- Art supplies\n- Concert tickets\nBrother:\n- Video game\n- Sports equipment\n- Subscription box"
+    },
+    "updateDate": 1694598762000,
     "lightColor": 345678,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1694598762000,
-    "reminderDate": 1702080000000,
-    "isDone": false
-  },
-  {
-    "id": 77,
-    "title": "Website Redesign Feedback",
-    "content": "Homepage:\n- Simplify navigation menu\n- Add customer testimonials\n- Improve call-to-action visibility\n\nProduct pages:\n- Include more product images\n- Add comparison feature\n- Streamline checkout process\n\nBlog section:\n- Implement better categorization\n- Add search functionality\n- Improve mobile responsiveness",
-    "lightColor": 234567,
-    "isPinned": false,
-    "isArchived": true,
-    "isTrashed": false,
-    "updateDate": 1686394857000,
-    "reminderDate": null,
-    "isDone": true
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 78,
     "title": "Coffee Shop Reviews",
-    "content": "Java Junction ★★★★☆\nGreat espresso, limited seating, good WiFi\n\nBrew Haven ★★★★★\nAmazing pastries, friendly staff, comfortable atmosphere\n\nCafe Corner ★★★☆☆\nDecentccoffee, spacious, but noisy during peak hours\n\nBean Brothers ★★★★☆\nUnique specialty drinks, moderate prices, good for meetings",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Java Junction ★★★★☆\nGreat espresso, limited seating, good WiFi\nBrew Haven ★★★★★\nAmazing pastries, friendly staff, comfortable atmosphere\nCafe Corner ★★★☆☆\nDecent coffee, spacious, but noisy during peak hours\nBean Brothers ★★★★☆\nUnique specialty drinks, moderate prices, good for meetings"
+    },
+    "updateDate": 1693587623000,
     "lightColor": 789012,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1693587623000,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 79,
     "title": "Podcast Recommendations",
-    "content": "Technology:\n- Reply All\n- Darknet Diaries\n- Waveform\n\nBusiness:\n- How I Built This\n- Planet Money\n- The Tim Ferriss Show\n\nScience:\n- Radiolab\n- Science Vs\n- StarTalk\n\nStorytelling:\n- This American Life\n- The Moth\n- Serial",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Technology:\n- Reply All\n- Darknet Diaries\n- Waveform\nBusiness:\n- How I Built This\n- Planet Money\n- The Tim Ferriss Show\nScience:\n- Radiolab\n- Science Vs\n- StarTalk\nStorytelling:\n- This American Life\n- The Moth\n- Serial"
+    },
+    "updateDate": 1690764352000,
     "lightColor": 890123,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1690764352000,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 80,
     "title": "Interview Questions",
-    "content": "Technical:\n- Explain your experience with Kotlin\n- How do you handle concurrency?\n- Describe your approach to testing\n\nBehavioral:\n- Tell me about a challenging project\n- How do you handle conflicting priorities?\n- Give an example of overcoming a team conflict\n\nQuestions to ask:\n- What does success look like in this role?\n- How is performance evaluated?\n- What are the team's biggest challenges?",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Technical:\n- Explain your experience with Kotlin\n- How do you handle concurrency?\n- Describe your approach to testing\nBehavioral:\n- Tell me about a challenging project\n- How do you handle conflicting priorities?\n- Give an example of overcoming a team conflict\nQuestions to ask:\n- What does success look like in this role?\n- How is performance evaluated?\n- What are the team's biggest challenges?"
+    },
+    "updateDate": 1687943726000,
     "lightColor": 901234,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1687943726000,
-    "reminderDate": 1696982400000,
-    "isDone": false
+    "pinnedDate": 1687943726000,
+    "noteType": "TEXT"
   },
   {
     "id": 81,
     "title": "Sustainable Living Tips",
-    "content": "1. Reduce single-use plastics\n2. Set up a composting system\n3. Use public transportation when possible\n4. Buy local and seasonal produce\n5. Switch to LED light bulbs\n6. Wash clothes in cold water\n7. Fix items instead of replacing them\n8. Use reusable shopping bags",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 81,
+          "content": "Reduce single-use plastics",
+          "position": 0
+        },
+        {
+          "noteId": 81,
+          "content": "Set up a composting system",
+          "position": 1
+        },
+        {
+          "noteId": 81,
+          "content": "Use public transportation when possible",
+          "position": 2
+        },
+        {
+          "noteId": 81,
+          "content": "Buy local and seasonal produce",
+          "position": 3
+        },
+        {
+          "noteId": 81,
+          "content": "Switch to LED light bulbs",
+          "position": 4
+        },
+        {
+          "noteId": 81,
+          "content": "Wash clothes in cold water",
+          "position": 5
+        },
+        {
+          "noteId": 81,
+          "content": "Fix items instead of replacing them",
+          "position": 6
+        },
+        {
+          "noteId": 81,
+          "content": "Use reusable shopping bags",
+          "position": 7
+        }
+      ]
+    },
+    "updateDate": 1695324567000,
     "lightColor": 543210,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1695324567000,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 82,
     "title": "Home Maintenance Schedule",
-    "content": "Monthly:\n- Check and replace HVAC filters\n- Clean kitchen sink disposal\n- Test smoke detectors\n\nQuarterly:\n- Deep clean refrigerator\n- Check for leaks under sinks\n- Clean gutters\n\nBiannually:\n- Service HVAC system\n- Check water heater\n- Power wash exterior\n\nAnnually:\n- Inspect roof\n- Clean dryer vent\n- Check for insect infestations",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Monthly:\n- Check and replace HVAC filters\n- Clean kitchen sink disposal\n- Test smoke detectors\nQuarterly:\n- Deep clean refrigerator\n- Check for leaks under sinks\n- Clean gutters\nBiannually:\n- Service HVAC system\n- Check water heater\n- Power wash exterior\nAnnually:\n- Inspect roof\n- Clean dryer vent\n- Check for insect infestations"
+    },
+    "updateDate": 1689387645000,
     "lightColor": 123456,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1689387645000,
-    "reminderDate": 1699142400000,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 83,
     "title": "Coding Project Ideas",
-    "content": "1. Habit tracker with analytics\n2. Recipe manager with meal planning\n3. Personal finance dashboard\n4. Language learning flashcard app\n5. Workout routine builder\n6. Smart home automation controller\n7. Collaborative document editor\n8. Weather app with clothing recommendations",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 83,
+          "content": "Habit tracker with analytics",
+          "position": 0
+        },
+        {
+          "noteId": 83,
+          "content": "Recipe manager with meal planning",
+          "position": 1
+        },
+        {
+          "noteId": 83,
+          "content": "Personal finance dashboard",
+          "position": 2
+        },
+        {
+          "noteId": 83,
+          "content": "Language learning flashcard app",
+          "position": 3
+        },
+        {
+          "noteId": 83,
+          "content": "Workout routine builder",
+          "position": 4
+        },
+        {
+          "noteId": 83,
+          "content": "Smart home automation controller",
+          "position": 5
+        },
+        {
+          "noteId": 83,
+          "content": "Collaborative document editor",
+          "position": 6
+        },
+        {
+          "noteId": 83,
+          "content": "Weather app with clothing recommendations",
+          "position": 7
+        }
+      ]
+    },
+    "updateDate": 1692134875000,
     "lightColor": 654987,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1692134875000,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": 1692134875000,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 84,
     "title": "Online Course Notes - ML Fundamentals",
-    "content": "Week 1: Introduction to Machine Learning\n- Supervised vs. unsupervised learning\n- Regression vs. classification\n- Training and test sets\n\nWeek 2: Linear Regression\n- Cost function\n- Gradient descent\n- Feature scaling\n\nWeek 3: Logistic Regression\n- Sigmoid function\n- Decision boundary\n- Multiclass classification",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Week 1: Introduction to Machine Learning\n- Supervised vs. unsupervised learning\n- Regression vs. classification\n- Training and test sets\nWeek 2: Linear Regression\n- Cost function\n- Gradient descent\n- Feature scaling\nWeek 3: Logistic Regression\n- Sigmoid function\n- Decision boundary\n- Multiclass classification"
+    },
+    "updateDate": 1694892375000,
     "lightColor": 789456,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1694892375000,
-    "reminderDate": null,
-    "isDone": false
-  },
-  {
-    "id": 85,
-    "title": "Restaurant Bucket List",
-    "content": "Italian:\n- Bella Vita\n- Pasta Paradise\n\nJapanese:\n- Sushi Supreme\n- Ramen Revolution\n\nMexican:\n- Taco Temple\n- Burrito Barn\n\nIndian:\n- Curry Corner\n- Spice Sensation\n\nThailand:\n- Bangkok Bistro\n- Thai Delight",
-    "lightColor": 321654,
-    "isPinned": false,
-    "isArchived": false,
-    "isTrashed": true,
-    "updateDate": 1686964352000,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 86,
     "title": "Productivity Techniques",
-    "content": "1. Pomodoro Technique (25 min work, 5 min break)\n2. Time blocking (schedule specific tasks)\n3. Eisenhower Matrix (urgent/important grid)\n4. Getting Things Done (GTD) method\n5. Eat the Frog (hardest task first)\n6. 2-Minute Rule (quick tasks immediately)\n7. Kanban board for visual workflow",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 86,
+          "content": "Pomodoro Technique (25 min work, 5 min break)",
+          "position": 0
+        },
+        {
+          "noteId": 86,
+          "content": "Time blocking (schedule specific tasks)",
+          "position": 1
+        },
+        {
+          "noteId": 86,
+          "content": "Eisenhower Matrix (urgent/important grid)",
+          "position": 2
+        },
+        {
+          "noteId": 86,
+          "content": "Getting Things Done (GTD) method",
+          "position": 3
+        },
+        {
+          "noteId": 86,
+          "content": "Eat the Frog (hardest task first)",
+          "position": 4
+        },
+        {
+          "noteId": 86,
+          "content": "2-Minute Rule (quick tasks immediately)",
+          "position": 5
+        },
+        {
+          "noteId": 86,
+          "content": "Kanban board for visual workflow",
+          "position": 6
+        }
+      ]
+    },
+    "updateDate": 1691054763000,
     "lightColor": 987456,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1691054763000,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 87,
     "title": "Music Festival Packing List",
-    "content": "Essentials:\n- Tickets and ID\n- Cash and cards\n- Phone and charger\n- Sunscreen and hat\n- Water bottle\n- Comfortable shoes\n\nCamping gear:\n- Tent and sleeping bag\n- Flashlight\n- Portable shower\n- Cooler\n- Cooking supplies\n\nClothing:\n- Weather-appropriate layers\n- Rain gear\n- Extra socks\n- Swimwear",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Essentials:\n- Tickets and ID\n- Cash and cards\n- Phone and charger\n- Sunscreen and hat\n- Water bottle\n- Comfortable shoes\nCamping gear:\n- Tent and sleeping bag\n- Flashlight\n- Portable shower\n- Cooler\n- Cooking supplies\nClothing:\n- Weather-appropriate layers\n- Rain gear\n- Extra socks\n- Swimwear"
+    },
+    "updateDate": 1693823475000,
     "lightColor": 654789,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1693823475000,
-    "reminderDate": 1703462400000,
-    "isDone": false
-  },
-  {
-    "id": 88,
-    "title": "Morning Routine",
-    "content": "5:30 AM - Wake up\n5:45 AM - Drink water and stretch\n6:00 AM - Meditation (10 minutes)\n6:15 AM - Exercise (30 minutes)\n6:45 AM - Shower\n7:00 AM - Breakfast\n7:30 AM - Review daily goals\n8:00 AM - Start work",
-    "lightColor": 321789,
-    "isPinned": false,
-    "isArchived": true,
-    "isTrashed": false,
-    "updateDate": 1688492375000,
-    "reminderDate": null,
-    "isDone": true
+    "pinnedDate": 1693823475000,
+    "noteType": "TEXT"
   },
   {
     "id": 89,
     "title": "Car Maintenance Log",
-    "content": "Oil change: 65,000 miles (03/15/2023)\nTire rotation: 65,000 miles (03/15/2023)\nAir filter: 60,000 miles (01/10/2023)\nBrake pads: 55,000 miles (11/20/2022)\nBattery replacement: 50,000 miles (09/05/2022)\n\nUpcoming:\nTransmission fluid: 70,000 miles\nSpark plugs: 100,000 miles",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Oil change: 65,000 miles (03/15/2023)\nTire rotation: 65,000 miles (03/15/2023)\nAir filter: 60,000 miles (01/10/2023)\nBrake pads: 55,000 miles (11/20/2022)\nBattery replacement: 50,000 miles (09/05/2022)\nUpcoming:\nTransmission fluid: 70,000 miles\nSpark plugs: 100,000 miles"
+    },
+    "updateDate": 1695063475000,
     "lightColor": 456123,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1695063475000,
-    "reminderDate": 1698537600000,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 90,
     "title": "Public Speaking Tips",
-    "content": "Preparation:\n- Know your audience\n- Structure with clear beginning, middle, end\n- Practice multiple times\n- Prepare visual aids\n\nDelivery:\n- Speak clearly and at moderate pace\n- Make eye contact with audience\n- Use natural gestures\n- Vary your tone and volume\n\nHandling nerves:\n- Deep breathing before starting\n- Visualize success\n- Focus on message, not self\n- Welcome questions",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Preparation:\n- Know your audience\n- Structure with clear beginning, middle, end\n- Practice multiple times\n- Prepare visual aids\nDelivery:\n- Speak clearly and at moderate pace\n- Make eye contact with audience\n- Use natural gestures\n- Vary your tone and volume\nHandling nerves:\n- Deep breathing before starting\n- Visualize success\n- Focus on message, not self\n- Welcome questions"
+    },
+    "updateDate": 1690134756000,
     "lightColor": 789321,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1690134756000,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 91,
     "title": "Vegetable Garden Layout",
-    "content": "North side (tall plants):\n- Tomatoes (6 plants)\n- Corn (12 plants)\n- Pole beans (trellis)\n\nMiddle section:\n- Peppers (4 plants)\n- Eggplant (2 plants)\n- Zucchini (2 plants)\n\nSouth side (short plants):\n- Lettuce and greens\n- Radishes\n- Carrots\n- Onions\n\nHerb corner:\n- Basil\n- Parsley\n- Cilantro\n- Thyme",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "North side (tall plants):\n- Tomatoes (6 plants)\n- Corn (12 plants)\n- Pole beans (trellis)\nMiddle section:\n- Peppers (4 plants)\n- Eggplant (2 plants)\n- Zucchini (2 plants)\nSouth side (short plants):\n- Lettuce and greens\n- Radishes\n- Carrots\n- Onions\nHerb corner:\n- Basil\n- Parsley\n- Cilantro\n- Thyme"
+    },
+    "updateDate": 1687153624000,
     "lightColor": 654321,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1687153624000,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": 1687153624000,
+    "noteType": "TEXT"
   },
   {
     "id": 92,
     "title": "Creative Writing Prompts",
-    "content": "1. A character discovers an old map in a library book\n2. Write a story that takes place during a power outage\n3. A mysterious package arrives with no return address\n4. Two strangers meet when both get the same wrong number call\n5. A character can suddenly understand animal languages\n6. Write about someone who collects unusual items\n7. A journey on an overnight train takes an unexpected turn",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 92,
+          "content": "A character discovers an old map in a library book",
+          "position": 0
+        },
+        {
+          "noteId": 92,
+          "content": "Write a story that takes place during a power outage",
+          "position": 1
+        },
+        {
+          "noteId": 92,
+          "content": "A mysterious package arrives with no return address",
+          "position": 2
+        },
+        {
+          "noteId": 92,
+          "content": "Two strangers meet when both get the same wrong number call",
+          "position": 3
+        },
+        {
+          "noteId": 92,
+          "content": "A character can suddenly understand animal languages",
+          "position": 4
+        },
+        {
+          "noteId": 92,
+          "content": "Write about someone who collects unusual items",
+          "position": 5
+        },
+        {
+          "noteId": 92,
+          "content": "A journey on an overnight train takes an unexpected turn",
+          "position": 6
+        }
+      ]
+    },
+    "updateDate": 1694583745000,
     "lightColor": 123789,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1694583745000,
-    "reminderDate": null,
-    "isDone": false
-  },
-  {
-    "id": 93,
-    "title": "Customer Feedback Analysis",
-    "content": "Positive trends:\n- Easy navigation praised by 85% of users\n- Fast loading times mentioned in 76% of reviews\n- Customer service response rated 4.7/5\n\nAreas for improvement:\n- Mobile experience rated 3.2/5\n- Checkout process has 23% abandonment rate\n- Search functionality complaints in 34% of feedback\n\nAction items:\n- Optimize mobile interface\n- Streamline checkout process\n- Enhance search capabilities",
-    "lightColor": 456789,
-    "isPinned": false,
-    "isArchived": true,
-    "isTrashed": false,
-    "updateDate": 1689763452000,
-    "reminderDate": null,
-    "isDone": true
+    "pinnedDate": null,
+    "noteType": "CHECKLIST"
   },
   {
     "id": 94,
     "title": "Subscription Tracker",
-    "content": "Streaming:\n- Netflix: $15.99/month (renews 15th)\n- Spotify: $9.99/month (renews 3rd)\n- Disney+: $7.99/month (renews 21st)\n\nSoftware:\n- Adobe Creative Cloud: $52.99/month (renews 10th)\n- Microsoft 365: $6.99/month (renews 5th)\n\nOther:\n- Gym membership: $35/month (auto-draft 1st)\n- Magazine subscription: $19/quarter (renews Jan/Apr/Jul/Oct)",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Streaming:\n- Netflix: $15.99/month (renews 15th)\n- Spotify: $9.99/month (renews 3rd)\n- Disney+: $7.99/month (renews 21st)\nSoftware:\n- Adobe Creative Cloud: $52.99/month (renews 10th)\n- Microsoft 365: $6.99/month (renews 5th)\nOther:\n- Gym membership: $35/month (auto-draft 1st)\n- Magazine subscription: $19/quarter (renews Jan/Apr/Jul/Oct)"
+    },
+    "updateDate": 1692953756000,
     "lightColor": 987654,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1692953756000,
-    "reminderDate": 1697932800000,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 95,
     "title": "Baking Recipe - Chocolate Chip Cookies",
-    "content": "Ingredients:\n- 2 1/4 cups all-purpose flour\n- 1 teaspoon baking soda\n- 1 teaspoon salt\n- 1 cup (2 sticks) butter, softened\n- 3/4 cup granulated sugar\n- 3/4 cup packed brown sugar\n- 2 large eggs\n- 2 teaspoons vanilla extract\n- 2 cups semi-sweet chocolate chips\n\nInstructions:\n1. Preheat oven to 375°F\n2. Combine flour, baking soda, and salt\n3. Beat butter and sugars until creamy\n4. Add eggs and vanilla, beat well\n5. Gradually add flour mixture\n6. Stir in chocolate chips\n7. Drop by rounded tablespoon onto baking sheets\n8. Bake 9-11 minutes until golden brown",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Ingredients:\n- 2 1/4 cups all-purpose flour\n- 1 teaspoon baking soda\n- 1 teaspoon salt\n- 1 cup (2 sticks) butter, softened\n- 3/4 cup granulated sugar\n- 3/4 cup packed brown sugar\n- 2 large eggs\n- 2 teaspoons vanilla extract\n- 2 cups semi-sweet chocolate chips\nInstructions:\n1. Preheat oven to 375°F\n2. Combine flour, baking soda, and salt\n3. Beat butter and sugars until creamy\n4. Add eggs and vanilla, beat well\n5. Gradually add flour mixture\n6. Stir in chocolate chips\n7. Drop by rounded tablespoon onto baking sheets\n8. Bake 9-11 minutes until golden brown"
+    },
+    "updateDate": 1691354867000,
     "lightColor": 543210,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1691354867000,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": 1691354867000,
+    "noteType": "TEXT"
   },
   {
     "id": 96,
     "title": "Foreign Language Phrases - Spanish",
-    "content": "Greetings:\n- Hola = Hello\n- Buenos días = Good morning\n- Buenas tardes = Good afternoon\n- Buenas noches = Good evening\n\nBasic phrases:\n- ¿Cómo estás? = How are you?\n- Muy bien, gracias = Very well, thank you\n- Por favor = Please\n- Gracias = Thank you\n- De nada = You're welcome\n\nPractical phrases:\n- ¿Dónde está el baño? = Where is the bathroom?\n- ¿Cuánto cuesta? = How much does it cost?\n- No entiendo = I don't understand\n- Habla más despacio = Speak more slowly",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Greetings:\n- Hola = Hello\n- Buenos días = Good morning\n- Buenas tardes = Good afternoon\n- Buenas noches = Good evening\nBasic phrases:\n- ¿Cómo estás? = How are you?\n- Muy bien, gracias = Very well, thank you\n- Por favor = Please\n- Gracias = Thank you\n- De nada = You're welcome\nPractical phrases:\n- ¿Dónde está el baño? = Where is the bathroom?\n- ¿Cuánto cuesta? = How much does it cost?\n- No entiendo = I don't understand\n- Habla más despacio = Speak more slowly"
+    },
+    "updateDate": 1688753625000,
     "lightColor": 876543,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1688753625000,
-    "reminderDate": null,
-    "isDone": false
-  },
-  {
-    "id": 97,
-    "title": "Website Color Scheme",
-    "content": "Primary colors:\n- Deep blue (#2c3e50)\n- Light blue (#3498db)\n- White (#ffffff)\n\nAccent colors:\n- Orange (#e67e22)\n- Green (#27ae60)\n\nText colors:\n- Dark gray (#333333)\n- Medium gray (#777777)\n- Light gray (#aaaaaa)\n\nBackground colors:\n- Off-white (#f9f9f9)\n- Light gray (#eeeeee)",
-    "lightColor": 765432,
-    "isPinned": false,
-    "isArchived": false,
-    "isTrashed": true,
-    "updateDate": 1693124765000,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 98,
     "title": "Meditation Techniques",
-    "content": "Breathing meditation:\n- Focus on natural breath\n- Count inhales and exhales\n- Notice sensations in body\n\nBody scan:\n- Start at top of head\n- Move attention through entire body\n- Release tension as you go\n\nLoving-kindness meditation:\n- Direct positive wishes to self\n- Extend to loved ones\n- Expand to all beings\n\nMindful observation:\n- Choose one object\n- Observe details without judgment\n- Return attention when mind wanders",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Breathing meditation:\n- Focus on natural breath\n- Count inhales and exhales\n- Notice sensations in body\nBody scan:\n- Start at top of head\n- Move attention through entire body\n- Release tension as you go\nLoving-kindness meditation:\n- Direct positive wishes to self\n- Extend to loved ones\n- Expand to all beings\nMindful observation:\n- Choose one object\n- Observe details without judgment\n- Return attention when mind wanders"
+    },
+    "updateDate": 1695584736000,
     "lightColor": 654987,
     "isPinned": false,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1695584736000,
-    "reminderDate": null,
-    "isDone": false
+    "pinnedDate": null,
+    "noteType": "TEXT"
   },
   {
     "id": 99,
     "title": "Conference Speaker Notes",
-    "content": "Introduction (2 minutes):\n- Personal background\n- Overview of presentation\n\nMain points (15 minutes):\n1. Current industry challenges\n2. Innovative approaches\n3. Case study examples\n4. Implementation strategies\n\nInteractive segment (5 minutes):\n- Audience poll\n- Discussion questions\n\nConclusion (3 minutes):\n- Summary of key points\n- Call to action\n- Contact information",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Introduction (2 minutes):\n- Personal background\n- Overview of presentation\nMain points (15 minutes):\n1. Current industry challenges\n2. Innovative approaches\n3. Case study examples\n4. Implementation strategies\nInteractive segment (5 minutes):\n- Audience poll\n- Discussion questions\nConclusion (3 minutes):\n- Summary of key points\n- Call to action\n- Contact information"
+    },
+    "updateDate": 1690534756000,
     "lightColor": 543876,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1690534756000,
-    "reminderDate": 1696636800000,
-    "isDone": false
+    "pinnedDate": 1690534756000,
+    "noteType": "TEXT"
   },
   {
     "id": 100,
     "title": "Family Recipe - Grandma's Lasagna",
-    "content": "Ingredients:\n- 1 pound ground beef\n- 1 onion, chopped\n- 2 garlic cloves, minced\n- 2 cans (15 oz each) tomato sauce\n- 1 can (6 oz) tomato paste\n- 2 tsp dried basil\n- 1 tsp dried oregano\n- 1/2 tsp salt\n- 1/4 tsp pepper\n- 9 lasagna noodles, cooked\n- 3 cups ricotta cheese\n- 2 eggs, beaten\n- 1/2 cup grated Parmesan cheese\n- 4 cups shredded mozzarella cheese\n\nInstructions:\n1. Brown beef, onion, and garlic; drain\n2. Add tomato sauce, paste, and seasonings; simmer 20 minutes\n3. Mix ricotta, eggs, and Parmesan\n4. Layer in 13x9 dish: sauce, noodles, ricotta mixture, mozzarella\n5. Repeat layers twice\n6. Bake at 350°F for",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Ingredients:\n- 1 pound ground beef\n- 1 onion, chopped\n- 2 garlic cloves, minced\n- 2 cans (15 oz each) tomato sauce\n- 1 can (6 oz) tomato paste\n- 2 tsp dried basil\n- 1 tsp dried oregano\n- 1/2 tsp salt\n- 1/4 tsp pepper\n- 9 lasagna noodles, cooked\n- 3 cups ricotta cheese\n- 2 eggs, beaten\n- 1/2 cup grated Parmesan cheese\n- 4 cups shredded mozzarella cheese\nInstructions:\n1. Brown beef, onion, and garlic; drain\n2. Add tomato sauce, paste, and seasonings; simmer 20 minutes\n3. Mix ricotta, eggs, and Parmesan\n4. Layer in 13x9 dish: sauce, noodles, ricotta mixture, mozzarella\n5. Repeat layers twice\n6. Bake at 350°F for"
+    },
+    "updateDate": 1690534756000,
     "lightColor": 543876,
     "isPinned": true,
-    "isArchived": false,
-    "isTrashed": false,
-    "updateDate": 1690534756000,
-    "reminderDate": 1696636800000,
-    "isDone": false
+    "pinnedDate": 1690534756000,
+    "noteType": "TEXT"
   }
 ]

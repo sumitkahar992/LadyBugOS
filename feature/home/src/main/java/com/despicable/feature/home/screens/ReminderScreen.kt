@@ -35,12 +35,12 @@ import com.despicable.core.common.navigation.NoteActionType
 import com.despicable.core.designsystem.component.ReminderDialog
 import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.model.Note
+import com.despicable.core.model.NoteComplete
 import com.despicable.feature.home.HandleNoteActions
 import com.despicable.feature.home.NoteItemTag
 import com.despicable.feature.home.NoteListViewModel
 import com.despicable.feature.home.NoteScreenContent
 import com.despicable.feature.home.NoteSnackBarHandler
-import com.despicable.feature.home.NoteWithTagsAndChecklist
 import com.despicable.feature.home.R
 import com.despicable.feature.home.SectionHeader
 import com.despicable.feature.home.SwipeableSnackBarHost
@@ -73,7 +73,8 @@ fun ReminderScreen(
     val searchQuery by remember(uiState.searchQuery) { mutableStateOf(uiState.searchQuery) }
 
     // Handle search visibility properly
-    var isSearchBarVisible = rememberSaveable { mutableStateOf(isSearchMode || searchQuery.isNotEmpty()) }
+    val isSearchBarVisible =
+        rememberSaveable { mutableStateOf(isSearchMode || searchQuery.isNotEmpty()) }
 
     var selectedNotes by remember { mutableStateOf(setOf<Note>()) }
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -220,8 +221,8 @@ fun ReminderScreen(
 @Composable
 fun NoteGridTagsReminder(
     modifier: Modifier = Modifier,
-    upcomingList: List<NoteWithTagsAndChecklist>,
-    completedList: List<NoteWithTagsAndChecklist>,
+    upcomingList: List<NoteComplete>,
+    completedList: List<NoteComplete>,
     selectedNotes: Set<Note>,
     onNoteClick: (Note) -> Unit,
     onNoteLongPress: (Note) -> Unit,

@@ -27,6 +27,8 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
 
 
+    implementation (libs.androidx.paging.runtime.ktx)
+    implementation (libs.androidx.room.paging)
 
 
     // Koin

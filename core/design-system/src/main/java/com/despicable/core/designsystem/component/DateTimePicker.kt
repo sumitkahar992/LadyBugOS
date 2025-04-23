@@ -27,10 +27,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.ZoneOffset
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,13 +43,15 @@ fun DatePickerContent(
     onDateSelected: (LocalDate) -> Unit,
     onDismiss: () -> Unit
 ) {
+// Convert LocalDate to Instant for the picker state using the system default time zone
+    val initialInstant = selectedDate.atStartOfDayAtDefaultTimeZone()
     val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = selectedDate.atStartOfDay(ZoneOffset.UTC).toInstant()
-            .toEpochMilli(),
+        initialSelectedDateMillis = initialInstant.toEpochMilliseconds(),
         selectableDates = object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean {
-                val date = Instant.ofEpochMilli(utcTimeMillis).atZone(ZoneOffset.UTC).toLocalDate()
-                return !date.isBefore(LocalDate.now())
+                val date =
+                    Instant.fromEpochMilliseconds(utcTimeMillis).toLocalDateAtDefaultTimeZone()
+                return date >= Clock.System.todayAtDefaultTimeZone()
             }
         }
     )
@@ -57,7 +63,7 @@ fun DatePickerContent(
                 onClick = {
                     datePickerState.selectedDateMillis?.let {
                         val newSelectedDate =
-                            Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate()
+                            Instant.fromEpochMilliseconds(it).toLocalDateAtDefaultTimeZone()
                         onDateSelected(newSelectedDate)
                     }
                 },
@@ -80,6 +86,17 @@ fun DatePickerContent(
     }
 }
 
+
+// Helper functions for time zone handling
+fun LocalDate.atStartOfDayAtDefaultTimeZone(): Instant =
+    this.atTime(LocalTime(0, 0)).toInstant(TimeZone.currentSystemDefault())
+
+fun Instant.toLocalDateAtDefaultTimeZone(): LocalDate =
+    this.toLocalDateTime(TimeZone.currentSystemDefault()).date
+
+fun Clock.System.todayAtDefaultTimeZone(): LocalDate =
+    this.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimePickerContent(
@@ -93,19 +110,22 @@ fun TimePickerContent(
         initialMinute = selectedTime.minute
     )
 
-    val selectedTimeIsValid = remember(timePickerState.hour, timePickerState.minute, isCurrentDate) {
-        if (!isCurrentDate) true
-        else {
-            val currentTime = LocalTime.now()
-            val selectedTimes = LocalTime.of(timePickerState.hour, timePickerState.minute)
-            !selectedTimes.isBefore(currentTime)
+    // Check if selected time is valid (not in the past for current date)
+    val selectedTimeIsValid =
+        remember(timePickerState.hour, timePickerState.minute, isCurrentDate) {
+            if (!isCurrentDate) true
+            else {
+                val currentTime =
+                    Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).time
+                val selectedTimes = LocalTime(timePickerState.hour, timePickerState.minute)
+                selectedTimes >= currentTime
+            }
         }
-    }
 
     TimePickerDialog(
         onDismiss = onBack,
         onConfirm = {
-            val newSelectedTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
+            val newSelectedTime = LocalTime(timePickerState.hour, timePickerState.minute)
             onTimeSelected(newSelectedTime)
         },
         confirmEnabled = selectedTimeIsValid,

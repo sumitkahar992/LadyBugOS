@@ -5,11 +5,16 @@ import com.despicable.core.data.model.toDomain
 import com.despicable.core.data.repository.NoteRepository
 import com.despicable.core.database.model.NoteEntity
 import com.despicable.core.database.model.TagEntity
+import com.despicable.core.model.NoteContent
+import com.despicable.core.model.NoteType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 import kotlin.random.Random
+import kotlin.time.Duration.Companion.days
 
 class LoadSampleDataUseCase(
     private val repo: NoteRepository,
@@ -31,15 +36,27 @@ class LoadSampleDataUseCase(
                         it.copy(
                             // Use color index instead of ARGB values for better theme compatibility
                             lightColor = Random.nextInt(0, 18), // 0-9 for our 10 note colors
-                            updateDate = generateRandomDate()
+                            updateDate = generateRandomDate(),
+                            creationDate = generateRandomDate(),
+                            reminderDate = generateRandomDate(),
+                            pinnedDate = generateRandomDate()
 
                         )
                     }
                 sampleNotes.forEach { note ->
                     val randomTags = sampleTags.shuffled().take(Random.nextInt(1, 4))
+
+                    val checklistItems = if (note.noteType == NoteType.CHECKLIST) {
+                        val content = note.content as NoteContent.ChecklistItems
+                        content.items
+                    } else {
+                        emptyList()
+                    }
+
                     repo.insertNoteWithTagsChecklist(
                         note.toDomain(),
                         randomTags.map { it.id },
+                        checklistItems,
                         emptyList()
                     )
                 }
@@ -77,19 +94,18 @@ class LoadSampleDataUseCase(
     }
 
     private suspend fun getSampleNotes(): List<NoteEntity> {
-        val json = assetLoader.loadTextAsset("noteee.json")
+//        val json = assetLoader.loadTextAsset("noteee.json")
+        val json = assetLoader.loadTextAsset("codeee.json")
         return Json.decodeFromString<List<NoteEntity>>(json)
     }
 }
 
 // Replace string date generation with timestamp generation
-fun generateRandomDate(): Long {
-    val currentTime = System.currentTimeMillis()
-    val oneDay = 24 * 60 * 60 * 1000L
-    val randomDaysAgo = Random.nextInt(0, 365) // Between now and a year ago
-    return currentTime - (randomDaysAgo * oneDay)
+fun generateRandomDate(): Instant {
+    val currentInstant = Clock.System.now()
+    val randomDaysAgo = Random.nextInt(0, 365)
+    return currentInstant - randomDaysAgo.days
 }
-
 
 interface AssetLoader {
     suspend fun loadTextAsset(fileName: String): String
@@ -101,77 +117,6 @@ class AssetLoaderImpl(private val context: Context) : AssetLoader {
     }
 }
 
-
-// Titles of varying lengths for the notes
-val smallTitles = listOf("Note", "Todo", "Idea", "Reminder", "Task")
-val mediumTitles =
-    listOf("Meeting Notes", "Shopping List", "Travel Plans", "Study Schedule", "Fitness Goals")
-val largeTitles = listOf(
-    "Long-Term Project Overview",
-    "Quarterly Business Strategy Discussion",
-    "Research on Market Trends for New Product Launch",
-    "Comprehensive Plan for Website Redesign and Development",
-    "Detailed Steps for Personal Finance Management"
-)
-
-// Contents of varying lengths for the notes
-val smallContents = listOf("Buy milk", "Call mom", "Water the plants", "Email boss", "Book flight")
-val mediumContents = listOf(
-    "Prepare presentation for Monday's meeting",
-    "Buy groceries: milk, eggs, bread, and cheese",
-    "Outline for the next blog post on technology trends",
-    "Plan vacation to Italy: book hotel and tours",
-    "Study chapters 1-5 for next week's test",
-    """
-        Day 1-3: Tokyo
-        - Arrive at Narita International Airport
-        - Check-in at Hotel Sunroute Plaza Shinjuku
-        - Visit Senso-ji Temple in Asakusa
-        - Explore Akihabara for electronics and anime culture
-        - Dinner at Robot Restaurant
-        - Day trip to DisneySea
-        - Shibuya Crossing and shopping
-        - Teamlab Borderless digital art museum
-
-        Day 4-5: Hakone
-        - Take Shinkansen to Odawara, then bus to Hakone
-        - Stay at traditional ryokan with onsen (hot springs)
-        - Hakone Ropeway for Mt. Fuji views
-        - Lake Ashi cruise
-        - Hakone Open-Air Museum
-
-        Day 6-8: Kyoto
-        - Travel to Kyoto by Shinkansen
-        - Check-in at Kyoto Century Hotel
-        - Visit Kinkaku-ji (Golden Pavilion)
-        - Explore Arashiyama Bamboo Grove
-        - Fushimi Inari Shrine (1000 torii gates)
-        - Day trip to Nara (Todaiji Temple, deer park)
-        - Gion district for geisha spotting
-        - Tea ceremony experience
-
-        Day 9-10: Hiroshima & Miyajima
-        - Travel to Hiroshima by Shinkansen
-        - Visit Peace Memorial Park and Museum
-        - Hiroshima Castle
-        - Day trip to Miyajima Island
-        - See the floating torii gate of Itsukushima Shrine
-        - Mt. Misen ropeway for panoramic views
-
-        Remember to pack:
-        - Passport
-        - JR Pass
-        - Comfortable walking shoes
-        - Adapter for electronics
-        """
-)
-val largeContents = listOf(
-    "Project description: Develop a mobile application for personal task management. Features include adding, editing, and deleting tasks, organizing them by priority and deadline, and setting reminders.",
-    "Business strategy for Q4: Focus on increasing sales in European markets, launch the new product line by November, and optimize the marketing campaigns for Black Friday.",
-    "Research: Analyze consumer behavior trends in the last 5 years for digital products, identify new market opportunities, and develop actionable insights for the product team.",
-    "Website redesign plan: Improve the user experience by simplifying navigation, increasing mobile responsiveness, and integrating modern design elements.",
-    "Personal finance plan: Set a monthly budget, track expenses in real-time, save for emergencies, and plan for retirement by investing in low-risk mutual funds."
-)
 
 // 14 predefined tag headers
 val tags = listOf(
@@ -190,77 +135,3 @@ val tags = listOf(
     TagEntity(13, "Education"),
     TagEntity(14, "Hobby")
 )
-
-/*suspend fun generateDummyData(noteRepository: com.despicable.core.data.repository.NoteRepository) {
-    val random = Random(System.currentTimeMillis())
-
-    // Fetch existing tags from the database
-    // Step 1: Insert tags if they don't exist in the database
-    val existingTags = noteRepository.getAllTags().firstOrNull()
-
-    val tagIds = if (existingTags.isNullOrEmpty()) {
-        // Insert tags
-        tags.forEach {
-            noteRepository.insertTag(it)
-        }
-        // Fetch inserted tags' IDs
-        noteRepository.getAllTags().first().map { it.id }
-    } else {
-        // Tags already exist, use the existing tag IDs
-        Timber.tag("DEBUG").d("Predefined tags already exist.")
-        existingTags.map { it.id }
-    }
-
-    if (tagIds.isEmpty()) {
-        throw Exception("No tags found in the database! Please insert tags first.")
-    }
-
-    val notes = List(100) {
-        val (title, content) = when (random.nextInt(3)) {
-            0 -> Pair(smallTitles.random(), smallContents.random()) // Small note
-            1 -> Pair(mediumTitles.random(), mediumContents.random()) // Medium note
-            else -> Pair(largeTitles.random(), largeContents.random()) // Large note
-        }
-
-        val isPinned = random.nextBoolean()
-        val isArchived = false
-        val isTrashed = false
-        val lightColor = colorPalette.random().toArgb() // Random color from the palette
-        val updateDate = generateRandomDate()
-
-        // Shuffle and pick random tags only if this is the first launch (tags were just inserted)
-        val randomTags = if (existingTags.isNullOrEmpty()) {
-            tagIds.shuffled().take(random.nextInt(1, 4)) // Shuffle if this is the first time
-        } else {
-            tagIds.take(random.nextInt(0, 4)) // Don't shuffle, just take a few tags
-        }
-//        Timber.tag("DEBUG").d("[randomTags]=[$randomTags]")
-
-        NoteEntity(
-            title = title,
-            content = content,
-            updateDate = updateDate,
-            lightColor = lightColor,
-            isPinned = isPinned,
-            isArchived = isArchived,
-            isTrashed = isTrashed,
-            isDone = false
-        ) to randomTags
-    }
-
-    // Batch insert notes with tags
-    runBlocking {
-        notes.forEach { (note, tags) ->
-            noteRepository.insertNoteWithTags(note, tags)
-        }
-    }
-
-    println("100 dummy notes have been inserted successfully!")
-}
-
-fun generateRandomDate(): String {
-    val year = Random.nextInt(2021, 2024)
-    val month = Random.nextInt(1, 13)
-    val day = Random.nextInt(1, 29) // To simplify, we assume each month has 28 days
-    return "$year-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}"
-}*/

@@ -11,6 +11,9 @@ android {
 
 dependencies {
 
+    implementation (libs.androidx.paging.runtime.ktx)
+    implementation (libs.androidx.room.paging)
+
     api(projects.core.domain)
     api(projects.core.data)
 

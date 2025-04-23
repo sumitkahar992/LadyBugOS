@@ -11,46 +11,36 @@ import com.despicable.core.data.sample.LoadSampleDataUseCase
 import com.despicable.core.datastore.SettingsRepo
 import com.despicable.core.designsystem.theme.GridLayout
 import com.despicable.core.designsystem.theme.Theme
-import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
-import com.despicable.core.model.NoteWithTags
+import com.despicable.core.model.NoteComplete
 import com.despicable.core.model.Tag
 import com.despicable.widgets.data.WidgetUpdater
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import timber.log.Timber
 
 
 @Keep
 data class NoteListUiState(
     val isNotesInitialized: Boolean = false,
-    val notes: List<NoteWithTagsAndChecklist> = emptyList(),
+    val notes: List<NoteComplete> = emptyList(),
     val tagState: TagState = TagState(),
     val searchQuery: String = "",
     val gridLayout: GridLayout = GridLayout.TwoColumns,
     val lastModifiedNotes: List<Note>? = null
 )
 
-// New data class to combine note, tags, and checklist items
-data class NoteWithTagsAndChecklist(
-    val note: Note,
-    val tags: List<Tag>,
-    val checklistItems: List<Checklist> = emptyList()
-)
 
 @Keep
 data class TagState(
@@ -89,7 +79,7 @@ class NoteListViewModel(
     ) { noteCompleteList, query ->
         noteCompleteList
             .map { noteComplete ->
-                NoteWithTagsAndChecklist(
+                NoteComplete(
                     note = noteComplete.note,
                     tags = noteComplete.tags,
                     checklistItems = noteComplete.checklistItems
@@ -105,7 +95,7 @@ class NoteListViewModel(
     ) { noteCompleteList, query ->
         noteCompleteList
             .map { noteComplete ->
-                NoteWithTagsAndChecklist(
+                NoteComplete(
                     note = noteComplete.note,
                     tags = noteComplete.tags,
                     checklistItems = noteComplete.checklistItems
@@ -122,7 +112,7 @@ class NoteListViewModel(
     ) { noteCompleteList, query ->
         noteCompleteList
             .map { noteComplete ->
-                NoteWithTagsAndChecklist(
+                NoteComplete(
                     note = noteComplete.note,
                     tags = noteComplete.tags,
                     checklistItems = noteComplete.checklistItems
@@ -135,13 +125,14 @@ class NoteListViewModel(
 
     init {
         initializeNotes()
-//        viewModelScope.launch {
-//            loadSampleDataUseCase()
-//        }
+        viewModelScope.launch {
+            loadSampleDataUseCase()
+        }
     }
 
     private fun initializeNotes() {
         noteFlowJob = viewModelScope.launch {
+            val startTime = System.currentTimeMillis()
             combine(
                 settingsRepo.get { gridLayout },
                 repo.getAllTags(),
@@ -162,41 +153,72 @@ class NoteListViewModel(
                     selectedTagId = _uiState.value.tagState.selectedTagId
                 )
 
-                // Inside initializeNotes() method, replace the current coroutineScope block with this:
+                val endTime = System.currentTimeMillis()
+                Timber.tag("DEBUG")
+                    .d("Total time for notes and checklists: ${endTime - startTime} ms")
+                _uiState.update { current ->
+                    current.copy(
+                        isNotesInitialized = true,
+                        notes = filteredNotes, // Already complete notes with all data
+                        gridLayout = gridLayout,
+                        tagState = current.tagState.copy(
+                            availableTags = tags,
+                            activeTagIds = activeTagIds
+                        )
+                    )
+                }
 
-// Transform to NoteWithTagsAndChecklist
+            }.collect()
+        }
+    }
+
+    /*
+        private fun initializeNotes() {
+        noteFlowJob = viewModelScope.launch {
+            val startTime = System.currentTimeMillis()
+
+            combine(
+                settingsRepo.get { gridLayout },
+                repo.getAllTags(),
+                repo.getAllNotesWithTags(),
+                _uiState.map { it.searchQuery }
+            ) { gridLayout, tags, allNotes, query ->
+                // Calculate active tag IDs (tags with non-trashed notes)
+                val activeTagIds = allNotes
+//                    .filter { !it.note.isTrashed }
+                    .flatMap { it.tags }
+                    .map { it.id }
+                    .toSet()
+
+                // Filter and sort notes based on current state
+                val filteredNotes = filterNotes(
+                    notes = allNotes,
+                    query = query,
+                    selectedTagId = _uiState.value.tagState.selectedTagId
+                )
+
                 coroutineScope {
                     // Process notes in batches of 20 for better performance
-                    val notesWithChecklist = filteredNotes
+                    val notes = filteredNotes
                         .chunked(20) // Split the list into chunks of 20 notes
                         .flatMap { chunk ->
                             // Process each chunk in parallel
-                            chunk.map { noteWithTags ->
+                            chunk.map { noteComplete ->
                                 async {
-                                    val checklistItems = if (noteWithTags.note.isChecklist) {
-                                        try {
-                                            repo.getChecklistItemsByNoteId(noteWithTags.note.id)
-                                                .first()
-                                        } catch (e: Exception) {
-                                            Timber.e(e, "Error loading checklist items")
-                                            emptyList()
-                                        }
-                                    } else {
-                                        emptyList()
-                                    }
                                     NoteWithTagsAndChecklist(
-                                        note = noteWithTags.note,
-                                        tags = noteWithTags.tags,
-                                        checklistItems = checklistItems
+                                        note = noteComplete.note,
+                                        tags = noteComplete.tags,
+                                        checklistItems = noteComplete.checklistItems
                                     )
                                 }
                             }.awaitAll() // Wait for all notes in this chunk to complete
                         }
-
+                    val endTime = System.currentTimeMillis()
+                    Timber.tag("DEBUG").d("Total time for notes and checklists: ${endTime - startTime} ms")
                     _uiState.update { current ->
                         current.copy(
                             isNotesInitialized = true,
-                            notes = notesWithChecklist,
+                            notes = notes,
                             gridLayout = gridLayout,
                             tagState = current.tagState.copy(
                                 availableTags = tags,
@@ -205,58 +227,23 @@ class NoteListViewModel(
                         )
                     }
                 }
-                /*
-                                // Transform to NoteWithTagsAndChecklist
-                                coroutineScope {
-                                    val notesWithChecklist = filteredNotes.map { noteWithTags ->
-                                        async {
-                                            val checklistItems = if (noteWithTags.note.isChecklist) {
-                                                try {
-                                                    repo.getChecklistItemsByNoteId(noteWithTags.note.id).first()
-                                                } catch (e: Exception) {
-                                                    Timber.e(e, "Error loading checklist items")
-                                                    emptyList()
-                                                }
-                                            } else {
-                                                emptyList()
-                                            }
-                                            NoteWithTagsAndChecklist(
-                                                note = noteWithTags.note,
-                                                tags = noteWithTags.tags,
-                                                checklistItems = checklistItems
-                                            )
-                                        }
-                                    }.awaitAll()
-
-
-                                    _uiState.update { current ->
-                                        current.copy(
-                                            isNotesInitialized = true,
-                                            notes = notesWithChecklist,
-                                            gridLayout = gridLayout,
-                                            tagState = current.tagState.copy(
-                                                availableTags = tags,
-                                                activeTagIds = activeTagIds
-                                            )
-                                        )
-                                    }
-                                }
-                                */
 
             }.collect()
         }
     }
 
+     */
+
     private fun filterNotes(
-        notes: List<NoteWithTags>,
+        notes: List<NoteComplete>,
         query: String,
         selectedTagId: Long?
-    ): List<NoteWithTags> {
+    ): List<NoteComplete> {
 
         // Short-circuit if no filtering needed
         if (query.isEmpty() && selectedTagId == null) {
             return notes.sortedWith(
-                compareByDescending<NoteWithTags> { it.note.isPinned }
+                compareByDescending<NoteComplete> { it.note.isPinned }
                     .thenByDescending { it.note.pinnedDate }
             )
         }
@@ -274,7 +261,7 @@ class NoteListViewModel(
                 matchesQuery && matchesTag
             }
             .sortedWith(
-                compareByDescending<NoteWithTags> { it.note.isPinned }
+                compareByDescending<NoteComplete> { it.note.isPinned }
                     .thenByDescending { it.note.pinnedDate }
             )
             .toList()
@@ -354,35 +341,35 @@ class NoteListViewModel(
         }
     }
 
-    // Add this function to update a single note in the UI state
-    fun updateSingleNoteInUiState(
-        updatedNote: Note,
-        updatedTags: List<Tag>? = null,
-        updatedChecklist: List<Checklist>? = null
-    ) =
-        viewModelScope.launch {
-            _uiState.update { currentState ->
-                val currentNotes = currentState.notes.toMutableList()
+    /*    // Add this function to update a single note in the UI state
+        fun updateSingleNoteInUiState(
+            updatedNote: Note,
+            updatedTags: List<Tag>? = null,
+            updatedChecklist: List<Checklist>? = null
+        ) =
+            viewModelScope.launch {
+                _uiState.update { currentState ->
+                    val currentNotes = currentState.notes.toMutableList()
 
-                // Find the index of the note to update
-                val index = currentNotes.indexOfFirst { it.note.id == updatedNote.id }
+                    // Find the index of the note to update
+                    val index = currentNotes.indexOfFirst { it.note.id == updatedNote.id }
 
-                if (index != -1) {
-                    // Update just this one note in the list
-                    val existingItem = currentNotes[index]
-                    Timber.tag("DEBUG").d("[updateSingleNoteInUiState]")
-                    Timber.tag("DEBUG").d("existingItem:[${existingItem.note.id}]")
+                    if (index != -1) {
+                        // Update just this one note in the list
+                        val existingItem = currentNotes[index]
+                        Timber.tag("DEBUG").d("[updateSingleNoteInUiState]")
+                        Timber.tag("DEBUG").d("existingItem:[${existingItem.note.id}]")
 
-                    currentNotes[index] = NoteWithTagsAndChecklist(
-                        note = updatedNote,
-                        tags = updatedTags ?: existingItem.tags,
-                        checklistItems = updatedChecklist ?: existingItem.checklistItems
-                    )
+                        currentNotes[index] = NoteWithTagsAndChecklist(
+                            note = updatedNote,
+                            tags = updatedTags ?: existingItem.tags,
+                            checklistItems = updatedChecklist ?: existingItem.checklistItems
+                        )
+                    }
+
+                    currentState.copy(notes = currentNotes)
                 }
-
-                currentState.copy(notes = currentNotes)
-            }
-        }
+            }*/
 
 
     private fun updateNotes(
@@ -407,7 +394,7 @@ class NoteListViewModel(
 
                 // Instead of full reinitialization, just update these notes in UI state
                 updatedNotes.forEach { note ->
-                    updateSingleNoteInUiState(note)
+//                    updateSingleNoteInUiState(note)
                 }
 
             } catch (e: Exception) {
@@ -459,7 +446,7 @@ class NoteListViewModel(
         updates = {
             it.copy(
                 isPinned = true,
-                pinnedDate = System.currentTimeMillis()
+                pinnedDate = Clock.System.now()
             )
         }
     )
@@ -469,7 +456,7 @@ class NoteListViewModel(
         updates = {
             it.copy(
                 isPinned = false,
-                pinnedDate = System.currentTimeMillis()
+                pinnedDate = Clock.System.now()
             )
         }
     )
@@ -512,7 +499,7 @@ class NoteListViewModel(
             updates = {
                 it.copy(
                     isPinned = true,
-                    pinnedDate = System.currentTimeMillis(),
+                    pinnedDate = Clock.System.now(),
                     isArchived = false
                 )
             }

@@ -1,15 +1,16 @@
 package com.despicable.core.database.model
 
-import android.annotation.SuppressLint
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.Junction
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import com.despicable.core.model.NoteContent
+import com.despicable.core.model.NoteType
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
-@SuppressLint("UnsafeOptInUsageError")
 @Serializable
 @Entity(
     tableName = "notes",
@@ -22,27 +23,34 @@ import kotlinx.serialization.Serializable
 data class NoteEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val title: String = "",
-    val content: String = "",
-    val updateDate: Long = 0, // Explicitly updated
+    val content: NoteContent = NoteContent.Text(""),
+    val creationDate: Instant, // Explicitly updated
+    val updateDate: Instant, // Explicitly updated
     val lightColor: Int = 0,
     val isPinned: Boolean = false,
-    val pinnedDate: Long? = null,
+    val pinnedDate: Instant? = null,
     val isArchived: Boolean = false,
     val isTrashed: Boolean = false,
-    val reminderDate: Long? = null,
+    val reminderDate: Instant? = null,
     val isDone: Boolean = false,
-    val isChecklist: Boolean = false,
+    val noteType: NoteType = NoteType.TEXT
 )
 
 
 // Add this combined relationship class for complete note data
-data class NoteComplete(
+data class NoteCompleteEntity(
     @Embedded val note: NoteEntity,
     @Relation(
         parentColumn = "id",
         entityColumn = "noteId"
     )
     val checklistItems: List<ChecklistEntity>,
+
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "noteId"
+    )
+    val habitItems: List<HabitEntity>,
 
     @Relation(
         entity = TagEntity::class,

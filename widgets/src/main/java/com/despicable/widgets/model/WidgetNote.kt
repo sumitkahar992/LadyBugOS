@@ -5,6 +5,9 @@ import androidx.annotation.Keep
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.despicable.core.model.NoteContent
+import com.despicable.core.model.NoteType
+import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 
 @Keep
@@ -12,12 +15,12 @@ import kotlinx.serialization.Serializable
 data class WidgetNote(
     val id: String,
     val title: String,
-    val content: String,
-    val lastUpdate: String,
-    val reminderDate: String,
+    val content: NoteContent = NoteContent.Text(""),
+    val noteType: NoteType = NoteType.TEXT,
+    val creationDate: Instant,
+    val lastUpdate: Instant,
+    val reminderDate: Instant?,
     val color: Int,
-    val isChecklist: Boolean = false,
-    val checklistItems: List<WidgetChecklistItem> = emptyList()
 )
 
 @Keep
@@ -29,12 +32,15 @@ data class WidgetChecklistItem(
     val position: Int
 )
 
+
+
 object WidgetKeys {
     object Prefs {
         val noteId = stringPreferencesKey("noteId")
         val noteHeader = stringPreferencesKey("noteHeader")
         val noteBody = stringPreferencesKey("noteBody")
         val noteLastUpdate = stringPreferencesKey("noteLastUpdate")
+        val noteCreatedUpdate = stringPreferencesKey("noteCreatedUpdate")
         val noteColor = intPreferencesKey("noteColor") // New key for storing the note color
         val isDeleted = booleanPreferencesKey("isDeleted")
 
