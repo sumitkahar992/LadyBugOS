@@ -1,13 +1,9 @@
 package com.despicable.core.database.model
 
-import android.annotation.SuppressLint
-import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import androidx.room.Junction
 import androidx.room.PrimaryKey
-import androidx.room.Relation
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -45,22 +41,6 @@ data class TagEntity(
 data class NoteTagRefEntity(
     val noteId: Long,
     val tagId: Long
-)
-
-
-@Serializable
-data class NoteWithTagsEntity(
-    @Embedded val note: NoteEntity,
-    @Relation(
-        parentColumn = "id",
-        entityColumn = "id",
-        associateBy = Junction(
-            value = NoteTagRefEntity::class,
-            parentColumn = "noteId",
-            entityColumn = "tagId"
-        )
-    )
-    val tags: List<TagEntity>
 )
 
 

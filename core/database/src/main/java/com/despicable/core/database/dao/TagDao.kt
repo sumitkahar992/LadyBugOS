@@ -7,8 +7,6 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
-import com.despicable.core.database.model.NoteEntity
-import com.despicable.core.database.model.NoteWithTagsEntity
 import com.despicable.core.database.model.TagEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -39,41 +37,4 @@ interface TagDao {
     @Query("SELECT * FROM tags WHERE id IN (SELECT tagId FROM note_tag_cross_ref WHERE noteId = :noteId)")
     fun getTagsForNote(noteId: Long): Flow<List<TagEntity>>
 
-    @Query("SELECT * FROM notes WHERE id IN (SELECT noteId FROM note_tag_cross_ref WHERE tagId = :tagId) AND isTrashed = 0")
-    fun getNotesWithTag(tagId: Long): Flow<List<NoteEntity>>
-
-    @Transaction
-    @Query("SELECT * FROM notes WHERE id IN (SELECT noteId FROM note_tag_cross_ref WHERE tagId = :tagId) AND isTrashed = 0")
-    fun getNotesWithTagComplete(tagId: Long): Flow<List<NoteWithTagsEntity>>
 }
-
-
-
-/*
-@Dao
-interface TagDao {
-    @Query("SELECT * FROM tags")
-    fun getAllTags(): Flow<List<TagEntity>>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertTag(tag: TagEntity): Long
-
-    @Update
-    suspend fun updateTag(tag: TagEntity)
-
-    @Delete
-    suspend fun deleteTag(tag: TagEntity)
-
-    @Query("SELECT * FROM tags WHERE id = :id")
-    fun getTagById(id: Long): Flow<TagEntity?>
-
-
-    @Query("DELETE FROM note_tag_cross_ref WHERE tagId = :tagId")
-    suspend fun deleteTagCrossRefs(tagId: Long)
-
-    @Transaction
-    suspend fun deleteTagAndCrossRefs(tag: TagEntity) {
-        deleteTagCrossRefs(tag.id)
-        deleteTag(tag)
-    }
-}*/

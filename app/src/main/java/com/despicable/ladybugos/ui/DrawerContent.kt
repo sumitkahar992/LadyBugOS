@@ -1,5 +1,6 @@
 package com.despicable.ladybugos.ui
 
+import android.util.Log
 import androidx.annotation.Keep
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
@@ -53,7 +54,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import timber.log.Timber
 import kotlin.reflect.KClass
 
 @Composable
@@ -167,10 +167,9 @@ private fun DrawerItems(
             selected = isSelected,
             onClick = {
                 coroutineScope.launch {
-                    Timber.tag("DEBUG").d("{ ROUTE } : ${item.route}")
-                    Timber.tag("DEBUG").d("{ isSelected } : $isSelected")
-                    Timber.tag("DEBUG")
-                        .d("{ destination } : ${currentDestination?.hierarchy?.map { it.route }}}")
+                    Log.e("APP","{ ROUTE } : ${item.route}")
+                    Log.e("APP","{ isSelected } : $isSelected")
+                    Log.e("APP","{ destination } : ${currentDestination?.hierarchy?.map { it.route }}}")
                     drawerState.close()
                     withContext(Dispatchers.Main) {
                         when (item) {

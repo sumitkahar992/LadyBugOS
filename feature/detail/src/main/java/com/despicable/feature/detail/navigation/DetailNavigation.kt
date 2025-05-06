@@ -19,7 +19,7 @@ fun NavController.navigateToDetail(id: Long, navOptions: NavOptionsBuilder.() ->
 
 
 fun NavGraphBuilder.detailScreen(
-    onBack: () -> Unit,
+    onBack: (Boolean) -> Unit,
     onDelete: (id: Long) -> Unit,
     onArchive: (id: Long) -> Unit,
     onUnArchive: (id: Long) -> Unit,

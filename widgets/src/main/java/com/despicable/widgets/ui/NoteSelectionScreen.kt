@@ -2,26 +2,31 @@ package com.despicable.widgets.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckBox
-import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
+import androidx.compose.material.icons.rounded.CheckBox
+import androidx.compose.material.icons.rounded.CheckBoxOutlineBlank
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,16 +39,14 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.despicable.core.designsystem.DarkNoteColors
 import com.despicable.core.designsystem.LightNoteColors
+import com.despicable.core.designsystem.component.ReminderInfo
+import com.despicable.core.model.NoteComplete
 import com.despicable.core.model.NoteContent
-import com.despicable.core.model.getRelativeTimeAgo
-import com.despicable.widgets.mapper.toWidgetNote
-import com.despicable.widgets.model.WidgetNote
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -51,7 +54,7 @@ import org.koin.androidx.compose.koinViewModel
 fun NoteSelectionContent(
     viewModel: NoteSelectionViewModel = koinViewModel(),
     widgetId: Int,
-    onNoteSelected: (WidgetNote?) -> Unit
+    onNoteSelected: (NoteComplete?) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -60,12 +63,11 @@ fun NoteSelectionContent(
     }
 
     when (val state = uiState) {
-
         is NoteSelectionUiState.Error -> ErrorScreen(state.message)
         NoteSelectionUiState.Loading -> LoadingScreen()
         is NoteSelectionUiState.Success -> {
             NoteSelectionData(
-                notes = state.notes.map { it.toWidgetNote() },
+                notes = state.notes,
                 onNoteSelected = onNoteSelected,
                 widgetId = widgetId
             )
@@ -76,8 +78,8 @@ fun NoteSelectionContent(
 
 @Composable
 private fun NoteSelectionData(
-    notes: List<WidgetNote>,
-    onNoteSelected: (WidgetNote) -> Unit,
+    notes: List<NoteComplete>,
+    onNoteSelected: (NoteComplete) -> Unit,
     widgetId: Int,
 ) {
     if (notes.isEmpty()) {
@@ -91,24 +93,42 @@ private fun NoteSelectionData(
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesList(
-    notes: List<WidgetNote>,
-    onNoteSelected: (note: WidgetNote) -> Unit
+    notes: List<NoteComplete>,
+    onNoteSelected: (note: NoteComplete) -> Unit
 ) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(
-            items = notes,
-            key = { it.id }
-        ) { note ->
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(
+                        text = "Select a note for Widgets",
+                        modifier = Modifier.fillMaxWidth(),
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            )
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+    ) { padding ->
+        LazyVerticalStaggeredGrid(
+            columns = StaggeredGridCells.Fixed(2),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
+        ) {
+            items(
+                items = notes,
+                key = { it.note.id }
+            ) { note ->
 
-            NotePreview(note = note) {
-                onNoteSelected(note)
+                NotePreview(noteComplete = note) {
+                    onNoteSelected(note)
+                }
             }
-
-//            NoteListItem(note) {
-//                onNoteSelected(note)
-//            }
         }
     }
 }
@@ -149,16 +169,17 @@ fun ErrorScreen(message: String) {
 }
 
 
-// In your ConfigActivity.kt file, update the preview section
-
 @Composable
 fun NotePreview(
     modifier: Modifier = Modifier,
-    note: WidgetNote,
-    onNoteSelected: (WidgetNote) -> Unit
+    noteComplete: NoteComplete,
+    onNoteSelected: (NoteComplete) -> Unit
 ) {
+
+    val note = noteComplete.note
+
     // Get the correct color from the palette based on the colorId
-    val colorId = note.color
+    val colorId = note.lightColor
     val isDarkTheme = isSystemInDarkTheme()
     val backgroundColor =
         if (colorId >= 0 && colorId < (if (isDarkTheme) DarkNoteColors else LightNoteColors).size) {
@@ -171,25 +192,25 @@ fun NotePreview(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp)
-            .clickable(onClick = { onNoteSelected(note) }),
+            .padding(4.dp)
+            .clickable(onClick = { onNoteSelected(noteComplete) }),
         elevation = CardDefaults.cardElevation(4.dp),
         colors = CardDefaults.cardColors(
             containerColor = backgroundColor
         )
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.padding(14.dp)
         ) {
             // Title
             Text(
                 text = note.title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold
+                ),
+                maxLines = 3,
+                color = MaterialTheme.colorScheme.onSurface,
+                overflow = TextOverflow.Ellipsis,
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -198,47 +219,41 @@ fun NotePreview(
 
             when (val content = note.content) {
                 is NoteContent.ChecklistItems -> {
-                    // Show checklist items
-
-                    content.items.take(6).forEach { item ->
+                    content.items.take(8).forEach { item ->
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(
-                                imageVector = if (item.isChecked)
-                                    Icons.Filled.CheckBox
-                                else
-                                    Icons.Filled.CheckBoxOutlineBlank,
+                                imageVector = if (item.isChecked) {
+                                    Icons.Rounded.CheckBox
+                                } else {
+                                    Icons.Rounded.CheckBoxOutlineBlank
+                                },
                                 contentDescription = null,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(16.dp),
+                                tint = if (item.isChecked) {
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                }
                             )
-
-                            Spacer(modifier = Modifier.width(8.dp))
-
                             Text(
                                 text = item.content,
                                 style = MaterialTheme.typography.bodyMedium,
-                                textDecoration = if (item.isChecked)
-                                    TextDecoration.LineThrough
-                                else
-                                    null,
-                                color = if (item.isChecked)
-                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                                else
-                                    MaterialTheme.colorScheme.onSurface,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.onSurface.copy(
+                                    alpha = if (item.isChecked) 0.6f else 1f
+                                ),
                             )
                         }
                     }
 
-                    // Show "more items" if there are more than 3
-                    if (content.items.size > 6) {
+                    if (content.items.size > 8) {
                         Text(
-                            text = "+ ${content.items.size - 6} more items",
+                            text = "+ ${content.items.size - 8} more items",
                             style = MaterialTheme.typography.bodySmall,
                             fontStyle = FontStyle.Italic,
                             modifier = Modifier.padding(top = 4.dp)
@@ -247,24 +262,30 @@ fun NotePreview(
                 }
 
                 is NoteContent.Text -> {
-                    // Regular note content
                     Text(
                         text = content.text,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            lineHeight = 20.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        overflow = TextOverflow.Ellipsis,
+                        maxLines = 10,
                     )
                 }
             }
-            // Last updated
-            Text(
-                text = "Last updated: ${getRelativeTimeAgo(note.lastUpdate)}",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                textAlign = TextAlign.End
-            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            note.reminderDate?.let { reminderDate ->
+                Spacer(modifier = Modifier.height(8.dp))
+                ReminderInfo(
+                    reminderDate = reminderDate,
+                    isDone = note.isDone,
+                    onClick = {},
+                    noteColor = note.lightColor
+                )
+            }
+
         }
     }
 }

@@ -1,19 +1,20 @@
 package com.despicable.widgets.data
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.preferences.core.MutablePreferences
 import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.getAppWidgetState
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.state.PreferencesGlanceStateDefinition
-import com.despicable.core.model.Checklist
 import com.despicable.core.model.Note
-import com.despicable.core.model.NoteContent
-import com.despicable.core.model.NoteType
-import com.despicable.widgets.mapper.toWidgetChecklistItem
+import com.despicable.widgets.mapper.toWidgetNote
+import com.despicable.widgets.mapper.toWidgetNotes
 import com.despicable.widgets.model.WidgetChecklistItem
+import com.despicable.widgets.model.WidgetContent
 import com.despicable.widgets.model.WidgetKeys
+import com.despicable.widgets.model.WidgetNote
 import com.despicable.widgets.ui.NoteWidget
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -22,7 +23,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
-import timber.log.Timber
 
 
 class WidgetUpdater(
@@ -43,6 +43,32 @@ class WidgetUpdater(
         }
     }
 
+    //  WidgetUpdater class
+    suspend fun updateChecklistItemOnly(
+        glanceId: GlanceId,
+        itemId: Long,
+        isChecked: Boolean
+    ) {
+        updateAppWidgetState(context, glanceId) { prefs ->
+            val currentItemsJson =
+                prefs[WidgetKeys.Prefs.checklistItems] ?: return@updateAppWidgetState
+
+            try {
+                val currentItems =
+                    Json.decodeFromString<List<WidgetChecklistItem>>(currentItemsJson)
+                val updatedItems = currentItems.map { item ->
+                    if (item.id == itemId) item.copy(isChecked = isChecked) else item
+                }
+                prefs[WidgetKeys.Prefs.checklistItems] = Json.encodeToString(updatedItems)
+            } catch (e: Exception) {
+                Log.e("WIDGET", "Failed to update checklist item: $e")
+            }
+        }
+
+        // Only update widget after preference is updated
+        NoteWidget().update(context, glanceId)
+    }
+
     private suspend fun refreshWidgetNoteCache() {
         getGlanceIds().forEach { glanceId ->
             val noteId = getWidgetNoteId(glanceId)
@@ -53,8 +79,11 @@ class WidgetUpdater(
     }
 
     // Update only specific widgets for given notes
-    suspend fun updateWidgetsForNotes(notes: List<Note>) = withContext(dispatchers.io) {
+    suspend fun updateWidgetsForNotes(
+        notes: List<Note>
+    ) = withContext(dispatchers.io) {
         try {
+
             // Get relevant widget IDs for these notes only
             val noteIds = notes.map { it.id }.toSet()
             val relevantWidgets = widgetNoteCache.filter { it.value in noteIds }
@@ -63,12 +92,16 @@ class WidgetUpdater(
                 relevantWidgets.forEach { (glanceId, noteId) ->
                     launch {
                         val note = notes.find { it.id == noteId }
-                        updateWidgetState(glanceId, note)
+                        updateWidgetState(glanceId, note?.toWidgetNote())
                     }
                 }
             }
         } catch (e: Exception) {
-            Timber.e(e, "Failed to update widgets for notes: ${notes.map { it.id }}")
+            Log.e(
+                "WIDGET",
+                "Failed to update widgets for notes: ${notes.map { it.id }}",
+                e
+            )
         }
     }
 
@@ -76,17 +109,19 @@ class WidgetUpdater(
       Handles undo operation for multiple deleted widgets while preserving
       original widget-note associations
      */
-    suspend fun undoDeleteWidgets(notes: List<Note>) {
-        Timber.tag("DEBUG").d("undoDeleteWidgets[${notes.map { it.id }}]")
-        restoreMultipleWidgets(notes)
+    suspend fun undoDeleteWidgets(
+        notes: List<Note>
+    ) {
+        Log.e("WIDGET", "undoDeleteWidgets[${notes.map { it.id }}]")
+        restoreMultipleWidgets(notes.toWidgetNotes())
     }
 
     /*
       Handles undo operation for a single deleted widget
      */
-    suspend fun undoDeleteWidget(note: Note) {
-        Timber.tag("DEBUG").d("undoDeleteWidget[$note]")
-        restoreWidget(note)
+    suspend fun undoDeleteWidget(widgetNote: WidgetNote) {
+        Log.e("WIDGET", "undoDeleteWidget[$widgetNote]")
+        restoreWidget(widgetNote)
     }
 
     /*
@@ -102,10 +137,14 @@ class WidgetUpdater(
     /*
       Efficiently restores multiple widgets while preserving original associations
      */
-    private suspend fun restoreMultipleWidgets(notes: List<Note>) = withContext(dispatchers.io) {
+    private suspend fun restoreMultipleWidgets(
+        widgetNotes: List<WidgetNote>
+    ) = withContext(dispatchers.io) {
         try {
-            Timber.tag("DEBUG")
-                .d("restoreMultipleWidgets: Restoring widgets for notes ${notes.map { it.id }}")
+            Log.e(
+                "WIDGET",
+                "restoreMultipleWidgets: Restoring widgets for notes ${widgetNotes.map { it.id }}"
+            )
 
             // Step 1: Get all widget states with their associations
             val widgetStates = getGlanceIds().map { glanceId ->
@@ -120,63 +159,75 @@ class WidgetUpdater(
             // Step 2: Create a map of deleted widgets with their original note IDs
             val deletedWidgetMap = widgetStates.filter { it.isDeleted }.associateBy { it.noteId }
 
-            Timber.tag("DEBUG")
-                .d("restoreMultipleWidgets: Found ${deletedWidgetMap.size} deleted widgets")
+            Log.e(
+                "WIDGET",
+                "restoreMultipleWidgets: Found ${deletedWidgetMap.size} deleted widgets"
+            )
 
             // Step 3: Process each note and restore it to its original widget if possible
             coroutineScope {
-                notes.forEach { note ->
+                widgetNotes.forEach { widgetNote ->
                     // Find the widget that was originally associated with this note
-                    val originalWidget = deletedWidgetMap[note.id]
+                    val originalWidget = deletedWidgetMap[widgetNote.id]
                     if (originalWidget != null) {
                         launch {
-                            Timber.tag("DEBUG")
-                                .d("Restoring note ${note.id} to its original widget ${originalWidget.glanceId}")
-                            updateWidgetState(originalWidget.glanceId, note)
+                            Log.e(
+                                "WIDGET",
+                                "Restoring note ${widgetNote.id} to its original widget ${originalWidget.glanceId}"
+                            )
+                            updateWidgetState(
+                                originalWidget.glanceId,
+                                widgetNote
+                            )
                         }
                     } else {
-                        Timber.tag("DEBUG").d("No original widget found for note ${note.id}")
+                        Log.e("WIDGET", "No original widget found for note ${widgetNote.id}")
                     }
                 }
             }
         } catch (e: Exception) {
-            Timber.e(e, "Failed to restore multiple widgets: ${e.message}")
+            Log.e("WIDGET", "Failed to restore multiple widgets: ${e.message}")
         }
     }
 
     /*
       Direct approach to restore single widget state
      */
-    private suspend fun restoreWidget(note: Note) = withContext(dispatchers.io) {
-        try {
-            Timber.tag("DEBUG").d("restoreWidget: Restoring widget for note ${note.id}")
-            val glanceIds = getGlanceIds()
+    private suspend fun restoreWidget(widgetNote: WidgetNote) =
+        withContext(dispatchers.io) {
+            try {
+                Log.e("WIDGET", "restoreWidget: Restoring widget for note ${widgetNote.id}")
+                val glanceIds = getGlanceIds()
 
-            // Find the widget that was originally associated with this note
-            glanceIds.forEach { glanceId ->
-                val prefs = getAppWidgetState(context, stateDefinition, glanceId)
-                val isDeleted =
-                    prefs[WidgetKeys.Prefs.isDeleted] ?: false
-                val widgetNoteId =
-                    prefs[WidgetKeys.Prefs.noteId]?.toLongOrNull()
+                // Find the widget that was originally associated with this note
+                glanceIds.forEach { glanceId ->
+                    val prefs = getAppWidgetState(context, stateDefinition, glanceId)
+                    val isDeleted =
+                        prefs[WidgetKeys.Prefs.isDeleted] ?: false
+                    val widgetNoteId =
+                        prefs[WidgetKeys.Prefs.noteId]?.toLongOrNull()
 
-                if (isDeleted && widgetNoteId == note.id) {
-                    updateWidgetState(glanceId, note)
-                    return@forEach
+                    if (isDeleted && widgetNoteId == widgetNote.id) {
+                        updateWidgetState(glanceId, widgetNote)
+                        return@forEach
+                    }
                 }
+            } catch (e: Exception) {
+                Log.e(
+                    "WIDGET",
+                    "Failed to restore widget for note ${widgetNote.id}: ${e.message}"
+                )
             }
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to restore widget for note ${note.id}: ${e.message}")
         }
-    }
 
     /*
       Sealed interface to represent different update operations
      */
-    private sealed interface UpdateOperation {
-        data class Single(val note: Note) : UpdateOperation
-        data class Multiple(val notes: List<Note>) : UpdateOperation
-        data class Configuration(val glanceId: GlanceId, val note: Note) : UpdateOperation
+    sealed interface UpdateOperation {
+        data class Single(val widgetNote: WidgetNote) : UpdateOperation
+        data class Multiple(val widgetNote: List<WidgetNote>) : UpdateOperation
+        data class Configuration(val glanceId: GlanceId, val widgetNote: WidgetNote) :
+            UpdateOperation
     }
 
     /*
@@ -184,21 +235,23 @@ class WidgetUpdater(
      */
     private suspend fun executeUpdate(operation: UpdateOperation) = withContext(dispatchers.io) {
         try {
-            Timber.tag("DEBUG").d("executeUpdate: Starting operation: $operation")
+            Log.e("WIDGET", "executeUpdate: Starting operation: $operation")
             when (operation) {
-                is UpdateOperation.Single -> handleSingleUpdate(operation.note)
-                is UpdateOperation.Multiple -> handleMultipleUpdate(operation.notes)
+                is UpdateOperation.Single -> handleSingleUpdate(operation.widgetNote)
+
+                is UpdateOperation.Multiple -> handleMultipleUpdate(operation.widgetNote)
+
                 is UpdateOperation.Configuration -> handleConfigUpdate(
-                    operation.glanceId, operation.note
+                    operation.glanceId, operation.widgetNote
                 )
             }
         } catch (e: Exception) {
             val errorMessage = when (operation) {
-                is UpdateOperation.Single -> "Failed to update widget for note ${operation.note.id}"
+                is UpdateOperation.Single -> "Failed to update widget for note ${operation.widgetNote.id}"
                 is UpdateOperation.Multiple -> "Failed to update all widgets"
-                is UpdateOperation.Configuration -> "Failed to update widget from config for note ${operation.note.id}"
+                is UpdateOperation.Configuration -> "Failed to update widget from config for note ${operation.widgetNote.id}"
             }
-            Timber.e(e, "$errorMessage: ${e.message}")
+            Log.e("WIDGET", "$errorMessage: ${e.message}")
         }
     }
 
@@ -233,67 +286,64 @@ class WidgetUpdater(
             NoteWidget().update(context, glanceId)
         }*/
 
+    // Widget Updater class
     suspend fun updateWidgetFromConfig(
         glanceId: GlanceId,
-        note: Note,
-        checklistItems: List<Checklist> = emptyList()
+        widgetNote: WidgetNote
     ) {
-        // Update basic note info
+
+        Log.e("WIDGET", "updateWidgetFromConfig: [${widgetNote.content}]")
+        Log.e("WIDGET", "updateWidgetFromConfig: [${widgetNote.id}]")
+
         updateAppWidgetState(context, glanceId) { prefs ->
-            setNotePreferences(prefs, note)
-
-            // Set note body based on content type
-            when (note.content) {
-                is NoteContent.Text -> {
-                    prefs[WidgetKeys.Prefs.noteBody] = (note.content as NoteContent.Text).text
-                }
-
-                is NoteContent.ChecklistItems -> {
-                    // Empty string for text content since we're using checklist items
-                    prefs[WidgetKeys.Prefs.noteBody] = ""
-                }
-            }
-
-            // Update checklist items if this is a checklist note
-            if (note.noteType == NoteType.CHECKLIST && checklistItems.isNotEmpty()) {
-                val widgetItems = checklistItems.map { it.toWidgetChecklistItem() }
-                prefs[WidgetKeys.Prefs.checklistItems] = Json.encodeToString(widgetItems)
-            }
+            setNotePreferences(prefs, widgetNote)
         }
 
         NoteWidget().update(context, glanceId)
     }
 
-    suspend fun updateAllWidgets(notes: List<Note>) = executeUpdate(UpdateOperation.Multiple(notes))
+    suspend fun updateAllWidgets(
+        widgetNotes: List<WidgetNote>,
+    ) = executeUpdate(UpdateOperation.Multiple(widgetNotes))
 
     /*
       Regular update operation for non-undo scenarios
      */
-    suspend fun updateSingleWidget(note: Note) = executeUpdate(UpdateOperation.Single(note))
+    suspend fun updateSingleWidget(note: Note) =
+        executeUpdate(UpdateOperation.Single(note.toWidgetNote()))
 
 
     // Private handler methods
-    private suspend fun handleSingleUpdate(note: Note) {
-        Timber.tag("DEBUG").d("handleSingleUpdate: Processing note ${note.id}")
+    private suspend fun handleSingleUpdate(
+        widgetNote: WidgetNote
+    ) {
+        Log.e("WIDGET", "handleSingleUpdate: Processing note ${widgetNote.id}")
         val glanceIds = getGlanceIds()
 
         glanceIds.forEach { glanceId ->
-            if (isWidgetAssociatedWithNote(glanceId, note.id)) {
-                updateWidgetState(glanceId, note)
+            if (isWidgetAssociatedWithNote(glanceId, widgetNote.id)) {
+                updateWidgetState(glanceId, widgetNote)
             }
         }
     }
 
-    private suspend fun handleMultipleUpdate(notes: List<Note>) {
+    private suspend fun handleMultipleUpdate(noteCompletes: List<WidgetNote>) {
+        // Build a map for quick lookup
+        val noteCompleteMap = noteCompletes.associateBy { it.id }
+
         getGlanceIds().forEach { glanceId ->
             val noteId = getWidgetNoteId(glanceId)
-            val associatedNote = notes.find { it.id == noteId }
-            updateWidgetState(glanceId, associatedNote)
+            val associatedNoteComplete = noteCompleteMap[noteId]
+            updateWidgetState(glanceId, associatedNoteComplete)
         }
     }
 
-    private suspend fun handleConfigUpdate(glanceId: GlanceId, note: Note) {
-        updateWidgetState(glanceId, note)
+    private suspend fun handleConfigUpdate(
+        glanceId: GlanceId,
+        widgetNote: WidgetNote
+
+    ) {
+        updateWidgetState(glanceId, widgetNote)
     }
 
     // Helper methods
@@ -309,45 +359,14 @@ class WidgetUpdater(
     )[WidgetKeys.Prefs.noteId]?.toLongOrNull()
 
 
-    suspend fun updateWidgetStateWithChecklist(
+    private suspend fun updateWidgetState(
         glanceId: GlanceId,
-        noteId: Long,
-        checklistItems: List<Checklist>
+        widgetNote: WidgetNote?
     ) {
+        Log.e("WIDGET", "updateWidgetState: Starting update for note: ${widgetNote?.id}")
         updateAppWidgetState(context, glanceId) { prefs ->
-            // Encode checklist items to JSON
-            val widgetChecklist = checklistItems
-                .sortedBy { it.position }
-                .map { item ->
-                    WidgetChecklistItem(
-                        id = item.id,
-                        content = item.content,
-                        isChecked = item.isChecked,
-                        position = item.position
-                    )
-                }
-
-            // Log the checklist items for debugging
-            Timber.tag("DEBUG")
-                .d("updateWidgetStateWithChecklist: Encoding ${widgetChecklist.size} items for note $noteId")
-
-            // Store the encoded items
-            prefs[WidgetKeys.Prefs.checklistItems] = Json.encodeToString(widgetChecklist)
-
-            // Make sure isChecklist is set to true
-            prefs[WidgetKeys.Prefs.isChecklist] = true
-        }
-
-        // Update the widget
-        NoteWidget().update(context, glanceId)
-    }
-
-    private suspend fun updateWidgetState(glanceId: GlanceId, note: Note?) {
-        Timber.tag("DEBUG")
-            .d("updateWidgetState: Starting update for note: ${note?.id}, isTrashed: ${note?.isTrashed}, isArchived: ${note?.isArchived}")
-        updateAppWidgetState(context, glanceId) { prefs ->
-            if (note != null && !note.isTrashed && !note.isArchived) {
-                setNotePreferences(prefs, note)
+            if (widgetNote != null) {
+                setNotePreferences(prefs, widgetNote)
             } else {
                 clearNotePreferences(prefs)
             }
@@ -356,30 +375,109 @@ class WidgetUpdater(
     }
 
 
-    private fun setNotePreferences(prefs: MutablePreferences, note: Note) {
+    private val emptyChecklistJsonString = "[]"
+
+    private fun setNotePreferences(
+        prefs: MutablePreferences,
+        widgetNote: WidgetNote
+    ) = prefs.run {
+        val content = widgetNote.content
+
+        // Set basic note metadata
+        set(WidgetKeys.Prefs.noteId, widgetNote.id.toString())
+        set(WidgetKeys.Prefs.noteHeader, widgetNote.title)
+        set(WidgetKeys.Prefs.noteReminderDate, widgetNote.reminderDate.toString())
+        set(WidgetKeys.Prefs.noteColor, widgetNote.color)
+        set(WidgetKeys.Prefs.isDeleted, false)
+
+        // Handle content-specific preferences
+        when (content) {
+            is WidgetContent.Text -> {
+                set(WidgetKeys.Prefs.noteBody, content.text)
+                set(WidgetKeys.Prefs.checklistItems, emptyChecklistJsonString)
+                set(WidgetKeys.Prefs.isChecklist, false)
+            }
+
+            is WidgetContent.Checklist -> {
+                set(WidgetKeys.Prefs.noteBody, "")
+                val itemsJson = if (content.items.isNotEmpty()) {
+                    Json.encodeToString(content.items)
+                } else {
+                    emptyChecklistJsonString
+                }
+                set(WidgetKeys.Prefs.checklistItems, itemsJson)
+                set(WidgetKeys.Prefs.isChecklist, true)
+            }
+        }
+
+        Log.e(
+            "WIDGET",
+            "setNotePreferences: Set isChecklist=${content is WidgetContent.Checklist} for note ${widgetNote.id}"
+        )
+    }
+
+    private val widgetPreferenceKeysToClear = listOf(
+        WidgetKeys.Prefs.noteHeader,
+        WidgetKeys.Prefs.noteBody,
+        WidgetKeys.Prefs.noteReminderDate,
+        WidgetKeys.Prefs.noteColor,
+        WidgetKeys.Prefs.checklistItems
+    )
+
+    private fun clearNotePreferences(prefs: MutablePreferences) = prefs.run {
+        widgetPreferenceKeysToClear.forEach { remove(it) }
+        // Don't remove noteId as we need it to maintain the association
+        set(WidgetKeys.Prefs.isDeleted, true)
+        set(WidgetKeys.Prefs.isChecklist, false)
+    }
+
+
+    /*
+        private fun setNotePreferences(
+        prefs: MutablePreferences,
+        note: WidgetNote
+    ) {
         with(prefs) {
             set(WidgetKeys.Prefs.noteId, note.id.toString())
             set(WidgetKeys.Prefs.noteHeader, note.title)
-//            set(WidgetKeys.Prefs.noteBody, note.content)
-            set(WidgetKeys.Prefs.noteLastUpdate, note.updateDate.toString())
-
-            // Log color ID to verify it's being set correctly
-            Timber.tag("DEBUG").d("Setting note color ID: ${note.lightColor}")
-
-            set(WidgetKeys.Prefs.noteColor, note.lightColor)
+            set(WidgetKeys.Prefs.noteReminderDate, note.reminderDate.toString())
+            set(WidgetKeys.Prefs.noteColor, note.color)
             set(WidgetKeys.Prefs.isDeleted, false)
 
-            // Make sure to set the isChecklist flag correctly
-            prefs[WidgetKeys.Prefs.isChecklist] = note.noteType == NoteType.CHECKLIST
 
-            // If it's not a checklist, clear any existing checklist items
-            if (note.noteType != NoteType.CHECKLIST) {
-                prefs[WidgetKeys.Prefs.checklistItems] =
-                    Json.encodeToString<List<WidgetChecklistItem>>(emptyList())
+            // Handle note body and checklist items based on content type
+            when (note.content) {
+                is WidgetContent.Text -> {
+                    set(WidgetKeys.Prefs.noteBody, note.content.text)
+                    // Clear any existing checklist items when switching to text
+
+                    // Set checklist flag
+                    set(WidgetKeys.Prefs.isChecklist, false)
+                    set(
+                        WidgetKeys.Prefs.checklistItems,
+                        Json.encodeToString<List<WidgetChecklistItem>>(emptyList())
+                    )
+                }
+
+                is WidgetContent.Checklist -> {
+                    // Empty string for text content since we're using checklist items
+                    set(WidgetKeys.Prefs.noteBody, "")
+                    // Set checklist flag
+                    set(WidgetKeys.Prefs.isChecklist, true)
+
+                    // Only update checklist items if we have items to update
+                    val widgetItems = if (note.content.items.isNotEmpty()) {
+                        note.content.items
+                    } else {
+                        emptyList()
+                    }
+                    set(WidgetKeys.Prefs.checklistItems, Json.encodeToString(widgetItems))
+                }
             }
-
-            Timber.tag("DEBUG")
-                .d("setNotePreferences: Set isChecklist=${note.noteType == NoteType.CHECKLIST} for note ${note.id}")
+            Log.e(
+                "WIDGET",
+                "setNotePreferences: Set isChecklist=${note.content is WidgetContent.Checklist} for note ${note.id}"
+            )
 
         }
     }
@@ -390,12 +488,82 @@ class WidgetUpdater(
             listOf(
                 WidgetKeys.Prefs.noteHeader,
                 WidgetKeys.Prefs.noteBody,
-                WidgetKeys.Prefs.noteLastUpdate,
-                WidgetKeys.Prefs.noteColor
+                WidgetKeys.Prefs.noteReminderDate,
+                WidgetKeys.Prefs.noteColor,
+                WidgetKeys.Prefs.checklistItems
             ).forEach { remove(it) }
             set(WidgetKeys.Prefs.isDeleted, true)
+            set(WidgetKeys.Prefs.isChecklist, false)
         }
     }
+
+
+
+       private fun setNotePreferences(
+            prefs: MutablePreferences,
+            noteComplete: NoteComplete
+        ) {
+            val note = noteComplete.note
+            val checklistItems = noteComplete.checklistItems
+
+
+            with(prefs) {
+                set(WidgetKeys.Prefs.noteId, note.id.toString())
+                set(WidgetKeys.Prefs.noteHeader, note.title)
+                set(WidgetKeys.Prefs.noteReminderDate, note.reminderDate.toString())
+                set(WidgetKeys.Prefs.noteColor, note.lightColor)
+                set(WidgetKeys.Prefs.isDeleted, false)
+                // Set checklist flag
+                val isChecklist = note.noteType == NoteType.CHECKLIST
+                set(WidgetKeys.Prefs.isChecklist, isChecklist)
+
+                // Handle note body and checklist items based on content type
+                when (note.content) {
+                    is NoteContent.Text -> {
+                        set(WidgetKeys.Prefs.noteBody, (note.content as NoteContent.Text).text)
+                        // Clear any existing checklist items when switching to text
+                        set(
+                            WidgetKeys.Prefs.checklistItems,
+                            Json.encodeToString<List<WidgetChecklistItem>>(emptyList())
+                        )
+                    }
+
+                    is NoteContent.ChecklistItems -> {
+                        // Empty string for text content since we're using checklist items
+                        set(WidgetKeys.Prefs.noteBody, "")
+
+                        // Only update checklist items if we have items to update
+                        val widgetItems = if (isChecklist && checklistItems.isNotEmpty()) {
+                            checklistItems.map { it.toWidgetChecklistItem() }
+                        } else {
+                            emptyList()
+                        }
+                        set(WidgetKeys.Prefs.checklistItems, Json.encodeToString(widgetItems))
+                    }
+                }
+                Log.e(
+                    "WIDGET",
+                    "setNotePreferences: Set isChecklist=${note.noteType == NoteType.CHECKLIST} for note ${note.id}"
+                )
+
+            }
+        }
+
+        private fun clearNotePreferences(prefs: MutablePreferences) {
+            with(prefs) {
+                // Don't remove noteId as we need it to maintain the association
+                listOf(
+                    WidgetKeys.Prefs.noteHeader,
+                    WidgetKeys.Prefs.noteBody,
+                    WidgetKeys.Prefs.noteReminderDate,
+                    WidgetKeys.Prefs.noteColor,
+                    WidgetKeys.Prefs.checklistItems
+                ).forEach { remove(it) }
+                set(WidgetKeys.Prefs.isDeleted, true)
+                set(WidgetKeys.Prefs.isChecklist, false)
+            }
+        }
+        */
 }
 
 

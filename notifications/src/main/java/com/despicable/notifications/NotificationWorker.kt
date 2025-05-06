@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
@@ -20,7 +21,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -33,9 +33,12 @@ class NotificationWorker(
     private val repository: NoteRepository by inject()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+
         val noteId = inputData.getLong(KEY_NOTE_ID, -1)
         val noteTitle = inputData.getString(KEY_NOTE_TITLE) ?: "Reminder"
         val noteContent = inputData.getString(KEY_NOTE_CONTENT) ?: ""
+
+        Log.e("NOTIFICATION", "doWork() started for noteId: $noteId")
 
         return@withContext if (noteId != -1L) {
             showNotification(noteId, noteTitle, noteContent)
@@ -55,8 +58,10 @@ class NotificationWorker(
             val channel = NotificationChannel(
                 CHANNEL_ID,
                 CHANNEL_NAME,
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
+                NotificationManager.IMPORTANCE_HIGH  // Increase from DEFAULT to HIGH
+            ).apply {
+                enableVibration(true)  // Optional: enhance visibility
+            }
             notificationManager?.createNotificationChannel(channel)
         }
 
@@ -97,7 +102,7 @@ class NotificationWorker(
                 Result.success()
             } catch (e: Exception) {
                 Result.failure()
-                Timber.e(e, "Failed to update note status")
+                Log.e("NOTIFICATION", "Failed to update note status: ${e.message}")
             }
         }
     }
@@ -138,6 +143,8 @@ class NotificationWorker(
 
         fun cancelNotification(context: Context, noteId: Long) {
             WorkManager.getInstance(context).cancelUniqueWork("notification_$noteId")
+            Log.e("NOTIFICATION", "Cancelled notification for note $noteId")
+
         }
     }
 }

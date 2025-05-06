@@ -3,14 +3,15 @@ package com.despicable.widgets.data
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.lifecycle.lifecycleScope
-import com.despicable.core.model.NoteContent
-import com.despicable.widgets.mapper.toDomainNote
+import com.despicable.core.designsystem.theme.LadyBugOSTheme
+import com.despicable.core.model.NoteComplete
+import com.despicable.widgets.mapper.toWidgetNote
 import com.despicable.widgets.model.WidgetConstants
-import com.despicable.widgets.model.WidgetNote
 import com.despicable.widgets.ui.NoteSelectionContent
 import com.despicable.widgets.ui.NoteSelectionViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -18,7 +19,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import timber.log.Timber
 
 
 @AndroidEntryPoint
@@ -39,12 +39,14 @@ class ConfigWidgetActivity : ComponentActivity() {
             return
         }
         setContent {
-//            LadyBugOSTheme { }
-            NoteSelectionContent(
-                viewModel = viewModel,
-                widgetId = widgetId,
-                onNoteSelected = ::handleNoteSelection
-            )
+            LadyBugOSTheme {
+                NoteSelectionContent(
+                    viewModel = viewModel,
+                    widgetId = widgetId,
+                    onNoteSelected = ::handleNoteSelection
+                )
+            }
+
 
         }
     }
@@ -70,12 +72,12 @@ class ConfigWidgetActivity : ComponentActivity() {
         return true
     }
 
-    private fun handleNoteSelection(note: WidgetNote?) {
-        if (note == null) return
+    private fun handleNoteSelection(noteComplete: NoteComplete?) {
+        if (noteComplete == null) return
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                updateWidget(note)
+                updateWidget(noteComplete)
                 // Set result and finish on main thread
                 withContext(Dispatchers.Main) {
                     setResult(
@@ -85,7 +87,7 @@ class ConfigWidgetActivity : ComponentActivity() {
                     finish()
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to update widget")
+                Log.e("WIDGET", "Failed to update widget")
                 // Handle error appropriately
             }
         }
@@ -97,26 +99,19 @@ class ConfigWidgetActivity : ComponentActivity() {
             // Use widgetUpdater instead of direct update
             widgetUpdater.updateWidgetFromConfig(glanceId, note.toDomainNote())
         }*/
-    private suspend fun updateWidget(note: WidgetNote) {
+
+    // ConfigWidgetActivity
+    private suspend fun updateWidget(noteComplete: NoteComplete) {
         val glanceId = GlanceAppWidgetManager(applicationContext).getGlanceIdBy(widgetId)
 
-        // Convert WidgetNote to domain Note
-        val domainNote = note.toDomainNote()
 
-        // Extract checklist items if they exist
-        val checklistItems = when (note.content) {
-            is NoteContent.ChecklistItems -> {
-                note.content.items
-            }
-
-            else -> emptyList()
-        }
+        Log.e("WIDGET", "noteComplete: [${noteComplete.note}]")
+        Log.e("WIDGET", "noteComplete: [${noteComplete.checklistItems}]")
 
         // Use widgetUpdater to update the widget
         widgetUpdater.updateWidgetFromConfig(
             glanceId,
-            domainNote,
-            checklistItems
+            noteComplete.toWidgetNote()
         )
     }
 }

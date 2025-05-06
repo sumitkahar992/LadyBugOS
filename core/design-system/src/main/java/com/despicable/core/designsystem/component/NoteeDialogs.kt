@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun NoteeDialog(
+    modifier: Modifier = Modifier,
     enabled: Boolean = false,
     title: String,
     description: String,
@@ -23,8 +24,7 @@ fun NoteeDialog(
     confirmText: String? = null,
     dismissText: String? = null,
     onConfirm: (() -> Unit)? = null,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    onDismiss: () -> Unit
 ) {
     BaseNoteeDialog(
         enabled = enabled,
@@ -45,6 +45,7 @@ fun NoteeDialog(
 
 @Composable
 fun NoteeDialog(
+    modifier: Modifier = Modifier,
     enabled: Boolean = false,
     title: String,
     description: @Composable () -> Unit,
@@ -52,8 +53,7 @@ fun NoteeDialog(
     confirmText: String? = null,
     dismissText: String? = null,
     onConfirm: (() -> Unit)? = null,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    onDismiss: () -> Unit
 ) {
     BaseNoteeDialog(
         enabled = enabled,

@@ -1,5 +1,12 @@
 package com.despicable.feature.settings
 
+import android.app.AlarmManager
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -13,6 +20,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CloudQueue
 import androidx.compose.material.icons.filled.Contrast
@@ -45,12 +53,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.core.app.AlarmManagerCompat
+import androidx.core.content.getSystemService
 import com.despicable.core.designsystem.component.NoteeDialog
 import com.despicable.core.designsystem.theme.LocalThemeProvider
 import com.despicable.core.designsystem.theme.Theme
 import org.koin.androidx.compose.koinViewModel
+
+fun requestScheduleExactAlarmIntent(context: Context): Intent {
+    return Intent("android.settings.REQUEST_SCHEDULE_EXACT_ALARM").apply {
+        data = Uri.fromParts("package", context.packageName, null)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,7 +76,7 @@ fun SettingsScreen(
     onMenuClick: () -> Unit,
     onPrivacyClick: () -> Unit,
     onLicenseClick: () -> Unit,
-    onBackUpClick: () -> Unit
+    onBackUpClick: () -> Unit,
 ) {
     var blackTheme by remember { mutableStateOf(false) }
     var biometricLock by remember { mutableStateOf(false) }
@@ -70,8 +87,21 @@ fun SettingsScreen(
     val theme = LocalThemeProvider.theme
     val materialYou = LocalThemeProvider.dynamicColor
 
+    val context = LocalContext.current
+    val alarmManager: AlarmManager = remember { requireNotNull(context.getSystemService()) }
 
+    var canScheduleExactAlarms by remember {
+        mutableStateOf(AlarmManagerCompat.canScheduleExactAlarms(alarmManager))
+    }
 
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            canScheduleExactAlarms = AlarmManagerCompat.canScheduleExactAlarms(alarmManager)
+        }
+
+    var showExactAlarmsDialog by remember {
+        mutableStateOf(false)
+    }
 
 
     Scaffold(
@@ -128,6 +158,16 @@ fun SettingsScreen(
                         // Open goal card style selection
                     }
                 )
+                AnimatedVisibility(visible = !canScheduleExactAlarms) {
+                    SettingsItem(
+                        title = "Grant exact alarm permission",
+                        subtitle = "Allow this app to set reminder for notes",
+                        icon = Icons.Default.Alarm,
+                        onClick = {
+                            showExactAlarmsDialog = true
+                        }
+                    )
+                }
             }
 
             SettingsSection(title = "Locales") {
@@ -192,6 +232,27 @@ fun SettingsScreen(
             }
         }
     }
+
+
+    NoteeDialog(
+        enabled = showExactAlarmsDialog,
+        title = "Grant Exact Alarm Permission",
+        onDismiss = { showExactAlarmsDialog = false },
+        description = {
+            Text(
+                "Allow this app to set alarms and schedule time-sensitive actions. This lets the app run in the background, which may use more battery.\n" +
+                        "\n" +
+                        "If this permission is off, existing alarms and time-based events scheduled by this app won't work."
+            )
+        },
+        confirmText = "Grant",
+        dismissText = "dismiss",
+        onConfirm = {
+            showExactAlarmsDialog = false
+            launcher.launch(requestScheduleExactAlarmIntent(context))
+        },
+    )
+
     NoteeDialog(
         enabled = showThemeDialog,
         title = "Choose Theme",

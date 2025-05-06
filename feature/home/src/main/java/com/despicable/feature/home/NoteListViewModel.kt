@@ -1,6 +1,7 @@
 package com.despicable.feature.home
 
 
+import android.util.Log
 import androidx.annotation.Keep
 import androidx.compose.material3.SnackbarDuration
 import androidx.lifecycle.ViewModel
@@ -22,13 +23,13 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import timber.log.Timber
 
 
 @Keep
@@ -154,8 +155,7 @@ class NoteListViewModel(
                 )
 
                 val endTime = System.currentTimeMillis()
-                Timber.tag("DEBUG")
-                    .d("Total time for notes and checklists: ${endTime - startTime} ms")
+                Log.d("HOME", "Total time for notes and checklists: ${endTime - startTime} ms")
                 _uiState.update { current ->
                     current.copy(
                         isNotesInitialized = true,
@@ -332,7 +332,7 @@ class NoteListViewModel(
                     }
                 )
             } catch (e: Exception) {
-                Timber.e(e, "Error handling note action")
+                Log.d("HOME", "Error handling note action")
                 _snackBarMessage.value = SnackBarMessage(
                     message = "Error handling action",
                     onDismiss = { _snackBarMessage.value = null }
@@ -372,6 +372,39 @@ class NoteListViewModel(
             }*/
 
 
+    /*
+        private fun updateNotes(
+            notes: List<Note>,
+            updates: (Note) -> Note,
+            delayTime: Long = 400
+        ) {
+            viewModelScope.launch {
+                try {
+                    _uiState.update { it.copy(lastModifiedNotes = notes) }
+                    val updatedNotes = notes.map(updates)
+                    delay(delayTime)
+
+                    // Update database
+                    repo.updateNotes(updatedNotes)
+
+                    // Update widgets
+                    widgetUpdater.updateWidgetsForNotes(
+                        noteCompletes =
+                    )
+
+
+                } catch (e: Exception) {
+                    Log.d("HOME", "Error updating notes")
+                    _snackBarMessage.value = SnackBarMessage(
+                        message = "Error updating notes",
+                        onDismiss = { _snackBarMessage.value = null }
+                    )
+                }
+            }
+        }
+    */
+
+
     private fun updateNotes(
         notes: List<Note>,
         updates: (Note) -> Note,
@@ -380,25 +413,32 @@ class NoteListViewModel(
         viewModelScope.launch {
             try {
                 _uiState.update { it.copy(lastModifiedNotes = notes) }
+
                 val updatedNotes = notes.map(updates)
                 delay(delayTime)
 
                 // Update database
                 repo.updateNotes(updatedNotes)
 
-                // Update widgets
+                // Find the complete notes with checklist items in current UI state
+                val currentNoteCompletes = _uiState.value.notes
+                val updatedNoteCompletes = updatedNotes.map { updatedNote ->
+                    // Try to find this note in current UI state to get existing checklist items
+                    currentNoteCompletes.find { it.note.id == updatedNote.id }?.copy(
+                        note = updatedNote // Update the note part
+                    ) ?: NoteComplete(updatedNote) // Fallback if not found
+                }
+
+                // Update widgets with the complete notes
                 widgetUpdater.updateWidgetsForNotes(updatedNotes)
 
-                // Refresh notes list to ensure UI is in sync
-//                initializeNotes()
-
-                // Instead of full reinitialization, just update these notes in UI state
-                updatedNotes.forEach { note ->
-//                    updateSingleNoteInUiState(note)
+                // Update the UI state with the updated note completes
+                updatedNoteCompletes.forEach { noteComplete ->
+                    updateSingleNoteCompleteInUiState(noteComplete)
                 }
 
             } catch (e: Exception) {
-                Timber.e(e, "Error updating notes")
+                Log.d("HOME", "Error updating notes", e)
                 _snackBarMessage.value = SnackBarMessage(
                     message = "Error updating notes",
                     onDismiss = { _snackBarMessage.value = null }
@@ -512,11 +552,55 @@ class NoteListViewModel(
                     notes,
                     updates = { it.copy() }
                 )
+
+                // Batch all NoteComplete objects
+          /*      val noteCompletes = _uiState.value.lastModifiedNotes?.map { note ->
+                    val checklistItems = repo.getChecklistItemsByNoteId(note.id).first()
+                    NoteComplete(
+                        note = note,
+                        checklistItems = checklistItems
+                    )
+                }
+
+                if (noteCompletes != null) {
+                    widgetUpdater.updateWidgetsForNotes(noteCompletes)
+                }*/
+
+
+                // Update widgets with restored note completes
                 widgetUpdater.updateWidgetsForNotes(notes)
+
+
                 _uiState.update { it.copy(lastModifiedNotes = null) }
             }
         }
     }
+
+    /*    fun undoLastOperation() {
+            viewModelScope.launch {
+                _uiState.value.lastModifiedNotes?.let { notes ->
+                    // Get current NoteCompletes from UI state
+                    val currentNoteCompletes = _uiState.value.notes
+                    val noteCompletes = notes.map { note ->
+                        // Find matching NoteComplete in current UI state
+                        currentNoteCompletes.find { it.note.id == note.id }?.copy(
+                            note = note.copy() // Restore the original note
+                        ) ?: NoteComplete(note.copy()) // Fallback if not found
+                    }
+
+                    // Update notes in database
+                    updateNotes(
+                        notes,
+                        updates = { it.copy() }
+                    )
+
+                    // Update widgets with restored note completes
+                    widgetUpdater.updateWidgetsForNotes(noteCompletes)
+
+                    _uiState.update { it.copy(lastModifiedNotes = null) }
+                }
+            }
+        }*/
 
     fun addTag(name: String) {
         viewModelScope.launch {
@@ -544,6 +628,20 @@ class NoteListViewModel(
     override fun onCleared() {
         super.onCleared()
         noteFlowJob?.cancel() // Clean up when ViewModel is destroyed
+    }
+
+    // Helper method to update a single NoteComplete in the UI state
+    private fun updateSingleNoteCompleteInUiState(updatedNoteComplete: NoteComplete) {
+        _uiState.update { currentState ->
+            val updatedNotes = currentState.notes.map { existingNoteComplete ->
+                if (existingNoteComplete.note.id == updatedNoteComplete.note.id) {
+                    updatedNoteComplete
+                } else {
+                    existingNoteComplete
+                }
+            }
+            currentState.copy(notes = updatedNotes)
+        }
     }
 }
 

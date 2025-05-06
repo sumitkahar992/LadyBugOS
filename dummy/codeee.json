@@ -7,8 +7,9 @@
       "text": "Thank you for installing Note App! This is a sample note to help you get started. Feel free to edit or delete it."
     },
     "creationDate": "2025-07-31T11:35:33.183Z",
-    "updateDate": "2025-07-31T11:35:33.183Z",
-    "pinnedDate": "2025-07-31T11:35:33.183Z",
+    "updateDate": "2025-08-03T12:45:10.000Z",
+    "pinnedDate": "2025-09-22T09:15:30.000Z",
+    "reminderDate": "2025-08-05T10:00:00.000Z",
     "lightColor": 16777215,
     "isPinned": true,
     "noteType": "TEXT"
@@ -57,9 +58,10 @@
         }
       ]
     },
-    "creationDate": "2025-07-31T11:35:33.183Z",
-    "updateDate": "2025-07-31T11:35:33.183Z",
-    "pinnedDate": "2025-07-31T11:35:33.183Z",
+    "creationDate": "2025-01-03T08:20:45.000Z",
+    "updateDate": "2025-02-03T14:30:00.000Z",
+    "pinnedDate": null,
+    "reminderDate": "2025-02-05T10:00:00.000Z",
     "lightColor": 16776960,
     "isPinned": false,
     "noteType": "CHECKLIST"
@@ -102,9 +104,10 @@
         }
       ]
     },
-    "creationDate": "2025-07-31T11:35:33.183Z",
-    "updateDate": "2025-07-31T11:35:33.183Z",
-    "pinnedDate": "2025-07-31T11:35:33.183Z",
+    "creationDate": "2025-07-01T09:05:12.000Z",
+    "updateDate": "2025-07-22T16:20:45.000Z",
+    "pinnedDate": "2025-07-23T10:30:00.000Z",
+    "reminderDate": null,
     "lightColor": 16711935,
     "isPinned": true,
     "noteType": "CHECKLIST"
@@ -195,9 +198,10 @@
         }
       ]
     },
-    "creationDate": "2025-07-31T11:35:33.183Z",
-    "updateDate": "2025-07-31T11:35:33.183Z",
-    "pinnedDate": "2025-07-31T11:35:33.183Z",
+    "creationDate": "2025-07-03T10:10:00.000Z",
+    "updateDate": "2025-07-03T11:35:33.183Z",
+    "pinnedDate": "2025-07-11T14:22:10.000Z",
+    "reminderDate": "2025-07-04T09:00:00.000Z",
     "lightColor": 65535,
     "isPinned": false,
     "noteType": "CHECKLIST"
@@ -300,9 +304,10 @@
         }
       ]
     },
-    "creationDate": "2025-07-31T11:35:33.183Z",
-    "updateDate": "2025-07-31T11:35:33.183Z",
-    "pinnedDate": "2025-07-31T11:35:33.183Z",
+    "creationDate": "2025-07-11T08:15:00.000Z",
+    "updateDate": "2025-07-21T13:45:00.000Z",
+    "pinnedDate": "2025-07-23T15:30:00.000Z",
+    "reminderDate": null,
     "lightColor": 65280,
     "isPinned": false,
     "noteType": "CHECKLIST"
@@ -375,9 +380,10 @@
         }
       ]
     },
-    "creationDate": "2025-07-31T11:35:33.183Z",
-    "updateDate": "2025-07-31T11:35:33.183Z",
-    "pinnedDate": "2025-07-31T11:35:33.183Z",
+    "creationDate": "2025-06-03T10:00:00.000Z",
+    "updateDate": "2025-06-03T11:35:33.183Z",
+    "pinnedDate": "2025-08-03T12:00:00.000Z",
+    "reminderDate": null,
     "lightColor": 16711680,
     "isPinned": false,
     "noteType": "CHECKLIST"
@@ -450,9 +456,10 @@
         }
       ]
     },
-    "creationDate": "2025-07-31T11:35:33.183Z",
-    "updateDate": "2025-07-31T11:35:33.183Z",
-    "pinnedDate": "2025-07-31T11:35:33.183Z",
+    "creationDate": "2025-01-03T07:45:00.000Z",
+    "updateDate": "2025-01-03T11:35:33.183Z",
+    "pinnedDate": "2025-04-03T14:00:00.000Z",
+    "reminderDate": "2025-04-05T10:00:00.000Z",
     "lightColor": 16777215,
     "isPinned": true,
     "noteType": "CHECKLIST"
@@ -585,9 +592,10 @@
         }
       ]
     },
-    "creationDate": "2025-07-31T11:35:33.183Z",
-    "updateDate": "2025-07-31T11:35:33.183Z",
-    "pinnedDate": "2025-07-31T11:35:33.183Z",
+    "creationDate": "2025-06-03T12:00:00.000Z",
+    "updateDate": "2025-04-03T11:35:33.183Z",
+    "pinnedDate": "2025-06-03T13:15:00.000Z",
+    "reminderDate": "2025-06-04T10:00:00.000Z",
     "lightColor": 16776960,
     "isPinned": false,
     "noteType": "CHECKLIST"
@@ -660,9 +668,10 @@
         }
       ]
     },
-    "creationDate": "2025-07-31T11:35:33.183Z",
-    "updateDate": "2025-07-31T11:35:33.183Z",
-    "pinnedDate": "2025-07-31T11:35:33.183Z",
+    "creationDate": "2025-07-01T09:00:00.000Z",
+    "updateDate": "2025-07-01T11:35:33.183Z",
+    "pinnedDate": "2025-07-10T10:15:00.000Z",
+    "reminderDate": null,
     "lightColor": 16711935,
     "isPinned": false,
     "noteType": "CHECKLIST"
@@ -735,9 +744,10 @@
         }
       ]
     },
-    "creationDate": "2025-07-31T11:35:33.183Z",
-    "updateDate": "2025-07-31T11:35:33.183Z",
-    "pinnedDate": "2025-07-31T11:35:33.183Z",
+    "creationDate": "2025-02-03T08:30:00.000Z",
+    "updateDate": "2025-02-03T11:35:33.183Z",
+    "pinnedDate": null,
+    "reminderDate": "2025-02-06T10:00:00.000Z",
     "lightColor": 65535,
     "isPinned": false,
     "noteType": "CHECKLIST"

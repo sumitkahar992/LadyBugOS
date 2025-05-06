@@ -5,7 +5,6 @@ import com.despicable.core.database.model.HabitCompletionEntity
 import com.despicable.core.database.model.HabitEntity
 import com.despicable.core.database.model.NoteCompleteEntity
 import com.despicable.core.database.model.NoteEntity
-import com.despicable.core.database.model.NoteTagRefEntity
 import com.despicable.core.database.model.TagEntity
 import com.despicable.core.model.Checklist
 import com.despicable.core.model.HabitCompletion
@@ -19,7 +18,6 @@ import com.despicable.core.database.model.NoteCompleteEntity as DbNoteComplete
     Extension functions for mapping between domain and entity models
  */
 
-// Note Mappings
 fun Note.toEntity(): NoteEntity = NoteEntity(
     id = id,
     title = title,
@@ -139,26 +137,8 @@ fun DbNoteComplete.toDomain(): NoteComplete = NoteComplete(
 )
 
 // List Mappings
-fun List<Note>.toNoteEntityList(): List<NoteEntity> = map { it.toEntity() }
-fun List<NoteEntity>.toNoteDomainList(): List<Note> = map { it.toDomain() }
-fun List<Tag>.toTagEntityList(): List<TagEntity> = map { it.toEntity() }
 fun List<TagEntity>.toTagDomainList(): List<Tag> = map { it.toDomain() }
 fun List<DbNoteComplete>.toNoteCompleteDomainList(): List<NoteComplete> = map { it.toDomain() }
-
-// Nullable Mappings
-fun NoteEntity?.toDomainOrNull(): Note? = this?.toDomain()
-fun TagEntity?.toDomainOrNull(): Tag? = this?.toDomain()
-fun ChecklistEntity?.toDomainOrNull(): Checklist? = this?.toDomain()
-fun DbNoteComplete?.toDomainOrNull(): NoteComplete? = this?.toDomain()
-
-// Helper for creating note tag cross references
-fun createNoteTagCrossRef(noteId: Long, tagId: Long): NoteTagRefEntity =
-    NoteTagRefEntity(noteId = noteId, tagId = tagId)
-
-
-
-
-
 
 
 

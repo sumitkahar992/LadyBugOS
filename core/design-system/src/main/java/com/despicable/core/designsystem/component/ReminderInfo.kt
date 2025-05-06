@@ -120,7 +120,7 @@ fun ReminderInfo(
     }
 }
 
-private fun formatReminderDate(reminderDate: Instant): String {
+fun formatReminderDate(reminderDate: Instant): String {
     val now = Clock.System.now()
     val reminderDateTime = reminderDate.toLocalDateTime(TimeZone.currentSystemDefault())
     val nowDateTime = now.toLocalDateTime(TimeZone.currentSystemDefault())

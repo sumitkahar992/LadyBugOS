@@ -11,9 +11,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ChecklistDao {
 
-    // Widgets
-    @Query("SELECT * FROM checklist_items WHERE noteid = :noteId AND id = :itemId")
-    suspend fun getChecklistItem(noteId: Long, itemId: Long): ChecklistEntity?
+    // Single query to toggle `isChecked` without prior read
+    @Query("UPDATE checklist_items SET isChecked = NOT isChecked WHERE id = :itemId AND noteId = :noteId")
+    suspend fun toggleChecklistItem(noteId: Long, itemId: Long): Int // Returns rows affected
 
 
     // Checklist Operations
@@ -32,9 +32,6 @@ interface ChecklistDao {
     @Query("DELETE FROM checklist_items WHERE id = :itemId")
     suspend fun deleteChecklistItem(itemId: Long)
 
-
-//    @Query("UPDATE notes SET isChecklist = :isChecklist WHERE id = :noteId")
-//    suspend fun updateNoteChecklist(noteId: Long, isChecklist: Boolean)
 
     // BACK- UP
     @Query("SELECT * FROM checklist_items")

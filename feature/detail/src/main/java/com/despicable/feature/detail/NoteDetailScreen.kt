@@ -1,5 +1,6 @@
 package com.despicable.feature.detail
 
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -129,13 +130,12 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
-import timber.log.Timber
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun NoteDetailScreen(
     viewModel: NoteDetailViewModel = koinViewModel(),
-    onBack: () -> Unit,
+    onBack: (Boolean) -> Unit,
     onDelete: (Long) -> Unit,
     onArchive: (Long) -> Unit,
     onUnArchive: (Long) -> Unit,
@@ -214,12 +214,12 @@ fun NoteDetailScreen(
     }
 
     BackHandler(true) {
-        Timber.tag("DEBUG").d("[]BackHandler[]")
+        Log.d("DETAIL","[]BackHandler[]")
 //        onBack()
         viewModel.deleteNoteIfEmpty()
         viewModel.saveNote(
-            onComplete = onBack,
-            onSkip = onBack
+            onComplete = { onBack(false) },
+            onSkip = { onBack(false) }
         )
     }
 
@@ -278,8 +278,8 @@ fun NoteDetailScreen(
                     isTrashed = uiState.isTrashed,
                     onBack = {
                         viewModel.saveNote(
-                            onComplete = onBack,
-                            onSkip = onBack
+                            onComplete = { onBack(true) },
+                            onSkip = { onBack(true) }
                         )
                     },
                     onDelete = {
@@ -366,7 +366,7 @@ fun NoteDetailScreen(
             dismissText = "Cancel",
             onConfirm = {
                 showDeleteDialog = false
-                viewModel.deleteNoteForever(onComplete = onBack)
+                viewModel.deleteNoteForever(onComplete = { onBack(false) })
             },
             onDismiss = {
                 showDeleteDialog = false
@@ -421,7 +421,7 @@ fun NoteDetailScreen(
                 copyNote = {
                     viewModel.makeNoteCopy(
                         note = uiState.toNote(),
-                        onCopySuccess = onBack
+                        onCopySuccess = { onBack(false) }
                     )
                     showLeftBottomSheet = false
                 },
@@ -838,7 +838,7 @@ fun NoteContentSection(
     // Get content field value based on the note type
     val contentFieldValue = uiState.getContentFieldValue() ?: TextFieldValue("")
 
-    Timber.tag("DEBUG").d("contentFieldValue = {$contentFieldValue}")
+    Log.d("DETAIL","contentFieldValue = {$contentFieldValue}")
 
 
     Box(

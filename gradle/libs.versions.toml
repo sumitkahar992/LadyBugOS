@@ -1,7 +1,7 @@
 [versions]
 androidGradlePlugin = "8.9.2"
 #animation = "1.7.6"
-animationCore = "1.7.8"
+animationCore = "1.8.0"
 core = "1.16.0"
 foundation = "1.7.6"
 koinCoreViewmodel = "4.0.4"
@@ -10,11 +10,11 @@ coreKtx = "1.16.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
-kotlinxCoroutinesCore = "1.10.1"
+kotlinxCoroutinesCore = "1.10.2"
 kotlinxSerializationCore = "1.8.1"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.10.1"
-compose-bom = "2025.04.00"
+compose-bom = "2025.04.01"
 
 google-play-publish = "3.10.1"
 advanced-gradle-build-version = "3.0.0"
@@ -62,12 +62,11 @@ hilt = "2.52"
 
 coil = "2.7.0"
 javaxInject = "1"
-timber = "5.0.1"
 okhttp = "4.12.0"
 retrofit = "2.11.0"
 gson = "2.11.0"
-room = "2.7.0"
-ksp = "2.1.20-1.0.32"
+room = "2.7.1"
+ksp = "2.1.20-2.0.0"
 
 androidxComposeBom = "2024.08.00"
 
@@ -75,7 +74,7 @@ androidxComposeBom = "2024.08.00"
 moshi = "1.15.1"
 moshiConverter = "2.11.0"
 
-kotlinxCoroutines = "1.10.1"
+kotlinxCoroutines = "1.10.2"
 kotlinxDatetime = "0.6.2"
 
 ktor = "2.3.12"
@@ -97,7 +96,7 @@ coreSplashscreen = "1.0.1"
 navigationSafeArgsGenerator = "2.8.2"
 appcompat = "1.7.0"
 materialVersion = "1.12.0"
-workmanager = "2.10.0"
+workmanager = "2.10.1"
 androidx-constraintlayout = "1.1.1"
 
 reorderable = "2.4.3"
@@ -105,7 +104,7 @@ reorderable = "2.4.3"
 # Plugins
 dependencyanalysis = "2.14.0"
 
-roomPaging = "2.7.0"
+roomPaging = "2.7.1"
 pagingRuntimeKtx = "3.3.6"
 
 
@@ -168,7 +167,6 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 
 
 
-timber = { group = "com.jakewharton.timber", name = "timber", version.ref = "timber" }
 javax-inject = { group = "javax.inject", name = "javax.inject", version.ref = "javaxInject" }
 coil-kt = { group = "io.coil-kt", name = "coil", version.ref = "coil" }
 coil-kt-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }

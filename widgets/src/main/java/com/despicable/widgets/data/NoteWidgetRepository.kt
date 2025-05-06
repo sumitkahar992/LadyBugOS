@@ -3,6 +3,7 @@ package com.despicable.widgets.data
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
+import android.util.Log
 import androidx.collection.LruCache
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -10,16 +11,13 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.despicable.core.data.repository.NoteRepository
-import com.despicable.core.model.Checklist
-import com.despicable.core.model.Note
-import com.despicable.widgets.model.WidgetChecklistItem
+import com.despicable.widgets.mapper.toWidgetNote
+import com.despicable.widgets.model.WidgetNote
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
-import timber.log.Timber
 import javax.inject.Inject
 
 private const val DATASTORE_NAME = "widget_preferences"
@@ -61,15 +59,15 @@ class NoteWidgetRepository @Inject constructor(
                 }
 
                 // Update widget if note exists
-                repo.getNoteById(noteId)
+                repo.getNoteCompleteById(noteId)
                     .firstOrNull()
                     ?.let { note ->
-                        widgetUpdater.updateSingleWidget(note)
+                        widgetUpdater.updateSingleWidget(note.note)
                     } ?: throw NoSuchElementException("Note not found: $noteId")
 
                 WidgetResult.Success(widgetId)
             } catch (e: Exception) {
-                Timber.e(e, "Failed to save widget note ID: widgetId=$widgetId, noteId=$noteId")
+                Log.e("WIDGET", "Failed to save widget note ID: widgetId=$widgetId, noteId=$noteId")
                 WidgetResult.Error(e, widgetId)
             }
         }
@@ -79,7 +77,7 @@ class NoteWidgetRepository @Inject constructor(
      */
     suspend fun restoreWidgets(): WidgetResult = withContext(dispatchers.io) {
         try {
-            Timber.tag("DEBUG").d("[restoreWidgets()] -")
+            Log.e("WIDGET", "[restoreWidgets()] -")
             coroutineScope {
                 // Launch widget updates and cleanup in parallel
                 val updateJob = async { updateAllWidgets() }
@@ -92,7 +90,7 @@ class NoteWidgetRepository @Inject constructor(
 
             WidgetResult.Success(-1) // Using -1 to indicate batch operation
         } catch (e: Exception) {
-            Timber.e(e, "Failed to restore widgets")
+            Log.e("WIDGET", "Failed to restore widgets")
             WidgetResult.Error(e)
         }
     }
@@ -101,10 +99,11 @@ class NoteWidgetRepository @Inject constructor(
       Updates all widgets with current note data
      */
     private suspend fun updateAllWidgets() {
-        repo.getAllNotes()
+        repo.getAllNotesWithTags()
             .first()
-            .let { notes ->
-                widgetUpdater.updateAllWidgets(notes)
+            .let { noteComplete ->
+
+                widgetUpdater.updateAllWidgets(noteComplete.map { it.note.toWidgetNote() })
             }
     }
 
@@ -176,32 +175,22 @@ class NoteWidgetRepository @Inject constructor(
 
             WidgetResult.Success(-1)
         } catch (e: Exception) {
-            Timber.e(e, "Failed to cleanup widgets for deleted note: noteId=$noteId")
+            Log.e("WIDGET", "Failed to cleanup widgets for deleted note: noteId=$noteId")
             WidgetResult.Error(e)
         }
     }
 
-    suspend fun toggleChecklistItem(noteId: Long, itemId: Long) {
-        withContext(dispatchers.io) {
-            val item = repo.getChecklistItem(noteId, itemId)
-            if (item != null) {
-                val updatedItem = item.copy(isChecked = !item.isChecked)
-                repo.updateChecklistItem(updatedItem)
-            }
-
-
+    // widget repo
+    suspend fun getNoteCompleteById(noteId: Long): WidgetNote? {
+        return withContext(dispatchers.io) {
+            repo.getNoteCompleteById(noteId).firstOrNull()?.toWidgetNote()
         }
     }
 
-    // Add this method
-    suspend fun getChecklistItems(noteId: Long): List<Checklist> {
-        return repo.getChecklistItemsByNoteId(noteId).first()
-
-    }
-
-    // Existing method
-    suspend fun getNoteById(noteId: Long): Flow<Note?> {
-        return repo.getNoteById(noteId)
+    suspend fun toggleChecklistItem(noteId: Long, itemId: Long): Boolean {
+        return withContext(dispatchers.io) {
+            repo.toggleChecklistItem(noteId, itemId)
+        }
     }
 
 

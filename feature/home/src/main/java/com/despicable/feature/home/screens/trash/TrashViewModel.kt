@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -25,10 +26,9 @@ class TrashViewModel(
     val gridLayout = settingsRepo.get { gridLayout }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000L), GridLayout.TwoColumns)
 
-    private val _lastRestoredNotes =
-        MutableStateFlow<List<Note>?>(null)
-    val lastRestoredNotes: StateFlow<List<Note>?> =
-        _lastRestoredNotes.asStateFlow()
+    private val _lastRestoredNotes = MutableStateFlow<List<Note>?>(null)
+    val lastRestoredNotes: StateFlow<List<Note>?> = _lastRestoredNotes.asStateFlow()
+
 
     /*    val trashedNotes = repo.getAllNotesWithTags()
             .map { notes -> notes.filter { it.note.isTrashed } }
@@ -119,10 +119,20 @@ class TrashViewModel(
         viewModelScope.launch {
             val updatedNotes = notes.map { it.copy(isTrashed = false) }
             repo.updateNotes(updatedNotes)
+
+            // Batch all NoteComplete objects
+            val noteCompletes = updatedNotes.map { note ->
+                val checklistItems = repo.getChecklistItemsByNoteId(note.id).first()
+                NoteComplete(
+                    note = note, // Already has isTrashed = false
+                    checklistItems = checklistItems
+                )
+            }
+
+            // Update widgets in a single call
             widgetUpdater.undoDeleteWidgets(updatedNotes)
 
-
-            _lastRestoredNotes.value = notes
+            _lastRestoredNotes.value = updatedNotes
         }
     }
 

@@ -86,6 +86,8 @@ dependencies {
 
 
     // Koin
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.core)
     implementation(libs.koin.android)
 
     implementation(libs.javax.inject)
@@ -94,7 +96,6 @@ dependencies {
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.hilt.navigation.compose)
-    implementation(libs.timber)
 
     runtimeOnly(libs.kotlinx.coroutines.android)
 

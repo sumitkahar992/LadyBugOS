@@ -10,6 +10,7 @@ import com.despicable.feature.home.di.homeModule
 import com.despicable.feature.settings.di.settingsModule
 import com.despicable.ladybugos.di.appModule
 import com.despicable.notifications.di.notificationModule
+import com.despicable.widgets.data.NoteWidgetRepository
 import com.despicable.widgets.di.widgetModule
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,25 +21,24 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
-import timber.log.Timber
 
 
 class LazyBugApplication : Application(), KoinComponent {
 
     override fun onCreate() {
         super.onCreate()
-        Timber.plant(Timber.DebugTree())
 
         initializeKoin()
 
         // Restore widgets after force stop
         CoroutineScope(Dispatchers.Main).launch {
-            get<com.despicable.widgets.data.NoteWidgetRepository>().restoreWidgets()
+            get<NoteWidgetRepository>().restoreWidgets()
         }
     }
 
 
     private fun initializeKoin() {
+
         startKoin {
             androidLogger()
             androidContext(this@LazyBugApplication)

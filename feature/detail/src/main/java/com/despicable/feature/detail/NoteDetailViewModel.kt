@@ -1,6 +1,7 @@
 package com.despicable.feature.detail
 
 
+import android.util.Log
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
@@ -34,7 +35,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
-import timber.log.Timber
 
 
 class NoteDetailViewModel(
@@ -52,7 +52,7 @@ class NoteDetailViewModel(
     init {
         val noteId = savedStateHandle.toRoute<DetailRoute>().id
 
-        Timber.tag("DEBUG").d("NoteDetailViewModel: NoteId=[$noteId]")
+        Log.e("DETAIL", "NoteDetailViewModel: NoteId=[$noteId]")
 
 
         fetchTags()
@@ -74,7 +74,7 @@ class NoteDetailViewModel(
         viewModelScope.launch {
             repo.getNoteCompleteById(id)
                 .catch { e ->
-                    Timber.e(e, "Error loading note #$id")
+                    Log.e("DETAIL", "Error loading note #$id")
                     updateUiState { it.copy(isLoading = false) }
 
                 }
@@ -83,8 +83,8 @@ class NoteDetailViewModel(
                         it.fromNoteComplete(noteComplete)
                     }
 
-                    Timber.tag("DEBUG").d("NoteDetail___Title = [${noteComplete.note.title}]")
-                    Timber.tag("DEBUG").d("NoteDetail___Content = [${noteComplete.note.content}]")
+                    Log.e("DETAIL", "Title = [${noteComplete.note.title}]")
+                    Log.e("DETAIL", "Content = [${noteComplete.note.content}]")
 
 
                 }
@@ -120,10 +120,10 @@ class NoteDetailViewModel(
                 )
 
                 // Log success
-                Timber.d("Note copied successfully with new ID: $newNoteId")
+                Log.e("DETAIL", "Note copied successfully with new ID: $newNoteId")
                 onCopySuccess()
             } catch (e: Exception) {
-                Timber.e(e, "Error copying note: ${e.message}")
+                Log.e("DETAIL", "Error copying note: ${e.message}")
             }
 
         }
@@ -244,7 +244,7 @@ class NoteDetailViewModel(
                 currentState.id
             }
 
-            Timber.tag("DEBUG").d("=--noteId--==[$noteId]")
+            Log.e("DETAIL", "=--noteId--==[$noteId]")
 
             // Create new item
             val newItem = Checklist(
@@ -418,19 +418,19 @@ class NoteDetailViewModel(
     }
 
 
-    /*        fun preloadNoteData(noteId: Long, glanceId: GlanceId) {
-                viewModelScope.launch {
-                    try {
-                        val noteWithTags = noteRepository.getNoteWithTagsById(noteId).firstOrNull()
-                        updateUiState { it.fromNoteWithTags(noteWithTags) }
+/*    fun preloadNoteData(noteId: Long, glanceId: GlanceId) {
+        viewModelScope.launch {
+            try {
+                val noteWithTags = noteRepository.getNoteWithTagsById(noteId).firstOrNull()
+                updateUiState { it.fromNoteWithTags(noteWithTags) }
 
-                    } catch (e: Exception) {
-                        Timber.e(e, "Error preloading note data")
-                        // Optionally, you could add error handling in the UI state if needed:
-                        // updateUiState { it.copy(error = e.localizedMessage) }
-                    }
-                }
-            }*/
+            } catch (e: Exception) {
+                Log.e("DETAIL", "$e : Error preloading note data")
+                // Optionally, you could add error handling in the UI state if needed:
+                // updateUiState { it.copy(error = e.localizedMessage) }
+            }
+        }
+    }*/
 
 
     @OptIn(FlowPreview::class)
@@ -438,7 +438,7 @@ class NoteDetailViewModel(
         viewModelScope.launch {
             _noteUpdateTrigger.debounce(500L).distinctUntilChanged().flowOn(Dispatchers.Default)
                 .catch { e ->
-                    Timber.e(e, "Error in note update flow")
+                    Log.e("DETAIL", "Error in note update flow")
                 }
                 .collect { payload ->
                     try {
@@ -449,7 +449,7 @@ class NoteDetailViewModel(
                             payload.updateTimestamp
                         )
                     } catch (e: Exception) {
-                        Timber.e(e, "Error updating note")
+                        Log.e("DETAIL", "Error updating note")
                     }
                 }
         }
@@ -567,10 +567,17 @@ class NoteDetailViewModel(
                             updateTimestamp = updateTimestamp
                         )
                     )
+//                    widgetUpdater.updateSingleWidget(
+//                        NoteComplete(
+//                            note = currentState.toNote(),
+//                            checklistItems = currentState.checklistItems,
+//                            habitItems = currentState.habitItems
+//                        )
+//                    )
                     widgetUpdater.updateSingleWidget(currentState.toNote())
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Error saving/updating note")
+                Log.e("DETAIL", "Error saving/updating note")
             }
         }
     }
@@ -645,12 +652,9 @@ class NoteDetailViewModel(
                             isDone = updatedNote.isDone
                         )
                     }
-
-                    // Update any associated widgets
-                    widgetUpdater.updateSingleWidget(updatedNote)
                 }
             } catch (e: Exception) {
-                Timber.e(e, "Failed to update reminder for note #$noteId")
+                Log.e("DETAIL", "Failed to update reminder for note #$noteId")
             }
         }
     }
@@ -682,13 +686,13 @@ class NoteDetailViewModel(
 
             // Check if note is empty before saving
             if (uiState.value.isEmpty()) {
-                Timber.tag("DEBUG").d("[ onSkip() ]")
+                Log.e("DETAIL", "[ onSkip() ]")
                 onSkip()
                 return@launch
             }
 
             saveOrUpdateNote(currentNote)
-            Timber.tag("DEBUG").d("[ onComplete() ]")
+            Log.e("DETAIL", "[ onComplete() ]")
             onComplete()
         }
     }
@@ -739,10 +743,18 @@ class NoteDetailViewModel(
             )
 
             // Update any widgets associated with this note
+//            widgetUpdater.updateSingleWidget(
+//                NoteComplete(
+//                    note = note,
+//                    checklistItems = currentState.checklistItems,
+//                    habitItems = currentState.habitItems
+//                )
+//            )
             widgetUpdater.updateSingleWidget(note)
 
+
         } catch (e: Exception) {
-            Timber.e(e, "Error saving/updating note #${note.id}")
+            Log.e("DETAIL", "Error saving/updating note #${note.id}")
         }
     }
 
@@ -792,7 +804,7 @@ class NoteDetailViewModel(
                 // Navigate with action
                 onComplete(noteId)
             } catch (e: Exception) {
-                Timber.e(e, "Error handling note action: ${action.message}")
+                Log.e("DETAIL", "Error handling note action: ${action.message}")
                 // Revert UI state on error
                 updateUiState {
                     it.copy(
@@ -817,7 +829,7 @@ class NoteDetailViewModel(
     private fun fetchTags() {
         viewModelScope.launch {
             repo.getAllTags()
-                .catch { e -> Timber.e(e, "Error fetching tags") }
+                .catch { e -> Log.e("DETAIL", "Error fetching tags") }
                 .collect { tags ->
                     updateUiState { it.copy(allTags = tags) }
                 }
@@ -846,7 +858,7 @@ class NoteDetailViewModel(
                 repo.deleteNote(currentNote)
                 onComplete()
             } catch (e: Exception) {
-                Timber.e(e, "Error deleting note permanently")
+                Log.e("DETAIL", "Error deleting note permanently")
             }
         }
     }
@@ -858,10 +870,18 @@ class NoteDetailViewModel(
                 val restoredNote = currentNote.copy(isTrashed = false)
                 repo.updateNotes(listOf(restoredNote))
                 updateUiState { it.copy(isTrashed = false) }
+//                widgetUpdater.updateSingleWidget(
+//                    NoteComplete(
+//                        note = restoredNote,
+//                        checklistItems = _uiState.value.checklistItems,
+//                        habitItems = _uiState.value.habitItems
+//                    )
+//                )
                 widgetUpdater.updateSingleWidget(restoredNote)
+
                 onComplete()
             } catch (e: Exception) {
-                Timber.e(e, "Error restoring note from trash")
+                Log.e("DETAIL", "Error restoring note from trash")
             }
         }
     }
@@ -873,9 +893,17 @@ class NoteDetailViewModel(
                 val trashedNote = currentNote.copy(isTrashed = true)
                 repo.updateNotes(listOf(trashedNote))
                 updateUiState { it.copy(isTrashed = true) }
+//                widgetUpdater.updateSingleWidget(
+//                    NoteComplete(
+//                        note = trashedNote,
+//                        checklistItems = _uiState.value.checklistItems,
+//                        habitItems = _uiState.value.habitItems
+//                    )
+//                )
                 widgetUpdater.updateSingleWidget(trashedNote)
+
             } catch (e: Exception) {
-                Timber.e(e, "Error undoing restore")
+                Log.e("DETAIL", "Error undoing restore")
             }
         }
     }
@@ -972,7 +1000,7 @@ data class NoteUiState(
     fun fromNoteComplete(noteComplete: NoteComplete?): NoteUiState {
         if (noteComplete == null) return this
 
-        Timber.tag("DEBUG").d("TAGS[NoteComplete]=[$${noteComplete.tags.size}]")
+        Log.e("DETAIL", "TAGS[NoteComplete]=[$${noteComplete.tags.size}]")
 
         return copy(
             id = noteComplete.note.id,

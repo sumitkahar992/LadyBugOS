@@ -5,7 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,21 +53,23 @@ import androidx.glance.text.TextDecoration
 import androidx.glance.text.TextStyle
 import com.despicable.core.designsystem.DarkNoteColors
 import com.despicable.core.designsystem.LightNoteColors
-import com.despicable.core.model.getRelativeTimeAgo
+import com.despicable.core.designsystem.component.formatReminderDate
 import com.despicable.widgets.R
 import com.despicable.widgets.data.ConfigWidgetActivity
+import com.despicable.widgets.data.CoroutineDispatchers
 import com.despicable.widgets.data.NoteWidgetRepository
 import com.despicable.widgets.data.WidgetUpdater
+import com.despicable.widgets.mapper.toNote
 import com.despicable.widgets.model.WidgetChecklistItem
+import com.despicable.widgets.model.WidgetContent
 import com.despicable.widgets.model.WidgetKeys
 import com.despicable.widgets.ui.ToggleChecklistItemCallback.Companion.itemIdKey
 import com.despicable.widgets.ui.ToggleChecklistItemCallback.Companion.noteIdKey
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import timber.log.Timber
 
 
 class NoteWidget : GlanceAppWidget() {
@@ -83,42 +87,40 @@ class NoteWidget : GlanceAppWidget() {
     }
 }
 
+
 @Composable
 fun NoteWidgetContent(
     prefs: Preferences,
     context: Context,
-    widgetId: Int,
-
-    ) {
+    widgetId: Int
+) {
+    // Extract preferences
     val noteId = prefs[WidgetKeys.Prefs.noteId]?.toLongOrNull()
     val noteHeader = prefs[WidgetKeys.Prefs.noteHeader]
-    val noteBody = prefs[WidgetKeys.Prefs.noteBody]
-    val updatedAtString = prefs[WidgetKeys.Prefs.noteLastUpdate]
-    // Get the color index directly instead of creating a Color
-    val colorId = prefs[WidgetKeys.Prefs.noteColor] ?: 0
     val isDeleted = prefs[WidgetKeys.Prefs.isDeleted] ?: false
+    val colorId = prefs[WidgetKeys.Prefs.noteColor] ?: 0
 
+    // Parse reminder date
+    val reminderDateString = prefs[WidgetKeys.Prefs.noteReminderDate]
+    val formattedDate = reminderDateString?.toInstantOrNull() ?: Instant.DISTANT_PAST
+
+    // Parse checklist items
+    val checklistJson = prefs[WidgetKeys.Prefs.checklistItems] ?: "[]"
+    val checklistItems = remember(checklistJson) {
+        parseChecklistItems(checklistJson)
+    }
+
+    // Determine content type
     val isChecklist = prefs[WidgetKeys.Prefs.isChecklist] ?: false
-    val checklistItems = prefs[WidgetKeys.Prefs.checklistItems]?.let {
-        try {
-            // First try to decode as WidgetChecklistItem and convert to ChecklistItem
-            val widgetItems = Json.decodeFromString<List<WidgetChecklistItem>>(it)
-            widgetItems.map { item ->
-                WidgetChecklistItem(
-                    id = item.id,
-                    content = item.content,
-                    isChecked = item.isChecked,
-                    position = item.position
-                )
-            }
-        } catch (e: Exception) {
-            Timber.e(e, "Failed to decode checklist items: $it")
-            emptyList()
-        }
-    } ?: emptyList()
+    val widgetContent = if (isChecklist && checklistItems.isNotEmpty()) {
+        WidgetContent.Checklist(checklistItems)
+    } else {
+        val noteBody = prefs[WidgetKeys.Prefs.noteBody] ?: ""
+        WidgetContent.Text(noteBody)
+    }
 
 
-    // Background color based on system theme
+    // Background with color and corner radius
     val backgroundColor = ColorProvider(
         day = getColorFromPalette(colorId, isLight = true),
         night = getColorFromPalette(colorId, isLight = false)
@@ -129,55 +131,44 @@ fun NoteWidgetContent(
      * For lower versions adding a background with a  filled shape of same
      * background color and corner radius.
      */
-    val background = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        GlanceModifier
-            .cornerRadius(16.dp)
-            .background(backgroundColor)
+    val backgroundModifier = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        GlanceModifier.cornerRadius(16.dp).background(backgroundColor)
     } else {
-        GlanceModifier
-            .background(ImageProvider(R.drawable.rounded_corner))
+        GlanceModifier.background(ImageProvider(R.drawable.rounded_corner))
     }
-
-
-    Timber.tag("DEBUG").d("[ WIDGEET ] isCheckList = $isChecklist")
-    Timber.tag("DEBUG").d("[ WIDGEET ] checklistItems = $checklistItems")
-
-// Parse updatedAtString into an Instant
-    val formattedDate = updatedAtString?.let {
-        try {
-            Instant.parse(it) // Converts the string to an Instant
-        } catch (e: Exception) {
-            null // Parsing failed
-        }
-    } ?: Instant.DISTANT_PAST // Default value if null or invalid
-
-
 
     Box(
         modifier = GlanceModifier
             .appWidgetBackground()
             .fillMaxSize()
-            .then(background)
+            .then(backgroundModifier)
             .padding(16.dp)
-
     ) {
         if (!isDeleted && noteId != null && noteHeader != null) {
-            if (isChecklist) {
-                ChecklistNote(
-                    noteHeader = noteHeader,
-                    checklistItems = checklistItems,
-                    updatedAt = formattedDate,
-                    noteId = noteId,
-                    widgetId = widgetId,
-                )
-            } else {
-                SelectedNote(
-                    noteHeader = noteHeader,
-                    noteBody = "$noteBody",
-                    updatedAt = formattedDate,
-                    noteId = noteId,
-                    widgetId = widgetId
-                )
+            when (widgetContent) {
+                is WidgetContent.Text -> {
+                    Log.e("WIDGET", "NoteWidgetContent:${widgetContent.text} ")
+
+                    SelectedNote(
+                        noteHeader = noteHeader,
+                        noteBody = widgetContent.text,
+                        reminderDate = formattedDate,
+                        noteId = noteId,
+                        widgetId = widgetId
+                    )
+                }
+
+                is WidgetContent.Checklist -> {
+                    Log.e("WIDGET", "NoteWidgetContent:${widgetContent.items} ")
+
+                    ChecklistNote(
+                        noteHeader = noteHeader,
+                        checklistItems = widgetContent.items,
+                        reminderDate = formattedDate,
+                        noteId = noteId,
+                        widgetId = widgetId
+                    )
+                }
             }
         } else {
             ZeroState(widgetId) // Show ZeroState if note details are missing
@@ -186,17 +177,35 @@ fun NoteWidgetContent(
 }
 
 
+private fun String.toInstantOrNull(): Instant? = try {
+    Instant.parse(this)
+} catch (e: Exception) {
+    Log.e("WIDGET", "Failed to parse Instant from string: $this", e)
+    null
+}
+
+private fun parseChecklistItems(json: String): List<WidgetChecklistItem> {
+    return try {
+        Json.decodeFromString<List<WidgetChecklistItem>>(json)
+    } catch (e: Exception) {
+        Log.e("WIDGET", "Failed to decode checklist items: $json", e)
+        emptyList()
+    }
+}
+
+
 @Composable
 fun ChecklistNote(
     noteHeader: String,
     checklistItems: List<WidgetChecklistItem>,
-    updatedAt: Instant,
+    reminderDate: Instant,
     noteId: Long,
     widgetId: Int
 
 ) {
-    val formattedUpdateAt = getRelativeTimeAgo(updatedAt)
-
+    val formattedDate = remember(reminderDate) {
+        formatReminderDate(reminderDate)
+    }
     Box(
         modifier = GlanceModifier.fillMaxSize()
     ) {
@@ -229,21 +238,9 @@ fun ChecklistNote(
                 )
             }
 
+
             item {
-                Text(
-                    modifier = GlanceModifier
-                        .clickable(actionStartActivity(AndroidDestinations.homeIntent(noteId)))
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    text = "Edited: $formattedUpdateAt",
-                    style = TextStyle(
-                        fontSize = 11.sp,
-                        color = ColorProvider(
-                            day = Color.DarkGray,
-                            night = Color.LightGray
-                        )
-                    )
-                )
+                WidgetReminder(noteId, formattedDate)
             }
         }
     }
@@ -275,15 +272,6 @@ fun ChecklistItemRow(
                         )
                     )
                 ),
-            /*       .clickable(
-                       actionStartActivity(
-                           AndroidDestinations.toggleChecklistItem(
-                               noteId = noteId,
-                               itemId = item.id,
-                               widgetId = widgetId
-                           )
-                       )
-                   ),*/
             provider = ImageProvider(
                 if (item.isChecked) R.drawable.check_box
                 else R.drawable.uncheck_box
@@ -317,38 +305,29 @@ fun ChecklistItemRow(
 
 
 class ToggleChecklistItemCallback : ActionCallback, KoinComponent {
-
     private val repository: NoteWidgetRepository by inject()
-    private val widgetUpdater: WidgetUpdater by inject() // Inject WidgetUpdater
+    private val dispatchers: CoroutineDispatchers by inject()
+    private val widgetUpdater: WidgetUpdater by inject()
 
     override suspend fun onAction(
         context: Context,
         glanceId: GlanceId,
         parameters: ActionParameters
     ) {
-        val noteId = parameters[noteIdKey]
-        val itemId = parameters[itemIdKey]
+        val noteId = parameters[noteIdKey] ?: return
+        val itemId = parameters[itemIdKey] ?: return
 
-        if (noteId == null || itemId == null) {
-            return
-        }
+        withContext(dispatchers.io) {
+            // Toggle item in DB (single operation)
+            repository.toggleChecklistItem(noteId, itemId)
 
-        // Toggle the checklist item in the database
-        repository.toggleChecklistItem(noteId, itemId)
+            repository.getNoteCompleteById(noteId)?.toNote()?.let {
+                // Update all widgets associated with the note
+                widgetUpdater.updateSingleWidget(it)
 
-        // Fetch the updated note and checklist items
-        val updatedNote = repository.getNoteById(noteId).firstOrNull()
-        val checklistItems = repository.getChecklistItems(noteId) // Ensure this method exists
-
-        if (updatedNote != null && checklistItems != null) {
-            // Update the widget state with the full note and checklist data
-            widgetUpdater.updateWidgetFromConfig(glanceId, updatedNote, checklistItems)
-        } else if (checklistItems != null) {
-            // Fallback: update only the checklist items if the note fetch fails
-            widgetUpdater.updateWidgetStateWithChecklist(glanceId, noteId, checklistItems)
-        } else {
-            // Log an error if data can't be fetched
-            Timber.e("Failed to fetch updated data for note #$noteId after toggling checklist item")
+            } ?: run {
+                Log.e("WIDGET", "Note not found for noteId=$noteId after toggle attempt")
+            }
         }
     }
 
@@ -358,17 +337,17 @@ class ToggleChecklistItemCallback : ActionCallback, KoinComponent {
     }
 }
 
-/*
 @Composable
 fun SelectedNote(
     noteHeader: String,
     noteBody: String,
-    updatedAt: Instant,
+    reminderDate: Instant,
     noteId: Long,
     widgetId: Int
 ) {
-    val formattedUpdateAt = getRelativeTimeAgo(updatedAt)
-
+    val formattedDate = remember(reminderDate) {
+        formatReminderDate(reminderDate)
+    }
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
@@ -383,7 +362,6 @@ fun SelectedNote(
                         .clickable(
                             actionStartActivity(AndroidDestinations.homeIntent(noteId))
                         )
-//                        .openNote(noteId, widgetId)
                         .fillMaxWidth()
                         .padding(top = 4.dp),
                     text = noteHeader,
@@ -403,7 +381,6 @@ fun SelectedNote(
                         .clickable(
                             actionStartActivity(AndroidDestinations.homeIntent(noteId))
                         )
-//                        .openNote(noteId, widgetId)
                         .fillMaxWidth().height(5.dp)
                 )
             }
@@ -414,7 +391,6 @@ fun SelectedNote(
                         .clickable(
                             actionStartActivity(AndroidDestinations.homeIntent(noteId))
                         )
-//                        .openNote(noteId, widgetId)
                         .fillMaxWidth()
                         .padding(top = 4.dp),
                     text = noteBody,
@@ -427,37 +403,50 @@ fun SelectedNote(
                     )
                 )
             }
-            item {
-                Spacer(
-//                    modifier = GlanceModifier.openNote(noteId, widgetId).fillMaxWidth().height(5.dp)
-                )
-
-            }
 
             item {
-                Text(
-                    modifier = GlanceModifier
-                        .clickable(
-                            actionStartActivity(AndroidDestinations.homeIntent(noteId))
-                        )
-                        //                        .openNote(noteId, widgetId)
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-                    text = "Edited: $formattedUpdateAt",
-                    style = TextStyle(
-                        fontSize = 11.sp,
-                        color = ColorProvider(
-                            day = Color.DarkGray,
-                            night = Color.LightGray
-                        )
-                    )
-                )
+                WidgetReminder(noteId, formattedDate)
+
             }
         }
     }
 
 }
-*/
+
+@Composable
+private fun WidgetReminder(noteId: Long, formattedDate: String) {
+    Row(
+        modifier = GlanceModifier.fillMaxWidth().padding(top = 6.dp).clickable(
+            actionStartActivity(AndroidDestinations.homeIntent(noteId))
+        ),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalAlignment = Alignment.Start
+    ) {
+        Image(
+            provider = ImageProvider(R.drawable.alarm),
+            contentDescription = "Tinted icon",
+            modifier = GlanceModifier.size(22.dp).padding(end = 6.dp),
+            colorFilter = ColorFilter.tint(
+                ColorProvider(
+                    day = Color.DarkGray,
+                    night = Color.LightGray
+                )
+            )
+        )
+
+
+        Text(
+            text = formattedDate,
+            style = TextStyle(
+                fontSize = 12.sp,
+                color = ColorProvider(
+                    day = Color.DarkGray,
+                    night = Color.LightGray
+                )
+            )
+        )
+    }
+}
 
 
 @Composable
@@ -487,63 +476,6 @@ fun ZeroState(widgetId: Int) {
     }
 }
 
-@Composable
-fun SelectedNote(
-    noteHeader: String,
-    noteBody: String,
-    updatedAt: Instant,
-    noteId: Long,
-    widgetId: Int
-) {
-
-//    val formattedUpdateAt = formatUpdateDate(updatedAt)
-    val formattedUpdateAt = getRelativeTimeAgo(updatedAt)
-
-
-    Column(
-        modifier = GlanceModifier
-            .fillMaxSize()
-            .clickable {
-                actionStartActivity(AndroidDestinations.homeIntent(noteId))
-            }
-    ) {
-        Text(
-            text = noteHeader,
-            style = TextStyle(
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                color = ColorProvider(
-                    day = Color(0xFF3E3E3E),
-                    night = Color(0xFFF6F6F6)
-                )
-            )
-        )
-        Spacer(modifier = GlanceModifier.height(8.dp))
-        Text(
-            text = noteBody,
-            maxLines = 3,
-            style = TextStyle(
-                fontSize = 14.sp,
-                color = ColorProvider(
-                    day = Color(0xFF3E3E3E),
-                    night = Color(0xFFF6F6F6)
-                )
-            )
-        )
-        Spacer(modifier = GlanceModifier.height(8.dp))
-        Text(
-            text = "Edited: $formattedUpdateAt",
-            style = TextStyle(
-                fontSize = 11.sp,
-                color = ColorProvider(
-                    day = Color.DarkGray,
-                    night = Color.LightGray
-                )
-            )
-        )
-    }
-}
-
 
 object AndroidDestinations {
 
@@ -560,41 +492,10 @@ object AndroidDestinations {
         }
 
         return Intent(Intent.ACTION_VIEW, uriBuilder.build())
-//        return Intent(Intent.ACTION_VIEW, Uri.parse(HOME_DEEP_LINK))
     }
 
 
-    /*   Main activity's deep link  */
-    private const val HOME_DEEP_LINK = "app://com.despicable.ladybugos"
-
-//    fun toggleChecklistItem(noteId: Long, itemId: String, widgetId: Int): Intent {
-//        return Intent(context, YourWidgetUpdateService::class.java).apply {
-//            action = ACTION_TOGGLE_CHECKLIST_ITEM
-//            putExtra(EXTRA_NOTE_ID, noteId)
-//            putExtra(EXTRA_ITEM_ID, itemId)
-//            putExtra(EXTRA_WIDGET_ID, widgetId)
-//        }
-//    }
 }
-
-
-/*private fun GlanceModifier.openNote(noteId: Long, widgetId: Int) =
-    this.clickable(
-        actionStartActivity<MainActivity>(
-            parameters = actionParametersOf(
-                ActionParameters.Key<Long>("noteId") to noteId,
-                ActionParameters.Key<String>(AppWidgetManager.EXTRA_APPWIDGET_ID) to "$widgetId"
-            )
-        )
-    )*/
-
-
-/*private fun actionOpenNote(noteId: String?, widgetId: Int) = actionStartActivity<MainActivity>(
-    parameters = actionParametersOf(
-        ActionParameters.Key<String>("noteId") to (noteId ?: ""),
-        ActionParameters.Key<Int>(AppWidgetManager.EXTRA_APPWIDGET_ID) to widgetId
-    )
-)*/
 
 
 // Simplify getColorFromPalette to use colorId directly instead of trying to map it

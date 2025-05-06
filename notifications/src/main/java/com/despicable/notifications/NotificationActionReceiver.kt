@@ -10,7 +10,6 @@ import com.despicable.notifications.NotificationWorker.Companion.KEY_NOTE_ID
 import org.koin.core.component.KoinComponent
 
 class NotificationActionReceiver : BroadcastReceiver(), KoinComponent {
-//    private val noteRepository: NoteRepository by inject()
 
     override fun onReceive(context: Context, intent: Intent) {
         val noteId = intent.getStringExtra(KEY_NOTE_ID)?.toLongOrNull() ?: -1L

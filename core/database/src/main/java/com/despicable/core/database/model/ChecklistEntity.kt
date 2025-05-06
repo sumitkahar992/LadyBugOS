@@ -1,6 +1,5 @@
 package com.despicable.core.database.model
 
-import android.annotation.SuppressLint
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index

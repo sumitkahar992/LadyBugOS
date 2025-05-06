@@ -22,8 +22,6 @@ dependencies {
 
     implementation(libs.androidx.navigation.runtime.ktx)
 
-    implementation(libs.timber)
-
 
     coreLibraryDesugaring(libs.android.desugarJdkLibs)
     implementation(libs.androidx.compose.animation)
@@ -34,10 +32,13 @@ dependencies {
 
 
     // Koin
-    implementation(libs.koin.androidx.compose)
-    implementation(libs.koin.core.viewmodel)
+//    implementation(libs.koin.androidx.compose)
+//    implementation(libs.koin.core.viewmodel)
 
-//    implementation(libs.koin.core)
+    // Koin
+    implementation(libs.koin.androidx.compose)
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
 
 
 

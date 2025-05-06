@@ -1,6 +1,5 @@
 package com.despicable.core.database.model
 
-import android.annotation.SuppressLint
 import kotlinx.serialization.Serializable
 
 @Serializable

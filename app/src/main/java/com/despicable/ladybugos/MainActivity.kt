@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -30,8 +31,8 @@ import com.despicable.core.designsystem.component.NoteeDialog
 import com.despicable.core.designsystem.theme.LadyBugOSTheme
 import com.despicable.ladybugos.ui.MainContent
 import dagger.hilt.android.AndroidEntryPoint
+import org.koin.androidx.compose.KoinAndroidContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -85,17 +86,21 @@ class MainActivity : ComponentActivity() {
                             }
                         }*/
 
-            LadyBugOSTheme(themeConfig) {
-                Timber.tag("DEBUG").d("MainActivity_[noteId]=[$noteId]")
-                Timber.tag("DEBUG").d("MainActivity_[widgetId]=[$widgetId]")
+            KoinAndroidContext {
+                LadyBugOSTheme(themeConfig) {
+                    Log.e("APP","MainActivity_[noteId]=[$noteId]")
+                    Log.e("APP","MainActivity_[widgetId]=[$widgetId]")
 
-                PermissionContent {
-                    MainContent(
-                        navController = navController,
-                        noteId = noteId
-                    )
+                    PermissionContent {
+                        MainContent(
+                            navController = navController,
+                            noteId = noteId
+                        )
+                    }
                 }
             }
+
+
 
 
         }
@@ -114,7 +119,7 @@ class MainActivity : ComponentActivity() {
                 } else {
                     showDialog = true
                 }
-                Timber.tag("DEBUG").d("Notification permission granted: $isGranted")
+                Log.e("APP","Notification permission granted: $isGranted")
             }
         )
 

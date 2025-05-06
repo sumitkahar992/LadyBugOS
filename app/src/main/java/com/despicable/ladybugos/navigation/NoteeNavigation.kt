@@ -1,16 +1,18 @@
 package com.despicable.ladybugos.navigation
 
 import android.app.Activity
-import android.content.Context
+import android.util.Log
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.material3.DrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.Lifecycle
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import com.despicable.core.common.navigation.LocalSharedTransitionScope
@@ -30,7 +32,7 @@ import com.despicable.feature.home.screens.navigation.trashScreen
 import com.despicable.feature.settings.navigation.OSLicense
 import com.despicable.feature.settings.navigation.settingsScreen
 import kotlinx.coroutines.launch
-import timber.log.Timber
+
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -40,8 +42,8 @@ fun NoteeNavigation(
     drawerState: DrawerState
 ) {
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val isOpenedFromWidget = remember(noteId) { noteId != -1L }
+// Track if the app was opened from a widget, persists across config changes
+    var isOpenedFromWidget by rememberSaveable { mutableStateOf(noteId != -1L) }
     val startDestination = remember(noteId) {
         if (noteId == -1L) HomeRoute() else DetailRoute(noteId)
     }
@@ -66,26 +68,27 @@ fun NoteeNavigation(
                 )
 
 
-                Timber.tag("DEBUG").d("isOpenedFromWidget : [$isOpenedFromWidget]")
+                Log.e("APP","isOpenedFromWidget : [$isOpenedFromWidget]")
 
                 detailScreen(
-                    onBack = {
-                        if (isOpenedFromWidget) {
-                            navigationActions.handleWidgetNavigation(context)
-                        } else {
-//                            navController.popBackStackOnResume()
-                            navController.navigateUp()
+                    onBack = { isFromTopBar ->
+                        when {
+                            isOpenedFromWidget && isFromTopBar -> {
+                                navigationActions.handleWidgetNavigation()
+                                isOpenedFromWidget = false
+                            }
+                            isOpenedFromWidget -> {  // Implicitly && !isFromTopBar
+                                (navController.context as? Activity)?.finish()
+                            }
+                            else -> {
+                                navController.navigateUp()
+                            }
                         }
                     },
-                    onDelete = { noteId ->
-                        navController.handleAction(NoteAction.Delete(noteId))
-                    },
-                    onArchive = { noteId ->
-                        navController.handleAction(NoteAction.Archive(noteId))
-                    },
-                    onUnArchive = { noteId ->
-                        navController.handleAction(NoteAction.Unarchive(noteId))
-                    })
+                    onDelete = { noteId -> navController.handleAction(NoteAction.Delete(noteId)) },
+                    onArchive = { noteId -> navController.handleAction(NoteAction.Archive(noteId)) },
+                    onUnArchive = { noteId -> navController.handleAction(NoteAction.Unarchive(noteId)) }
+                )
 
 
 
@@ -129,21 +132,12 @@ fun NoteeNavigation(
 }
 
 
+// Helper class for navigation actions
 private class NavigationActions(private val navController: NavHostController) {
-
-    fun handleWidgetNavigation(context: Context) {
-        if (navController.currentBackStackEntry?.lifecycle?.currentState?.isAtLeast(
-                Lifecycle.State.CREATED
-            ) == true
-        ) {
-            navController.navigate(HomeRoute()) {
-                popUpTo(navController.graph.id) {
-                    inclusive = true
-                }
-                launchSingleTop = true
-            }
-        } else {
-            (context as? Activity)?.finish()
+    fun handleWidgetNavigation() {
+        navController.navigate(HomeRoute()) {
+            popUpTo(navController.graph.id) { inclusive = true }
+            launchSingleTop = true
         }
     }
 }
