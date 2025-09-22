@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.deathnote.android.library)
     alias(libs.plugins.deathnote.android.room)
     alias(libs.plugins.kotlin.serialization)
-//    alias(libs.plugins.dependencyanalysis)
 }
 
 android {

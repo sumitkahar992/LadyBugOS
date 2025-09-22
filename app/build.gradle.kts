@@ -6,9 +6,6 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.about.library)
     id("kotlin-parcelize")
-//    alias(libs.plugins.dependencyanalysis)
-
-
 }
 
 android {

@@ -567,13 +567,6 @@ class NoteDetailViewModel(
                             updateTimestamp = updateTimestamp
                         )
                     )
-//                    widgetUpdater.updateSingleWidget(
-//                        NoteComplete(
-//                            note = currentState.toNote(),
-//                            checklistItems = currentState.checklistItems,
-//                            habitItems = currentState.habitItems
-//                        )
-//                    )
                     widgetUpdater.updateSingleWidget(currentState.toNote())
                 }
             } catch (e: Exception) {
@@ -680,14 +673,14 @@ class NoteDetailViewModel(
 
             }
         }*/
-    fun saveNote(onComplete: () -> Unit, onSkip: () -> Unit) {
+    fun saveNote(onComplete: () -> Unit) {
         viewModelScope.launch {
             val currentNote = uiState.value.toNote()
 
             // Check if note is empty before saving
             if (uiState.value.isEmpty()) {
                 Log.e("DETAIL", "[ onSkip() ]")
-                onSkip()
+                onComplete()
                 return@launch
             }
 
@@ -743,13 +736,7 @@ class NoteDetailViewModel(
             )
 
             // Update any widgets associated with this note
-//            widgetUpdater.updateSingleWidget(
-//                NoteComplete(
-//                    note = note,
-//                    checklistItems = currentState.checklistItems,
-//                    habitItems = currentState.habitItems
-//                )
-//            )
+
             widgetUpdater.updateSingleWidget(note)
 
 

@@ -1,9 +1,6 @@
 plugins {
     alias(libs.plugins.deathnote.android.library)
     alias(libs.plugins.deathnote.android.library.compose)
-//    alias(libs.plugins.dependencyanalysis)
-
-
 }
 
 android {

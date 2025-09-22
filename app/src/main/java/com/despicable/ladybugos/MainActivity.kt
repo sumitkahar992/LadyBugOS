@@ -31,7 +31,6 @@ import com.despicable.core.designsystem.component.NoteeDialog
 import com.despicable.core.designsystem.theme.LadyBugOSTheme
 import com.despicable.ladybugos.ui.MainContent
 import dagger.hilt.android.AndroidEntryPoint
-import org.koin.androidx.compose.KoinAndroidContext
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 @AndroidEntryPoint
@@ -86,21 +85,18 @@ class MainActivity : ComponentActivity() {
                             }
                         }*/
 
-            KoinAndroidContext {
-                LadyBugOSTheme(themeConfig) {
-                    Log.e("APP","MainActivity_[noteId]=[$noteId]")
-                    Log.e("APP","MainActivity_[widgetId]=[$widgetId]")
+            LadyBugOSTheme(themeConfig) {
+                Log.e("APP", "MainActivity_[noteId]=[$noteId]")
+                Log.e("APP", "MainActivity_[widgetId]=[$widgetId]")
 
-                    PermissionContent {
-                        MainContent(
-                            navController = navController,
-                            noteId = noteId
-                        )
-                    }
+                PermissionContent {
+                    MainContent(
+                        navController = navController,
+                        noteId = noteId
+                    )
                 }
+//                    NotesScreen()
             }
-
-
 
 
         }
@@ -119,7 +115,7 @@ class MainActivity : ComponentActivity() {
                 } else {
                     showDialog = true
                 }
-                Log.e("APP","Notification permission granted: $isGranted")
+                Log.e("APP", "Notification permission granted: $isGranted")
             }
         )
 

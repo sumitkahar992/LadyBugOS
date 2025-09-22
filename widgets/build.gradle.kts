@@ -2,8 +2,6 @@ plugins {
     alias(libs.plugins.deathnote.android.feature)
     alias(libs.plugins.deathnote.android.library.compose)
     alias(libs.plugins.kotlin.serialization)
-//    alias(libs.plugins.dependencyanalysis)
-
 }
 
 android {

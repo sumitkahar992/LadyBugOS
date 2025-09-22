@@ -219,7 +219,6 @@ fun NoteDetailScreen(
         viewModel.deleteNoteIfEmpty()
         viewModel.saveNote(
             onComplete = { onBack(false) },
-            onSkip = { onBack(false) }
         )
     }
 
@@ -279,7 +278,6 @@ fun NoteDetailScreen(
                     onBack = {
                         viewModel.saveNote(
                             onComplete = { onBack(true) },
-                            onSkip = { onBack(true) }
                         )
                     },
                     onDelete = {
