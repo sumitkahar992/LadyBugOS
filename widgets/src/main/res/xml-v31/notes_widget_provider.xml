@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+
+    android:configure="com.despicable.widgets.data.ConfigWidgetActivity"
+    android:description="@string/widget_name"
+    android:initialLayout="@layout/glance_default_loading_layout"
+    android:minWidth="140dp"
+    android:minHeight="100dp"
+    android:minResizeWidth="80dp"
+    android:minResizeHeight="80dp"
+    android:resizeMode="horizontal|vertical"
+    android:updatePeriodMillis="1800000"
+    android:widgetCategory="home_screen"
+    android:targetCellWidth="3"
+    android:targetCellHeight="2"
+    android:widgetFeatures="reconfigurable">
+
+</appwidget-provider>

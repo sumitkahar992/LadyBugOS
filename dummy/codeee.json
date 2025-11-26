@@ -1,0 +1,755 @@
+[
+  {
+    "id": 1,
+    "title": "Welcome to Note App",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.Text",
+      "text": "Thank you for installing Note App! This is a sample note to help you get started. Feel free to edit or delete it."
+    },
+    "creationDate": "2025-07-31T11:35:33.183Z",
+    "updateDate": "2025-08-03T12:45:10.000Z",
+    "pinnedDate": "2025-09-22T09:15:30.000Z",
+    "reminderDate": "2025-08-05T10:00:00.000Z",
+    "lightColor": 16777215,
+    "isPinned": true,
+    "noteType": "TEXT"
+  },
+  {
+    "id": 2,
+    "title": "Shopping List",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 2,
+          "content": "Milk",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 2,
+          "content": "Eggs",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 2,
+          "content": "Bread",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 2,
+          "content": "Cheese",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 2,
+          "content": "Apples",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 2,
+          "content": "Chicken",
+          "position": 5,
+          "isChecked": false
+        }
+      ]
+    },
+    "creationDate": "2025-01-03T08:20:45.000Z",
+    "updateDate": "2025-02-03T14:30:00.000Z",
+    "pinnedDate": null,
+    "reminderDate": "2025-02-05T10:00:00.000Z",
+    "lightColor": 16776960,
+    "isPinned": false,
+    "noteType": "CHECKLIST"
+  },
+  {
+    "id": 3,
+    "title": "Project Ideas",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 3,
+          "content": "Develop a fitness tracking app",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 3,
+          "content": "Create a recipe sharing platform",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 3,
+          "content": "Design a personal finance manager",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 3,
+          "content": "Build a language learning game",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 3,
+          "content": "Invent a smart home automation system",
+          "position": 4,
+          "isChecked": false
+        }
+      ]
+    },
+    "creationDate": "2025-07-01T09:05:12.000Z",
+    "updateDate": "2025-07-22T16:20:45.000Z",
+    "pinnedDate": "2025-07-23T10:30:00.000Z",
+    "reminderDate": null,
+    "lightColor": 16711935,
+    "isPinned": true,
+    "noteType": "CHECKLIST"
+  },
+  {
+    "id": 4,
+    "title": "Birthday Party Planning",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 4,
+          "content": "Date: November 15",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Venue: Home",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Guest List: John and family",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Sarah and kids",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Mike and Lisa",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Grandma and Grandpa",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Menu: Pizza",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Salad",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Birthday Cake",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Ice Cream",
+          "position": 9,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Activities: Board games",
+          "position": 10,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Karaoke",
+          "position": 11,
+          "isChecked": false
+        },
+        {
+          "noteId": 4,
+          "content": "Gift opening",
+          "position": 12,
+          "isChecked": false
+        }
+      ]
+    },
+    "creationDate": "2025-07-03T10:10:00.000Z",
+    "updateDate": "2025-07-03T11:35:33.183Z",
+    "pinnedDate": "2025-07-11T14:22:10.000Z",
+    "reminderDate": "2025-07-04T09:00:00.000Z",
+    "lightColor": 65535,
+    "isPinned": false,
+    "noteType": "CHECKLIST"
+  },
+  {
+    "id": 5,
+    "title": "Workout Routine",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 5,
+          "content": "Monday: Chest and Triceps",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Bench Press: 3 sets of 10 reps",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Incline Dumbbell Press: 3 sets of 12 reps",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Tricep Pushdowns: 3 sets of 15 reps",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Dips: 3 sets to failure",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Wednesday: Back and Biceps",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Deadlifts: 3 sets of 8 reps",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Pull-ups: 3 sets to failure",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Barbell Rows: 3 sets of 10 reps",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Hammer Curls: 3 sets of 12 reps",
+          "position": 9,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Friday: Legs and Shoulders",
+          "position": 10,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Squats: 3 sets of 10 reps",
+          "position": 11,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Leg Press: 3 sets of 12 reps",
+          "position": 12,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Military Press: 3 sets of 10 reps",
+          "position": 13,
+          "isChecked": false
+        },
+        {
+          "noteId": 5,
+          "content": "Lateral Raises: 3 sets of 15 reps",
+          "position": 14,
+          "isChecked": false
+        }
+      ]
+    },
+    "creationDate": "2025-07-11T08:15:00.000Z",
+    "updateDate": "2025-07-21T13:45:00.000Z",
+    "pinnedDate": "2025-07-23T15:30:00.000Z",
+    "reminderDate": null,
+    "lightColor": 65280,
+    "isPinned": false,
+    "noteType": "CHECKLIST"
+  },
+  {
+    "id": 6,
+    "title": "Book Recommendations",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 6,
+          "content": "'The Alchemist' by Paulo Coelho",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'1984' by George Orwell",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'To Kill a Mockingbird' by Harper Lee",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'The Great Gatsby' by F. Scott Fitzgerald",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'Pride and Prejudice' by Jane Austen",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'The Catcher in the Rye' by J.D. Salinger",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'The Hobbit' by J.R.R. Tolkien",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'Brave New World' by Aldous Huxley",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'The Hunger Games' by Suzanne Collins",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 6,
+          "content": "'The Da Vinci Code' by Dan Brown",
+          "position": 9,
+          "isChecked": false
+        }
+      ]
+    },
+    "creationDate": "2025-06-03T10:00:00.000Z",
+    "updateDate": "2025-06-03T11:35:33.183Z",
+    "pinnedDate": "2025-08-03T12:00:00.000Z",
+    "reminderDate": null,
+    "lightColor": 16711680,
+    "isPinned": false,
+    "noteType": "CHECKLIST"
+  },
+  {
+    "id": 7,
+    "title": "Travel Bucket List",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 7,
+          "content": "Visit the Great Wall of China",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "See the Northern Lights in Iceland",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Explore Machu Picchu",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Go on a safari in Tanzania",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Take a gondola ride in Venice",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Watch the sunset at Santorini",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Visit the Taj Mahal in India",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Hike to Everest Base Camp",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "Swim in the Dead Sea",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 7,
+          "content": "See cherry blossoms in Japan",
+          "position": 9,
+          "isChecked": false
+        }
+      ]
+    },
+    "creationDate": "2025-01-03T07:45:00.000Z",
+    "updateDate": "2025-01-03T11:35:33.183Z",
+    "pinnedDate": "2025-04-03T14:00:00.000Z",
+    "reminderDate": "2025-04-05T10:00:00.000Z",
+    "lightColor": 16777215,
+    "isPinned": true,
+    "noteType": "CHECKLIST"
+  },
+  {
+    "id": 8,
+    "title": "Recipe: Chocolate Chip Cookies",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 8,
+          "content": "Ingredients:",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "2 1/4 cups all-purpose flour",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "1 tsp baking soda",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "1 tsp salt",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "1 cup unsalted butter, softened",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "3/4 cup granulated sugar",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "3/4 cup brown sugar",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "2 large eggs",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "2 tsp vanilla extract",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "2 cups semisweet chocolate chips",
+          "position": 9,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Instructions:",
+          "position": 10,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Preheat oven to 375°F (190°C)",
+          "position": 11,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Mix flour, baking soda, and salt",
+          "position": 12,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Cream butter and sugars",
+          "position": 13,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Beat in eggs and vanilla",
+          "position": 14,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Stir in flour mixture",
+          "position": 15,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Fold in chocolate chips",
+          "position": 16,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Drop spoonfuls onto baking sheets",
+          "position": 17,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Bake for 9-11 minutes",
+          "position": 18,
+          "isChecked": false
+        },
+        {
+          "noteId": 8,
+          "content": "Cool on wire racks",
+          "position": 19,
+          "isChecked": false
+        }
+      ]
+    },
+    "creationDate": "2025-06-03T12:00:00.000Z",
+    "updateDate": "2025-04-03T11:35:33.183Z",
+    "pinnedDate": "2025-06-03T13:15:00.000Z",
+    "reminderDate": "2025-06-04T10:00:00.000Z",
+    "lightColor": 16776960,
+    "isPinned": false,
+    "noteType": "CHECKLIST"
+  },
+  {
+    "id": 9,
+    "title": "Daily Affirmations",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 9,
+          "content": "I am capable of achieving great things",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I choose to be positive and optimistic",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I am worthy of love and respect",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I trust in my abilities and decisions",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I embrace challenges as opportunities",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I am grateful for all that I have",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I radiate confidence and self-assurance",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I am constantly improving and becoming better",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I attract positivity and success",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 9,
+          "content": "I am in control of my own happiness",
+          "position": 9,
+          "isChecked": false
+        }
+      ]
+    },
+    "creationDate": "2025-07-01T09:00:00.000Z",
+    "updateDate": "2025-07-01T11:35:33.183Z",
+    "pinnedDate": "2025-07-10T10:15:00.000Z",
+    "reminderDate": null,
+    "lightColor": 16711935,
+    "isPinned": false,
+    "noteType": "CHECKLIST"
+  },
+  {
+    "id": 10,
+    "title": "Home Improvement Ideas",
+    "content": {
+      "type": "com.despicable.core.model.NoteContent.ChecklistItems",
+      "items": [
+        {
+          "noteId": 10,
+          "content": "Paint the living room walls",
+          "position": 0,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Install new kitchen backsplash",
+          "position": 1,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Replace old light fixtures",
+          "position": 2,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Add a kitchen island",
+          "position": 3,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Create a vertical garden on the patio",
+          "position": 4,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Refinish hardwood floors",
+          "position": 5,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Update bathroom fixtures",
+          "position": 6,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Build a fire pit in the backyard",
+          "position": 7,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Install smart home devices",
+          "position": 8,
+          "isChecked": false
+        },
+        {
+          "noteId": 10,
+          "content": "Organize and declutter the garage",
+          "position": 9,
+          "isChecked": false
+        }
+      ]
+    },
+    "creationDate": "2025-02-03T08:30:00.000Z",
+    "updateDate": "2025-02-03T11:35:33.183Z",
+    "pinnedDate": null,
+    "reminderDate": "2025-02-06T10:00:00.000Z",
+    "lightColor": 65535,
+    "isPinned": false,
+    "noteType": "CHECKLIST"
+  }
+]
