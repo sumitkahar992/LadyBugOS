@@ -1,18 +1,18 @@
 [versions]
-androidGradlePlugin = "8.12.0"
-animationCore = "1.9.0"
+androidGradlePlugin = "8.13.1"
+animationCore = "1.9.5"
 core = "1.17.0"
-koinCoreViewmodel = "4.1.0"
-kotlin = "2.2.10"
+koinCoreViewmodel = "4.1.1"
+kotlin = "2.2.21"
 coreKtx = "1.17.0"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
 kotlinxCoroutinesCore = "1.10.2"
 kotlinxSerializationCore = "1.9.0"
-lifecycleRuntimeKtx = "2.9.2"
-activityCompose = "1.10.1"
-compose-bom = "2025.08.00"
+lifecycleRuntimeKtx = "2.10.0"
+activityCompose = "1.12.0"
+compose-bom = "2025.11.01"
 
 google-play-publish = "3.10.1"
 advanced-gradle-build-version = "3.0.0"
@@ -24,11 +24,11 @@ androidx-glance-preview = "1.1.1"
 
 kotlinxSerializationJson = "1.9.0"
 
-androidxNavigation = "2.9.3"
-navigationRuntimeKtx = "2.9.3"
+androidxNavigation = "2.9.6"
+navigationRuntimeKtx = "2.9.6"
 
 
-koin-bom = "4.1.0"
+koin-bom = "4.1.1"
 
 androidDesugarJdkLibs = "2.1.5"
 
@@ -38,9 +38,9 @@ androidxAppCompat = "1.7.0"
 androidxActivity = "1.9.1"
 androidxComposeCompiler = "1.5.14"
 androidxStartup = "1.1.1"
-androidxHiltNavigationCompose = "1.2.0"
+androidxHiltNavigationCompose = "1.3.0"
 androidxConstraintlayoutCompose = "1.0.1"
-androidxLifecycle = "2.9.2"
+androidxLifecycle = "2.10.0"
 
 
 androidxComposeMaterial3 = "1.2.1"
@@ -49,10 +49,10 @@ androidxComposeMaterial3 = "1.2.1"
 
 coil = "2.7.0"
 javaxInject = "1"
-okhttp = "5.1.0"
+okhttp = "5.3.2"
 retrofit = "3.0.0"
-room = "2.7.2"
-ksp = "2.2.10-2.0.2"
+room = "2.8.4"
+ksp = "2.3.2"
 
 
 kotlinxCoroutines = "1.10.2"
@@ -60,7 +60,7 @@ kotlinxDatetime = "0.6.2"
 
 
 androidxCoreSplashscreen = "1.0.1"
-androidxDataStore = "1.1.7"
+androidxDataStore = "1.2.0"
 
 paging = "3.3.2"
 gmsPlugin = "4.4.2"
@@ -69,19 +69,19 @@ activity = "1.9.1"
 androidxComposeMaterial3Adaptive = "1.0.0-rc01"
 androidxComposeMaterial3AdaptiveNavigationSuite = "1.3.0-rc01"
 
-aboutLibrary = "12.2.4"
+aboutLibrary = "13.1.0"
 
-coreSplashscreen = "1.0.1"
+coreSplashscreen = "1.2.0"
 navigationSafeArgsGenerator = "2.8.2"
 appcompat = "1.7.1"
-materialVersion = "1.12.0"
-workmanager = "2.10.3"
+materialVersion = "1.13.0"
+workmanager = "2.11.0"
 androidx-constraintlayout = "1.1.1"
 
-reorderable = "2.5.1"
+reorderable = "3.0.0"
 
 # Plugins
-roomPaging = "2.7.2"
+roomPaging = "2.8.4"
 pagingRuntimeKtx = "3.3.6"
 
 

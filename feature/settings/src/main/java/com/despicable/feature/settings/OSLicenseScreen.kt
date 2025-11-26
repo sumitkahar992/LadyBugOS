@@ -62,12 +62,6 @@ fun OSLicenseScreen(onBackPress: () -> Unit) {
             showAuthor = true,
             showVersion = true,
             showLicenseBadges = true,
-            colors = LibraryDefaults.libraryColors(
-                backgroundColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.onBackground,
-                badgeBackgroundColor = MaterialTheme.colorScheme.primary,
-                badgeContentColor = MaterialTheme.colorScheme.onPrimary
-            )
         )
 
     }
